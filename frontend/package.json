@@ -9,7 +9,7 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{ts,tsx,js,jsx,json,mjs}\"",
-    "prepare": "husky install"
+    "prepare": "node -e \"try { if (require('fs').existsSync('node_modules/husky')) { require('child_process').execSync('npx husky install', {stdio: 'ignore'}); } } catch (e) {}\" || true"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",

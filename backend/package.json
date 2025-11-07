@@ -23,7 +23,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prepare": "husky"
+    "prepare": "node -e \"try { if (require('fs').existsSync('node_modules/husky')) { require('child_process').execSync('npx husky', {stdio: 'ignore'}); } } catch (e) {}\" || true"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.8",
