@@ -10,6 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Seed configuration
+// Run with: npm run prisma:seed
+
 model SuperAdmin {
   id            String   @id @default(uuid())
   name          String

@@ -50,6 +50,7 @@ coverage/
 *.pid
 *.seed
 *.pid.lock
+.dev.pids
 
 # TypeScript
 *.tsbuildinfo

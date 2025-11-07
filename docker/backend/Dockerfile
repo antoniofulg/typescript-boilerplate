@@ -19,6 +19,9 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
+# Verify build output exists (NestJS generates dist/src/main.js)
+RUN test -f dist/src/main.js || (echo "ERROR: dist/src/main.js not found after build" && exit 1)
+
 # Stage 2: Runner
 FROM node:24-alpine AS runner
 
@@ -42,6 +45,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
+# Verify dist/src/main.js exists in runner stage
+RUN test -f dist/src/main.js || (echo "ERROR: dist/src/main.js not found in runner stage" && exit 1)
+
 # Change ownership
 RUN chown -R nestjs:nestjs /app
 
@@ -53,5 +59,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
 

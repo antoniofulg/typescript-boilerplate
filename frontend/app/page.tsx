@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -65,8 +65,43 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
+interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTenants = async () => {
+      try {
+        setLoading(true);
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        const response = await fetch(`${backendUrl}/api/tenants`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch tenants');
+        }
+        const data = await response.json();
+        setTenants(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error('Error fetching tenants:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenants();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -85,6 +120,92 @@ export default function Home() {
             <ThemeToggle />
           </div>
         </div>
+
+        {/* API Integration Test - Example Data from Backend */}
+        <Card>
+          <CardHeader>
+            <CardTitle>API Integration Test</CardTitle>
+            <CardDescription>
+              Example data fetched from backend API (GET /api/tenants)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-muted-foreground">Loading tenants...</p>
+              </div>
+            )}
+            {error && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  Failed to fetch tenants: {error}
+                  <br />
+                  <span className="text-xs">
+                    Make sure the backend is running on{' '}
+                    {process.env.NEXT_PUBLIC_BACKEND_URL ||
+                      'http://localhost:4000'}
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
+            {!loading && !error && tenants.length === 0 && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No Data</AlertTitle>
+                <AlertDescription>
+                  No tenants found. Run the seed script to add example data:
+                  <br />
+                  <code className="text-xs mt-2 block bg-muted p-2 rounded">
+                    cd backend && npm run prisma:seed
+                  </code>
+                </AlertDescription>
+              </Alert>
+            )}
+            {!loading && !error && tenants.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Found {tenants.length} tenant(s)
+                  </p>
+                  <Badge variant="secondary">API Connected</Badge>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {tenants.map((tenant) => (
+                    <Card key={tenant.id}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">
+                            {tenant.name}
+                          </CardTitle>
+                          <Badge
+                            variant={
+                              tenant.status === 'ACTIVE'
+                                ? 'default'
+                                : tenant.status === 'INACTIVE'
+                                  ? 'secondary'
+                                  : 'destructive'
+                            }
+                          >
+                            {tenant.status}
+                          </Badge>
+                        </div>
+                        <CardDescription>Slug: {tenant.slug}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">
+                          Created:{' '}
+                          {new Date(tenant.createdAt).toLocaleDateString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Buttons Section */}
         <Card>

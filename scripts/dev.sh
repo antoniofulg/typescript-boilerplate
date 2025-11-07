@@ -1,0 +1,199 @@
+#!/bin/bash
+
+# Script to run development environment with hot-reload
+# Usage: ./scripts/dev.sh [start|stop|status]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PID_FILE="$PROJECT_DIR/.dev.pids"
+
+DOCKER_DIR="$PROJECT_DIR/docker"
+BACKEND_DIR="$PROJECT_DIR/backend"
+FRONTEND_DIR="$PROJECT_DIR/frontend"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+start() {
+  echo -e "${GREEN}🚀 Starting development environment...${NC}"
+  echo ""
+
+  # Stop backend and frontend containers if running (to avoid port conflicts)
+  echo -e "${CYAN}🛑 Stopping backend/frontend containers if running...${NC}"
+  cd "$DOCKER_DIR" && docker-compose stop backend frontend 2>/dev/null || true
+  cd "$DOCKER_DIR" && docker-compose rm -f backend frontend 2>/dev/null || true
+
+  # Check if dependencies are installed
+  if [ ! -d "$BACKEND_DIR/node_modules" ]; then
+    echo -e "${YELLOW}⚠️  Backend dependencies not found. Installing...${NC}"
+    cd "$BACKEND_DIR" && npm install
+  fi
+
+  if [ ! -d "$FRONTEND_DIR/node_modules" ]; then
+    echo -e "${YELLOW}⚠️  Frontend dependencies not found. Installing...${NC}"
+    cd "$FRONTEND_DIR" && npm install
+  fi
+
+  # Start PostgreSQL and Redis
+  echo -e "${CYAN}📦 Starting PostgreSQL and Redis...${NC}"
+  cd "$DOCKER_DIR" && docker-compose up -d postgres redis
+  sleep 2
+
+  # Wait for PostgreSQL to be ready
+  echo -e "${CYAN}⏳ Waiting for PostgreSQL to be ready...${NC}"
+  until docker-compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
+    sleep 1
+  done
+  echo -e "${GREEN}✅ PostgreSQL is ready${NC}"
+
+  # Generate Prisma Client if needed
+  if [ ! -d "$BACKEND_DIR/node_modules/.prisma" ]; then
+    echo -e "${CYAN}📊 Generating Prisma Client...${NC}"
+    cd "$BACKEND_DIR" && npm run prisma:generate
+  fi
+
+  # Check if port 4000 is available
+  if lsof -Pi :4000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}❌ Port 4000 is already in use. Please stop the service using it first.${NC}"
+    echo -e "${YELLOW}   Try: make dev-stop or docker-compose stop backend${NC}"
+    exit 1
+  fi
+
+  # Start backend in background with DATABASE_URL
+  echo -e "${CYAN}💻 Starting backend (port 4000)...${NC}"
+  cd "$BACKEND_DIR"
+  DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente?schema=public" \
+  PORT=4000 \
+  npm run start:dev > /tmp/backend-dev.log 2>&1 &
+  BACKEND_PID=$!
+  echo "$BACKEND_PID" > "$PID_FILE"
+  echo -e "${GREEN}   Backend PID: $BACKEND_PID${NC}"
+  
+  # Wait a moment and check if backend started successfully
+  sleep 2
+  if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+    echo -e "${RED}❌ Backend failed to start. Check logs: tail -f /tmp/backend-dev.log${NC}"
+    exit 1
+  fi
+
+  # Check if port 3000 is available
+  if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}❌ Port 3000 is already in use. Please stop the service using it first.${NC}"
+    echo -e "${YELLOW}   Try: make dev-stop or docker-compose stop frontend${NC}"
+    exit 1
+  fi
+
+  # Start frontend in background
+  echo -e "${CYAN}💻 Starting frontend (port 3000)...${NC}"
+  cd "$FRONTEND_DIR"
+  NEXT_PUBLIC_BACKEND_URL="http://localhost:4000" \
+  npm run dev > /tmp/frontend-dev.log 2>&1 &
+  FRONTEND_PID=$!
+  echo "$FRONTEND_PID" >> "$PID_FILE"
+  echo -e "${GREEN}   Frontend PID: $FRONTEND_PID${NC}"
+  
+  # Wait a moment and check if frontend started successfully
+  sleep 2
+  if ! kill -0 "$FRONTEND_PID" 2>/dev/null; then
+    echo -e "${RED}❌ Frontend failed to start. Check logs: tail -f /tmp/frontend-dev.log${NC}"
+    exit 1
+  fi
+
+  # Wait a bit for services to start
+  sleep 3
+
+  echo ""
+  echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+  echo -e "${GREEN}║     🚀 Development Environment Started${NC}                    ║${NC}"
+  echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+  echo ""
+  echo -e "${GREEN}✅ Backend:${NC}  ${CYAN}http://localhost:4000${NC}"
+  echo -e "${GREEN}✅ Frontend:${NC} ${CYAN}http://localhost:3000${NC}"
+  echo -e "${GREEN}✅ PostgreSQL:${NC} ${CYAN}localhost:5432${NC}"
+  echo -e "${GREEN}✅ Redis:${NC}     ${CYAN}localhost:6379${NC}"
+  echo ""
+  echo -e "${YELLOW}💡 Logs:${NC}"
+  echo -e "   Backend:  ${CYAN}tail -f /tmp/backend-dev.log${NC}"
+  echo -e "   Frontend: ${CYAN}tail -f /tmp/frontend-dev.log${NC}"
+  echo ""
+  echo -e "${YELLOW}💡 To stop:${NC} ${CYAN}make dev-stop${NC} or ${CYAN}./scripts/dev.sh stop${NC}"
+  echo ""
+}
+
+stop() {
+  echo -e "${YELLOW}🛑 Stopping development environment...${NC}"
+
+  # Stop processes from PID file
+  if [ -f "$PID_FILE" ]; then
+    while read -r pid; do
+      if kill -0 "$pid" 2>/dev/null; then
+        echo -e "${CYAN}Stopping process $pid...${NC}"
+        kill "$pid" 2>/dev/null || true
+      fi
+    done < "$PID_FILE"
+    rm -f "$PID_FILE"
+  fi
+
+  # Stop Docker services (only postgres and redis, keep backend/frontend stopped)
+  cd "$DOCKER_DIR" && docker-compose stop postgres redis 2>/dev/null || true
+
+  echo -e "${GREEN}✅ Development environment stopped${NC}"
+}
+
+status() {
+  echo -e "${CYAN}📋 Development Environment Status:${NC}"
+  echo ""
+
+  # Check Docker services
+  cd "$DOCKER_DIR"
+  if docker-compose ps postgres redis 2>/dev/null | grep -q "Up"; then
+    echo -e "${GREEN}✅ PostgreSQL & Redis: Running${NC}"
+  else
+    echo -e "${YELLOW}⚪ PostgreSQL & Redis: Stopped${NC}"
+  fi
+
+  # Check backend
+  if [ -f "$PID_FILE" ]; then
+    BACKEND_PID=$(head -n 1 "$PID_FILE")
+    if kill -0 "$BACKEND_PID" 2>/dev/null; then
+      echo -e "${GREEN}✅ Backend: Running (PID: $BACKEND_PID)${NC}"
+    else
+      echo -e "${YELLOW}⚪ Backend: Stopped${NC}"
+    fi
+  else
+    echo -e "${YELLOW}⚪ Backend: Not started${NC}"
+  fi
+
+  # Check frontend
+  if [ -f "$PID_FILE" ] && [ $(wc -l < "$PID_FILE") -ge 2 ]; then
+    FRONTEND_PID=$(tail -n 1 "$PID_FILE")
+    if kill -0 "$FRONTEND_PID" 2>/dev/null; then
+      echo -e "${GREEN}✅ Frontend: Running (PID: $FRONTEND_PID)${NC}"
+    else
+      echo -e "${YELLOW}⚪ Frontend: Stopped${NC}"
+    fi
+  else
+    echo -e "${YELLOW}⚪ Frontend: Not started${NC}"
+  fi
+}
+
+case "${1:-start}" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  *)
+    echo "Usage: $0 [start|stop|status]"
+    exit 1
+    ;;
+esac
+

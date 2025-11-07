@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -161,6 +161,18 @@ migrate: ## Run Prisma migrations
 	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy
 
+migrate-dev: ## Create and apply Prisma migrations (development)
+	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev
+
+db-push: ## Push Prisma schema to database without migrations (development)
+	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push
+
+seed: migrate ## Run Prisma seed to add example data (runs migrations first)
+	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed
+
 prisma-studio: ## Open Prisma Studio
 	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
 	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
@@ -196,11 +208,23 @@ format-frontend: ## Format frontend code
 	@echo "$(GREEN)✨ Formatting frontend code...$(NC)"
 	@cd frontend && npm run format
 
-dev-backend: ## Run backend in development mode (local)
+dev: hosts-add ## Start development environment with hot-reload (PostgreSQL/Redis in Docker, backend/frontend locally)
+	@chmod +x scripts/dev.sh
+	@./scripts/dev.sh start
+
+dev-stop: ## Stop development environment
+	@chmod +x scripts/dev.sh
+	@./scripts/dev.sh stop
+
+dev-status: ## Show development environment status
+	@chmod +x scripts/dev.sh
+	@./scripts/dev.sh status
+
+dev-backend: ## Run backend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
 	@cd backend && npm run start:dev
 
-dev-frontend: ## Run frontend in development mode (local)
+dev-frontend: ## Run frontend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
 	@cd frontend && npm run dev
 
