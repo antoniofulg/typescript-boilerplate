@@ -48,6 +48,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.front.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
     ports:
       - "4000:4000"
       - "5555:5555"
@@ -77,6 +79,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-voto-inteligente.backend.local}:4000
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.front.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
     ports:
       - "3000:3000"
     depends_on:

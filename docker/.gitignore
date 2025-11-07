@@ -1,6 +1,11 @@
+# Arquivos de ambiente
+.env.postgres
 .env.backend
 .env.frontend
-.env.postgres
-*.env
-*.env.local
+.env.postgres.local
+.env.backend.local
+.env.frontend.local
 
+# Arquivos de backup
+*.bak
+*.backup
