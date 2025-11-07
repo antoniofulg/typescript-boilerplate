@@ -1,0 +1,12 @@
+{
+  "name": "voto-inteligente",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de votação inteligente",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
