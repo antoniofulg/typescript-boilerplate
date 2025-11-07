@@ -40,12 +40,47 @@ Os arquivos `.env.*` estão configurados com valores padrão. Para produção, a
 
 ### 2. Subir o ambiente
 
+**Opção A: Com Make (recomendado)**
+
+```bash
+# Na raiz do projeto
+make up
+```
+
+Este comando irá:
+
+- Subir todos os serviços
+- Aguardar os serviços iniciarem
+- Exibir automaticamente as URLs de acesso
+
+**Opção B: Manual**
+
 ```bash
 cd docker
 docker-compose up -d
+
+# Depois, para ver as URLs (na raiz do projeto):
+make urls
 ```
 
-### 3. Verificar logs
+### 3. Ver URLs dos serviços
+
+Após subir os serviços, você pode ver as URLs de acesso:
+
+```bash
+# Na raiz do projeto
+make urls
+```
+
+Isso exibirá:
+
+- 🌐 Frontend: http://localhost:3000
+- 🌐 Backend API: http://localhost:4000
+- 🏥 Healthcheck: http://localhost:4000/health
+- 🗄️ PostgreSQL: localhost:5432
+- 💾 Redis: localhost:6379
+
+### 4. Verificar logs
 
 ```bash
 # Todos os serviços
@@ -56,13 +91,13 @@ docker-compose logs -f backend
 docker-compose logs -f frontend
 ```
 
-### 4. Parar o ambiente
+### 5. Parar o ambiente
 
 ```bash
 docker-compose down
 ```
 
-### 5. Parar e remover volumes (limpar dados)
+### 6. Parar e remover volumes (limpar dados)
 
 ```bash
 docker-compose down -v
@@ -84,6 +119,8 @@ npm run prisma:migrate
 ```
 
 ## Acessos
+
+Após subir os serviços, execute `make urls` (na raiz do projeto) para ver todas as URLs:
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:4000
@@ -112,6 +149,7 @@ docker-compose up -d --build
 ### Backend não conecta ao banco
 
 Verifique se o PostgreSQL está saudável:
+
 ```bash
 docker-compose ps
 ```
@@ -121,6 +159,7 @@ Aguarde o healthcheck do PostgreSQL completar antes do backend iniciar.
 ### Erro de permissão
 
 Se houver erros de permissão, verifique os logs:
+
 ```bash
 docker-compose logs backend
 ```
@@ -149,4 +188,3 @@ cd ../frontend
 npm install
 npm run dev
 ```
-

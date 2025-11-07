@@ -53,16 +53,35 @@ Os arquivos `.env` na pasta `docker/` já possuem valores padrão. Para produç�
 
 #### 3. Suba o ambiente completo
 
+**Opção A: Com Make (recomendado)**
+
+```bash
+make up
+```
+
+**Opção B: Com Docker Compose diretamente**
+
 ```bash
 cd docker
 docker-compose up -d
+make urls  # Para ver as URLs (voltar para raiz)
+```
+
+**Opção C: Manual**
+
+```bash
+cd docker
+docker-compose up -d
+./show-urls.sh  # Para ver as URLs dos serviços
 ```
 
 Este comando irá:
+
 - ✅ Instalar automaticamente todas as dependências de cada projeto
 - ✅ Criar e configurar os containers (PostgreSQL, Redis, Backend, Frontend)
 - ✅ Executar as migrações do Prisma automaticamente
 - ✅ Iniciar todos os serviços
+- ✅ Exibir as URLs de acesso aos serviços
 
 #### 4. Verifique se está tudo funcionando
 
@@ -80,9 +99,18 @@ docker-compose logs -f frontend
 
 #### 5. Acesse a aplicação
 
+Após subir os serviços, as URLs serão exibidas automaticamente. Você também pode executar:
+
+```bash
+make urls
+```
+
+**URLs dos serviços:**
+
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:4000
 - **Healthcheck Backend:** http://localhost:4000/health
+- **Prisma Studio:** http://localhost:5555 (execute `make prisma-studio` para iniciar)
 - **PostgreSQL:** localhost:5432
 - **Redis:** localhost:6379
 
@@ -132,9 +160,33 @@ cd docker
 docker-compose up -d postgres redis
 ```
 
-### Comandos Úteis do Docker
+### Comandos Úteis
+
+**Com Make (recomendado):**
 
 ```bash
+make help          # Ver todos os comandos disponíveis
+make up            # Subir todos os serviços
+make down          # Parar todos os serviços
+make restart       # Reiniciar serviços
+make logs          # Ver logs de todos os serviços
+make logs-backend  # Ver logs do backend
+make logs-frontend # Ver logs do frontend
+make urls          # Ver URLs dos serviços
+make ps            # Ver status dos containers
+make build         # Build das imagens (sem cache)
+make clean         # Parar e remover volumes
+make shell-backend      # Entrar no container do backend
+make migrate            # Executar migrações do Prisma
+make prisma-studio      # Abrir Prisma Studio (http://localhost:5555)
+make prisma-studio-stop # Parar Prisma Studio
+```
+
+**Com Docker Compose diretamente:**
+
+```bash
+cd docker
+
 # Parar todos os serviços
 docker-compose down
 
@@ -169,6 +221,14 @@ Você precisa fazer rebuild das imagens Docker quando:
 - ✅ Mudar configurações do Prisma (`schema.prisma`)
 
 **Comando recomendado após mudanças:**
+
+```bash
+make build  # Build sem cache
+make up     # Subir serviços
+```
+
+Ou manualmente:
+
 ```bash
 cd docker
 docker-compose build --no-cache
@@ -180,7 +240,11 @@ docker-compose up -d
 As migrações são executadas automaticamente quando o container do backend inicia pela primeira vez. Para executar manualmente:
 
 ```bash
+# Com Make
+make migrate
+
 # Via Docker
+cd docker
 docker-compose exec backend npm run prisma:migrate:deploy
 
 # Ou localmente
@@ -193,6 +257,7 @@ npm run prisma:migrate
 #### Backend não conecta ao banco
 
 Verifique se o PostgreSQL está saudável:
+
 ```bash
 docker-compose ps
 ```
@@ -202,6 +267,7 @@ Aguarde o healthcheck do PostgreSQL completar antes do backend iniciar.
 #### Erro de permissão
 
 Verifique os logs:
+
 ```bash
 docker-compose logs backend
 ```
@@ -220,8 +286,8 @@ Se as portas 3000, 4000, 5432 ou 6379 estiverem em uso, altere no `docker-compos
 
 ```yaml
 ports:
-  - "3001:3000"  # Frontend
-  - "4001:4000"  # Backend
+  - "3001:3000" # Frontend
+  - "4001:4000" # Backend
 ```
 
 ---
