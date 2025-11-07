@@ -1,14 +1,14 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Executa lint-staged no backend se houver arquivos staged do backend
+# Run lint-staged on backend if there are staged backend files
 if git diff --cached --name-only --diff-filter=ACM | grep -q "^backend/"; then
-  echo "🔍 Executando linters no backend..."
+  echo "🔍 Running linters on backend..."
   cd backend && npx lint-staged && cd ..
 fi
 
-# Executa lint-staged no frontend se houver arquivos staged do frontend
+# Run lint-staged on frontend if there are staged frontend files
 if git diff --cached --name-only --diff-filter=ACM | grep -q "^frontend/"; then
-  echo "🔍 Executando linters no frontend..."
+  echo "🔍 Running linters on frontend..."
   cd frontend && npx lint-staged && cd ..
 fi

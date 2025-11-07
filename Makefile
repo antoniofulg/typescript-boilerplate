@@ -1,17 +1,17 @@
 .PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove
 
-# Variáveis
+# Variables
 DOCKER_COMPOSE = docker-compose
 DOCKER_DIR = docker
 COMPOSE_FILE = $(DOCKER_DIR)/docker-compose.yml
 
-# Variáveis de ambiente para aliases (com valores padrão)
+# Environment variables for aliases (with default values)
 FRONTEND_ALIAS ?= voto-inteligente.front.local
 BACKEND_ALIAS ?= voto-inteligente.backend.local
 export FRONTEND_ALIAS
 export BACKEND_ALIAS
 
-# Cores para output
+# Colors for output
 GREEN = \033[0;32m
 BLUE = \033[0;34m
 YELLOW = \033[1;33m
@@ -19,73 +19,73 @@ CYAN = \033[0;36m
 BOLD = \033[1m
 NC = \033[0m # No Color
 
-help: ## Mostra esta mensagem de ajuda
+help: ## Show this help message
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(GREEN)║     🚀 Voto Inteligente - Comandos Disponíveis           ║$(NC)"
+	@echo "$(GREEN)║     🚀 Voto Inteligente - Available Commands           ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Comandos Docker:$(NC)"
+	@echo "$(YELLOW)Docker Commands:$(NC)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
-hosts-add: ## Adiciona aliases ao arquivo /etc/hosts
-	@echo "$(GREEN)📝 Adicionando aliases ao /etc/hosts...$(NC)"
+hosts-add: ## Add aliases to /etc/hosts file
+	@echo "$(GREEN)📝 Adding aliases to /etc/hosts...$(NC)"
 	@chmod +x scripts/manage-hosts.sh
 	@./scripts/manage-hosts.sh add $(FRONTEND_ALIAS) $(BACKEND_ALIAS)
-	@echo "$(CYAN)💡 Aliases configurados:$(NC)"
+	@echo "$(CYAN)💡 Configured aliases:$(NC)"
 	@echo "   Frontend: $(BOLD)http://$(FRONTEND_ALIAS):3000$(NC)"
 	@echo "   Backend:  $(BOLD)http://$(BACKEND_ALIAS):4000$(NC)"
 
-hosts-remove: ## Remove aliases do arquivo /etc/hosts
-	@echo "$(YELLOW)🗑️  Removendo aliases do /etc/hosts...$(NC)"
+hosts-remove: ## Remove aliases from /etc/hosts file
+	@echo "$(YELLOW)🗑️  Removing aliases from /etc/hosts...$(NC)"
 	@chmod +x scripts/manage-hosts.sh
 	@./scripts/manage-hosts.sh remove $(FRONTEND_ALIAS) $(BACKEND_ALIAS)
 
-build: hosts-add ## Build das imagens Docker (sem cache) e adiciona aliases ao hosts
-	@echo "$(GREEN)🔨 Construindo imagens Docker...$(NC)"
+build: hosts-add ## Build Docker images (no cache) and add aliases to hosts
+	@echo "$(GREEN)🔨 Building Docker images...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build --no-cache
 
-build-fast: hosts-add ## Build das imagens Docker (com cache) e adiciona aliases ao hosts
-	@echo "$(GREEN)🔨 Construindo imagens Docker (com cache)...$(NC)"
+build-fast: hosts-add ## Build Docker images (with cache) and add aliases to hosts
+	@echo "$(GREEN)🔨 Building Docker images (with cache)...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build
 
-up: ## Subir todos os serviços
-	@echo "$(GREEN)🚀 Iniciando serviços...$(NC)"
+up: ## Start all services
+	@echo "$(GREEN)🚀 Starting services...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) up -d
 	@sleep 3
 	@$(MAKE) urls
 
-down: ## Parar todos os serviços
-	@echo "$(YELLOW)🛑 Parando serviços...$(NC)"
+down: ## Stop all services
+	@echo "$(YELLOW)🛑 Stopping services...$(NC)"
 	@cd $(DOCKER_DIR) && \
 	if $(DOCKER_COMPOSE) ps 2>/dev/null | grep -q "backend.*Up"; then \
 		$(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" 2>/dev/null && \
-		echo "$(GREEN)✅ Prisma Studio parado$(NC)" || true; \
+		echo "$(GREEN)✅ Prisma Studio stopped$(NC)" || true; \
 	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down
 
-restart: ## Reiniciar todos os serviços
-	@echo "$(YELLOW)🔄 Reiniciando serviços...$(NC)"
+restart: ## Restart all services
+	@echo "$(YELLOW)🔄 Restarting services...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) restart
 	@sleep 3
 	@$(MAKE) urls
 
-logs: ## Ver logs de todos os serviços
+logs: ## View logs from all services
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f
 
-logs-backend: ## Ver logs do backend
+logs-backend: ## View backend logs
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f backend
 
-logs-frontend: ## Ver logs do frontend
+logs-frontend: ## View frontend logs
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f frontend
 
-urls: ## Mostrar URLs dos serviços
+urls: ## Show service URLs
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(GREEN)║     $(BOLD)🚀 Voto Inteligente - Serviços em Execução$(NC)$(GREEN)          ║$(NC)"
+	@echo "$(GREEN)║     $(BOLD)🚀 Voto Inteligente - Running Services$(NC)$(GREEN)          ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "$(CYAN)📋 Status dos Serviços:$(NC)"
+	@echo "$(CYAN)📋 Service Status:$(NC)"
 	@echo ""
 	@cd $(DOCKER_DIR) && \
 	if $(DOCKER_COMPOSE) ps 2>/dev/null | grep -q "frontend.*Up"; then \
@@ -93,7 +93,7 @@ urls: ## Mostrar URLs dos serviços
 		echo "      $(BLUE)🌐 URL (localhost):$(NC) $(BOLD)http://localhost:3000$(NC)"; \
 		echo "      $(BLUE)🌐 URL (alias):$(NC) $(BOLD)http://$(FRONTEND_ALIAS):3000$(NC)"; \
 	else \
-		echo "   $(YELLOW)⏳ Frontend ainda está iniciando...$(NC)"; \
+		echo "   $(YELLOW)⏳ Frontend is still starting...$(NC)"; \
 	fi
 	@echo ""
 	@cd $(DOCKER_DIR) && \
@@ -103,7 +103,7 @@ urls: ## Mostrar URLs dos serviços
 		echo "      $(BLUE)🌐 API (alias):$(NC) $(BOLD)http://$(BACKEND_ALIAS):4000$(NC)"; \
 		echo "      $(BLUE)🏥 Healthcheck:$(NC) $(BOLD)http://localhost:4000/health$(NC)"; \
 	else \
-		echo "   $(YELLOW)⏳ Backend ainda está iniciando...$(NC)"; \
+		echo "   $(YELLOW)⏳ Backend is still starting...$(NC)"; \
 	fi
 	@echo ""
 	@cd $(DOCKER_DIR) && \
@@ -112,7 +112,7 @@ urls: ## Mostrar URLs dos serviços
 		echo "      $(BLUE)🗄️  Host:$(NC) $(BOLD)localhost:5432$(NC)"; \
 		echo "      $(BLUE)📊 Database:$(NC) $(BOLD)voto_inteligente$(NC)"; \
 	else \
-		echo "   $(YELLOW)⏳ PostgreSQL ainda está iniciando...$(NC)"; \
+		echo "   $(YELLOW)⏳ PostgreSQL is still starting...$(NC)"; \
 	fi
 	@echo ""
 	@cd $(DOCKER_DIR) && \
@@ -120,87 +120,87 @@ urls: ## Mostrar URLs dos serviços
 		echo "   $(GREEN)✅ Redis$(NC)"; \
 		echo "      $(BLUE)💾 Host:$(NC) $(BOLD)localhost:6379$(NC)"; \
 	else \
-		echo "   $(YELLOW)⏳ Redis ainda está iniciando...$(NC)"; \
+		echo "   $(YELLOW)⏳ Redis is still starting...$(NC)"; \
 	fi
 	@echo ""
 	@cd $(DOCKER_DIR) && \
 	if $(DOCKER_COMPOSE) exec backend pgrep -f "prisma studio" > /dev/null 2>&1; then \
 		echo "   $(GREEN)✅ Prisma Studio$(NC)"; \
 		echo "      $(BLUE)🎨 URL:$(NC) $(BOLD)http://localhost:5555$(NC)"; \
-		echo "      $(CYAN)💡 Para parar:$(NC) $(BOLD)make prisma-studio-stop$(NC)"; \
+		echo "      $(CYAN)💡 To stop:$(NC) $(BOLD)make prisma-studio-stop$(NC)"; \
 	else \
-		echo "   $(YELLOW)⚪ Prisma Studio não está rodando$(NC)"; \
-		echo "      $(CYAN)💡 Para iniciar:$(NC) $(BOLD)make prisma-studio$(NC)"; \
+		echo "   $(YELLOW)⚪ Prisma Studio is not running$(NC)"; \
+		echo "      $(CYAN)💡 To start:$(NC) $(BOLD)make prisma-studio$(NC)"; \
 	fi
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(GREEN)║                    $(BOLD)📝 Comandos Úteis$(NC)$(GREEN)                        ║$(NC)"
+	@echo "$(GREEN)║                    $(BOLD)📝 Useful Commands$(NC)$(GREEN)                        ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "   $(CYAN)Ver logs:$(NC)        $(BOLD)make logs$(NC)"
-	@echo "   $(CYAN)Parar serviços:$(NC)  $(BOLD)make down$(NC)"
+	@echo "   $(CYAN)View logs:$(NC)        $(BOLD)make logs$(NC)"
+	@echo "   $(CYAN)Stop services:$(NC)  $(BOLD)make down$(NC)"
 	@echo "   $(CYAN)Status:$(NC)          $(BOLD)make ps$(NC)"
 	@echo "   $(CYAN)Prisma Studio:$(NC)   $(BOLD)make prisma-studio$(NC)"
-	@echo "   $(CYAN)Ver URLs novamente:$(NC) $(BOLD)make urls$(NC)"
+	@echo "   $(CYAN)View URLs again:$(NC) $(BOLD)make urls$(NC)"
 	@echo ""
 
-ps: ## Ver status dos containers
+ps: ## View container status
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) ps
 
-clean: hosts-remove ## Parar serviços, remover volumes e remover aliases do hosts
-	@echo "$(YELLOW)🧹 Limpando containers, volumes e aliases...$(NC)"
+clean: hosts-remove ## Stop services, remove volumes and remove aliases from hosts
+	@echo "$(YELLOW)🧹 Cleaning containers, volumes and aliases...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down -v
 
-shell-backend: ## Entrar no container do backend
+shell-backend: ## Enter backend container
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend sh
 
-shell-frontend: ## Entrar no container do frontend
+shell-frontend: ## Enter frontend container
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec frontend sh
 
-migrate: ## Executar migrações do Prisma
-	@echo "$(GREEN)📊 Executando migrações do Prisma...$(NC)"
+migrate: ## Run Prisma migrations
+	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy
 
-prisma-studio: ## Abrir Prisma Studio
-	@echo "$(GREEN)🎨 Abrindo Prisma Studio...$(NC)"
-	@echo "$(CYAN)📊 Prisma Studio estará disponível em: http://localhost:5555$(NC)"
+prisma-studio: ## Open Prisma Studio
+	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
+	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555
-	@echo "$(GREEN)✅ Prisma Studio iniciado em background$(NC)"
-	@echo "$(CYAN)💡 Para parar o Prisma Studio, execute: make prisma-studio-stop$(NC)"
+	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
+	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma-studio-stop$(NC)"
 
-prisma-studio-stop: ## Parar Prisma Studio
-	@echo "$(YELLOW)🛑 Parando Prisma Studio...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio não estava rodando$(NC)"
+prisma-studio-stop: ## Stop Prisma Studio
+	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running$(NC)"
 
-install-backend: ## Instalar dependências do backend
-	@echo "$(GREEN)📦 Instalando dependências do backend...$(NC)"
+install-backend: ## Install backend dependencies
+	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"
 	@cd backend && npm install
 
-install-frontend: ## Instalar dependências do frontend
-	@echo "$(GREEN)📦 Instalando dependências do frontend...$(NC)"
+install-frontend: ## Install frontend dependencies
+	@echo "$(GREEN)📦 Installing frontend dependencies...$(NC)"
 	@cd frontend && npm install
 
-lint-backend: ## Executar lint no backend
-	@echo "$(GREEN)🔍 Executando lint no backend...$(NC)"
+lint-backend: ## Run lint on backend
+	@echo "$(GREEN)🔍 Running lint on backend...$(NC)"
 	@cd backend && npm run lint
 
-lint-frontend: ## Executar lint no frontend
-	@echo "$(GREEN)🔍 Executando lint no frontend...$(NC)"
+lint-frontend: ## Run lint on frontend
+	@echo "$(GREEN)🔍 Running lint on frontend...$(NC)"
 	@cd frontend && npm run lint
 
-format-backend: ## Formatar código do backend
-	@echo "$(GREEN)✨ Formatando código do backend...$(NC)"
+format-backend: ## Format backend code
+	@echo "$(GREEN)✨ Formatting backend code...$(NC)"
 	@cd backend && npm run format
 
-format-frontend: ## Formatar código do frontend
-	@echo "$(GREEN)✨ Formatando código do frontend...$(NC)"
+format-frontend: ## Format frontend code
+	@echo "$(GREEN)✨ Formatting frontend code...$(NC)"
 	@cd frontend && npm run format
 
-dev-backend: ## Rodar backend em modo desenvolvimento (local)
-	@echo "$(GREEN)💻 Iniciando backend em modo desenvolvimento...$(NC)"
+dev-backend: ## Run backend in development mode (local)
+	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
 	@cd backend && npm run start:dev
 
-dev-frontend: ## Rodar frontend em modo desenvolvimento (local)
-	@echo "$(GREEN)💻 Iniciando frontend em modo desenvolvimento...$(NC)"
+dev-frontend: ## Run frontend in development mode (local)
+	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
 	@cd frontend && npm run dev
 
