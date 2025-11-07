@@ -1,0 +1,51 @@
+{
+  "common": {
+    "appName": "Full-Stack Boilerplate",
+    "appDescription": "Full-stack application boilerplate",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions"
+  },
+  "home": {
+    "title": "Welcome to Full-Stack Boilerplate",
+    "subtitle": "A modern full-stack application template",
+    "description": "This is a comprehensive boilerplate with Next.js, NestJS, PostgreSQL, and Redis.",
+    "features": {
+      "title": "Features",
+      "frontend": "Frontend: Next.js 16 with App Router",
+      "backend": "Backend: NestJS with Fastify",
+      "database": "Database: PostgreSQL with Prisma",
+      "cache": "Cache: Redis",
+      "docker": "Docker: Full containerization"
+    },
+    "apiIntegration": {
+      "title": "API Integration Test",
+      "description": "Testing backend API connection",
+      "loading": "Loading tenants...",
+      "error": "Error loading tenants",
+      "noData": "No tenants found",
+      "tenantName": "Tenant Name",
+      "slug": "Slug",
+      "status": "Status",
+      "createdAt": "Created At"
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "language": {
+    "select": "Select Language",
+    "english": "English",
+    "portuguese": "Português (Brasil)"
+  }
+}

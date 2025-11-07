@@ -159,11 +159,23 @@ shell-frontend: ## Enter frontend container
 
 migrate: ## Run Prisma migrations
 	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy
+	@if docker ps | grep -q "app-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma migrate deploy; \
+	fi
 
 migrate-dev: ## Create and apply Prisma migrations (development)
 	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev
+	@if docker ps | grep -q "app-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma migrate dev; \
+	fi
 
 migrate-reset: ## Reset database and apply all migrations (WARNING: deletes all data)
 	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
@@ -180,11 +192,23 @@ migrate-resolve: ## Create baseline migration from current database state
 
 db-push: ## Push Prisma schema to database without migrations (development)
 	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push
+	@if docker ps | grep -q "app-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma db push; \
+	fi
 
 seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed
+	@if docker ps | grep -q "app-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npm run prisma:seed; \
+	fi
 
 prisma-studio: ## Open Prisma Studio
 	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"

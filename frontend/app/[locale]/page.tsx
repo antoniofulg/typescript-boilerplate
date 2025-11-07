@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -64,6 +65,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
 
 interface Tenant {
   id: string;
@@ -74,6 +76,8 @@ interface Tenant {
 }
 
 export default function Home() {
+  const t = useTranslations('home');
+  const tCommon = useTranslations('common');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,14 +113,11 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-4 flex-1 text-center">
-            <h1 className="text-4xl font-bold tracking-tight">
-              ShadCN UI Component Showcase
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Explore all available components and their variations
-            </p>
+            <h1 className="text-4xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground text-lg">{t('subtitle')}</p>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex gap-2">
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>
@@ -124,23 +125,23 @@ export default function Home() {
         {/* API Integration Test - Example Data from Backend */}
         <Card>
           <CardHeader>
-            <CardTitle>API Integration Test</CardTitle>
-            <CardDescription>
-              Example data fetched from backend API (GET /api/tenants)
-            </CardDescription>
+            <CardTitle>{t('apiIntegration.title')}</CardTitle>
+            <CardDescription>{t('apiIntegration.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading && (
               <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Loading tenants...</p>
+                <p className="text-muted-foreground">
+                  {t('apiIntegration.loading')}
+                </p>
               </div>
             )}
             {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>{tCommon('error')}</AlertTitle>
                 <AlertDescription>
-                  Failed to fetch tenants: {error}
+                  {t('apiIntegration.error')}: {error}
                   <br />
                   <span className="text-xs">
                     Make sure the backend is running on{' '}
@@ -153,9 +154,9 @@ export default function Home() {
             {!loading && !error && tenants.length === 0 && (
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertTitle>No Data</AlertTitle>
+                <AlertTitle>{tCommon('error')}</AlertTitle>
                 <AlertDescription>
-                  No tenants found. Run the seed script to add example data:
+                  {t('apiIntegration.noData')}
                   <br />
                   <code className="text-xs mt-2 block bg-muted p-2 rounded">
                     cd backend && npm run prisma:seed
@@ -191,11 +192,13 @@ export default function Home() {
                             {tenant.status}
                           </Badge>
                         </div>
-                        <CardDescription>Slug: {tenant.slug}</CardDescription>
+                        <CardDescription>
+                          {t('apiIntegration.slug')}: {tenant.slug}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-xs text-muted-foreground">
-                          Created:{' '}
+                          {t('apiIntegration.createdAt')}:{' '}
                           {new Date(tenant.createdAt).toLocaleDateString()}
                         </p>
                       </CardContent>

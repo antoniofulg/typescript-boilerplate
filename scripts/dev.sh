@@ -133,9 +133,28 @@ stop() {
       if kill -0 "$pid" 2>/dev/null; then
         echo -e "${CYAN}Stopping process $pid...${NC}"
         kill "$pid" 2>/dev/null || true
+        # Wait a bit and force kill if still running
+        sleep 1
+        if kill -0 "$pid" 2>/dev/null; then
+          echo -e "${CYAN}Force killing process $pid...${NC}"
+          kill -9 "$pid" 2>/dev/null || true
+        fi
       fi
     done < "$PID_FILE"
     rm -f "$PID_FILE"
+  fi
+
+  # Also stop any processes using ports 4000 and 3000 (in case PID file is missing)
+  if lsof -ti :4000 >/dev/null 2>&1; then
+    echo -e "${CYAN}Stopping process on port 4000...${NC}"
+    lsof -ti :4000 | xargs kill -9 2>/dev/null || true
+    sleep 1
+  fi
+
+  if lsof -ti :3000 >/dev/null 2>&1; then
+    echo -e "${CYAN}Stopping process on port 3000...${NC}"
+    lsof -ti :3000 | xargs kill -9 2>/dev/null || true
+    sleep 1
   fi
 
   # Stop Docker services (only postgres and redis, keep backend/frontend stopped)
