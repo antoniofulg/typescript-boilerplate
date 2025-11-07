@@ -34,6 +34,7 @@ RUN addgroup -S nestjs && \
 # Copy package files
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma
+COPY backend/tsconfig.seed.json ./tsconfig.seed.json
 
 # Install production dependencies and Prisma CLI
 RUN npm install --only=production && \

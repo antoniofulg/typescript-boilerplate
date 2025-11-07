@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -164,6 +164,19 @@ migrate: ## Run Prisma migrations
 migrate-dev: ## Create and apply Prisma migrations (development)
 	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev
+
+migrate-reset: ## Reset database and apply all migrations (WARNING: deletes all data)
+	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
+	@echo "$(CYAN)Resetting database and applying migrations...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force
+
+migrate-resolve: ## Create baseline migration from current database state
+	@echo "$(GREEN)📊 Creating baseline migration from current database...$(NC)"
+	@echo "$(CYAN)This creates an initial migration matching your current database state$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev --name init --create-only
+	@echo "$(GREEN)✅ Baseline migration created. Now marking it as applied...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate resolve --applied init || \
+		(cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend bash -c "MIGRATION_NAME=\$$(ls -1 prisma/migrations | head -1) && npx prisma migrate resolve --applied \$$MIGRATION_NAME")
 
 db-push: ## Push Prisma schema to database without migrations (development)
 	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"

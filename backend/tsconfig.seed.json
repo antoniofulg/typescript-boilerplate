@@ -1,10 +1,17 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "ES2023",
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true
   },
   "ts-node": {
     "transpileOnly": true,
@@ -12,5 +19,7 @@
       "module": "commonjs",
       "moduleResolution": "node"
     }
-  }
+  },
+  "include": ["prisma/**/*"],
+  "exclude": ["node_modules"]
 }
