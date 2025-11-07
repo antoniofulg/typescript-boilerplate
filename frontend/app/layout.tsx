@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Voto Inteligente',
-  description: 'Sistema de votação inteligente',
+  title: 'Full-Stack Boilerplate',
+  description: 'Full-stack application boilerplate',
 };
 
 export default function RootLayout({

@@ -121,8 +121,8 @@ enum TenantStatus {
 
 enum UserRole {
   ADMIN
-  OPERADOR
-  VEREADOR
+  OPERATOR
+  USER
 }
 
 enum SessionStatus {

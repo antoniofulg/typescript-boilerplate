@@ -1,78 +1,78 @@
-# Docker Environment - Voto Inteligente
+# Docker Environment - Full-Stack Boilerplate
 
-Este diretório contém a configuração Docker completa para o ambiente de desenvolvimento e produção do sistema Voto Inteligente.
+This directory contains the complete Docker configuration for the development and production environment of the full-stack boilerplate.
 
-## Estrutura
+## Structure
 
 ```
 docker/
 ├── backend/
-│   └── Dockerfile          # Build do backend NestJS
+│   └── Dockerfile          # Backend NestJS build
 ├── frontend/
-│   └── Dockerfile          # Build do frontend Next.js
-├── docker-compose.yml      # Orquestração de todos os serviços
-├── .env.backend           # Variáveis de ambiente do backend
-├── .env.frontend          # Variáveis de ambiente do frontend
-└── .env.postgres          # Configurações do PostgreSQL
+│   └── Dockerfile          # Frontend Next.js build
+├── docker-compose.yml      # Orchestration of all services
+├── .env.backend           # Backend environment variables
+├── .env.frontend          # Frontend environment variables
+└── .env.postgres          # PostgreSQL configuration
 ```
 
-## Serviços
+## Services
 
-- **postgres**: Banco de dados PostgreSQL (porta 5432)
-- **redis**: Cache e Pub/Sub (porta 6379)
-- **backend**: API NestJS (porta 4000)
-- **frontend**: Aplicação Next.js (porta 3000)
+- **postgres**: PostgreSQL database (port 5432)
+- **redis**: Cache and Pub/Sub (port 6379)
+- **backend**: NestJS API (port 4000)
+- **frontend**: Next.js application (port 3000)
 
-## Pré-requisitos
+## Prerequisites
 
 - Docker Engine 20.10+
 - Docker Compose 2.0+
 
-## Como usar
+## How to use
 
-### 1. Configurar variáveis de ambiente
+### 1. Configure environment variables
 
-Os arquivos `.env.*` estão configurados com valores padrão. Para produção, altere as senhas e secrets:
+The `.env.*` files are configured with default values. For production, change passwords and secrets:
 
-- `.env.postgres`: Credenciais do PostgreSQL
-- `.env.backend`: Configurações do backend (JWT secrets, etc.)
-- `.env.frontend`: Configurações do frontend
+- `.env.postgres`: PostgreSQL credentials
+- `.env.backend`: Backend configuration (JWT secrets, etc.)
+- `.env.frontend`: Frontend configuration
 
-### 2. Subir o ambiente
+### 2. Start the environment
 
-**Opção A: Com Make (recomendado)**
+**Option A: With Make (recommended)**
 
 ```bash
-# Na raiz do projeto
+# At project root
 make up
 ```
 
-Este comando irá:
+This command will:
 
-- Subir todos os serviços
-- Aguardar os serviços iniciarem
-- Exibir automaticamente as URLs de acesso
+- Start all services
+- Wait for services to start
+- Automatically display access URLs
 
-**Opção B: Manual**
+**Option B: Manual**
 
 ```bash
 cd docker
 docker-compose up -d
 
-# Depois, para ver as URLs (na raiz do projeto):
+# Then, to see URLs (at project root):
 make urls
 ```
 
-### 3. Ver URLs dos serviços
+### 3. View service URLs
 
-Após subir os serviços, você pode ver as URLs de acesso:
+After starting services, you can view access URLs:
 
 ```bash
-# Na raiz do projeto
+# At project root
 make urls
 ```
 
-Isso exibirá:
+This will display:
 
 - 🌐 Frontend: http://localhost:3000
 - 🌐 Backend API: http://localhost:4000
@@ -80,91 +80,91 @@ Isso exibirá:
 - 🗄️ PostgreSQL: localhost:5432
 - 💾 Redis: localhost:6379
 
-### 4. Verificar logs
+### 4. View logs
 
 ```bash
-# Todos os serviços
+# All services
 docker-compose logs -f
 
-# Serviço específico
+# Specific service
 docker-compose logs -f backend
 docker-compose logs -f frontend
 ```
 
-### 5. Parar o ambiente
+### 5. Stop the environment
 
 ```bash
 docker-compose down
 ```
 
-### 6. Parar e remover volumes (limpar dados)
+### 6. Stop and remove volumes (clean data)
 
 ```bash
 docker-compose down -v
 ```
 
-## Migrações do Prisma
+## Prisma Migrations
 
-As migrações do Prisma são executadas automaticamente quando o container do backend inicia pela primeira vez. Para executar manualmente:
+Prisma migrations are automatically executed when the backend container starts for the first time. To run manually:
 
 ```bash
-# Entrar no container do backend
+# Enter backend container
 docker-compose exec backend sh
 
-# Executar migrações
+# Execute migrations
 npm run prisma:migrate:deploy
 
-# Ou criar nova migração
+# Or create new migration
 npm run prisma:migrate
 ```
 
-## Acessos
+## Access
 
-Após subir os serviços, execute `make urls` (na raiz do projeto) para ver todas as URLs:
+After starting services, run `make urls` (at project root) to see all URLs:
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:4000
-- **Healthcheck Backend**: http://localhost:4000/health
+- **Backend Healthcheck**: http://localhost:4000/health
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 
-## Rebuild das imagens
+## Rebuilding images
 
-Se houver mudanças no código, é necessário fazer rebuild:
+If there are code changes, rebuild is necessary:
 
 ```bash
-# Rebuild de todos os serviços
+# Rebuild all services
 docker-compose build
 
-# Rebuild de um serviço específico
+# Rebuild specific service
 docker-compose build backend
 docker-compose build frontend
 
-# Rebuild e subir
+# Rebuild and start
 docker-compose up -d --build
 ```
 
 ## Troubleshooting
 
-### Backend não conecta ao banco
+### Backend not connecting to database
 
-Verifique se o PostgreSQL está saudável:
+Check if PostgreSQL is healthy:
 
 ```bash
 docker-compose ps
 ```
 
-Aguarde o healthcheck do PostgreSQL completar antes do backend iniciar.
+Wait for PostgreSQL healthcheck to complete before backend starts.
 
-### Erro de permissão
+### Permission error
 
-Se houver erros de permissão, verifique os logs:
+If there are permission errors, check logs:
 
 ```bash
 docker-compose logs backend
 ```
 
-### Limpar tudo e recomeçar
+### Clean everything and start over
 
 ```bash
 docker-compose down -v
@@ -172,9 +172,9 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## Desenvolvimento
+## Development
 
-Para desenvolvimento local sem Docker, use os comandos normais do projeto:
+For local development without Docker, use the normal project commands:
 
 ```bash
 # Backend

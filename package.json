@@ -1,8 +1,8 @@
 {
-  "name": "voto-inteligente",
+  "name": "fullstack-boilerplate",
   "version": "1.0.0",
   "private": true,
-  "description": "Sistema de votação inteligente",
+  "description": "Full-stack boilerplate with Next.js, NestJS, PostgreSQL, and Redis",
   "scripts": {
     "prepare": "husky"
   },

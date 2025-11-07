@@ -1,17 +1,17 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: voto-inteligente-postgres
+    container_name: app-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-voto_inteligente}
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - voto-inteligente-network
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -21,13 +21,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: voto-inteligente-redis
+    container_name: app-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - voto-inteligente-network
+      - app-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -40,16 +40,16 @@ services:
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
-    container_name: voto-inteligente-backend
+    container_name: app-backend
     env_file:
       - .env.backend
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-voto_inteligente}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app_db}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
-      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
-      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
     ports:
       - "4000:4000"
       - "5555:5555"
@@ -59,7 +59,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - voto-inteligente-network
+      - app-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -73,21 +73,21 @@ services:
     build:
       context: ..
       dockerfile: docker/frontend/Dockerfile
-    container_name: voto-inteligente-frontend
+    container_name: app-frontend
     env_file:
       - .env.frontend
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-voto-inteligente.backend.local}:4000
-      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
-      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
+      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-app.backend.local}:4000
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
     ports:
       - "3000:3000"
     depends_on:
       - backend
     networks:
-      - voto-inteligente-network
+      - app-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -97,7 +97,7 @@ services:
     restart: unless-stopped
 
 networks:
-  voto-inteligente-network:
+  app-network:
     driver: bridge
 
 volumes:

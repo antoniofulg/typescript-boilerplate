@@ -6,8 +6,8 @@ DOCKER_DIR = docker
 COMPOSE_FILE = $(DOCKER_DIR)/docker-compose.yml
 
 # Environment variables for aliases (with default values)
-FRONTEND_ALIAS ?= voto-inteligente.frontend.local
-BACKEND_ALIAS ?= voto-inteligente.backend.local
+FRONTEND_ALIAS ?= app.frontend.local
+BACKEND_ALIAS ?= app.backend.local
 export FRONTEND_ALIAS
 export BACKEND_ALIAS
 
@@ -21,7 +21,7 @@ NC = \033[0m # No Color
 
 help: ## Show this help message
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(GREEN)║     🚀 Voto Inteligente - Available Commands           ║$(NC)"
+	@echo "$(GREEN)║     🚀 Full-Stack Boilerplate - Available Commands     ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Docker Commands:$(NC)"
@@ -82,7 +82,7 @@ logs-frontend: ## View frontend logs
 urls: ## Show service URLs
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(GREEN)║     $(BOLD)🚀 Voto Inteligente - Running Services$(NC)$(GREEN)          ║$(NC)"
+	@echo "$(GREEN)║     $(BOLD)🚀 Full-Stack Boilerplate - Running Services$(NC)$(GREEN)    ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(CYAN)📋 Service Status:$(NC)"
@@ -110,7 +110,7 @@ urls: ## Show service URLs
 	if $(DOCKER_COMPOSE) ps 2>/dev/null | grep -q "postgres.*Up"; then \
 		echo "   $(GREEN)✅ PostgreSQL$(NC)"; \
 		echo "      $(BLUE)🗄️  Host:$(NC) $(BOLD)localhost:5432$(NC)"; \
-		echo "      $(BLUE)📊 Database:$(NC) $(BOLD)voto_inteligente$(NC)"; \
+		echo "      $(BLUE)📊 Database:$(NC) $(BOLD)app_db$(NC)"; \
 	else \
 		echo "   $(YELLOW)⏳ PostgreSQL is still starting...$(NC)"; \
 	fi

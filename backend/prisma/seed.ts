@@ -7,31 +7,31 @@ async function main() {
 
   // Create example tenants
   const tenant1 = await prisma.tenant.upsert({
-    where: { slug: 'camara-exemplo-1' },
+    where: { slug: 'tenant-1' },
     update: {},
     create: {
-      name: 'Câmara Municipal de Exemplo 1',
-      slug: 'camara-exemplo-1',
+      name: 'Tenant 1',
+      slug: 'tenant-1',
       status: 'ACTIVE',
     },
   });
 
   const tenant2 = await prisma.tenant.upsert({
-    where: { slug: 'camara-exemplo-2' },
+    where: { slug: 'tenant-2' },
     update: {},
     create: {
-      name: 'Câmara Municipal de Exemplo 2',
-      slug: 'camara-exemplo-2',
+      name: 'Tenant 2',
+      slug: 'tenant-2',
       status: 'ACTIVE',
     },
   });
 
   const tenant3 = await prisma.tenant.upsert({
-    where: { slug: 'camara-exemplo-3' },
+    where: { slug: 'tenant-3' },
     update: {},
     create: {
-      name: 'Câmara Municipal de Exemplo 3',
-      slug: 'camara-exemplo-3',
+      name: 'Tenant 3',
+      slug: 'tenant-3',
       status: 'INACTIVE',
     },
   });

@@ -1,6 +1,6 @@
-# 🏛️ Voto Inteligente - Voting System for Municipal Chambers
+# 🚀 Full-Stack Boilerplate
 
-SaaS multi-tenant system for managing attendance and project voting in Municipal Chambers.
+Modern full-stack application boilerplate with Next.js, NestJS, PostgreSQL, and Redis.
 
 **Stack:** Next.js 16 + NestJS + PostgreSQL + Redis + Docker
 
@@ -22,7 +22,7 @@ SaaS multi-tenant system for managing attendance and project voting in Municipal
 
 ```bash
 git clone <repository-url>
-cd voto-inteligente
+cd fullstack-boilerplate
 ```
 
 ### 2. Configure environment variables (optional)
@@ -83,7 +83,7 @@ make logs        # View logs (backend/frontend in /tmp/*-dev.log)
 
 ```bash
 git clone <repository-url>
-cd voto-inteligente
+cd fullstack-boilerplate
 ```
 
 ### 2. Configure environment variables
@@ -309,7 +309,7 @@ make seed
 
 ## 📚 Additional Documentation
 
-- **[BUSINESS_RULES.md](./BUSINESS_RULES.md)** - Business rules, functional requirements and architecture
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Architecture, functional requirements and technical documentation
 - **[docker/README.md](./docker/README.md)** - Docker-specific documentation
 
 ---
@@ -330,7 +330,7 @@ npm install
 npm run prisma:generate
 
 # Configure database (create .env file with DATABASE_URL)
-# DATABASE_URL="postgresql://user:password@localhost:5432/voto_inteligente?schema=public"
+# DATABASE_URL="postgresql://user:password@localhost:5432/app_db?schema=public"
 
 # Run migrations
 npm run prisma:migrate

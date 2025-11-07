@@ -66,7 +66,7 @@ start() {
   # Start backend in background with DATABASE_URL
   echo -e "${CYAN}💻 Starting backend (port 4000)...${NC}"
   cd "$BACKEND_DIR"
-  DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente?schema=public" \
+  DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" \
   PORT=4000 \
   npm run start:dev > /tmp/backend-dev.log 2>&1 &
   BACKEND_PID=$!
