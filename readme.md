@@ -14,13 +14,215 @@ Cada câmara possui um ambiente isolado dentro da mesma infraestrutura, com logi
 A solução é composta por:
 
 - **Frontend:** Next.js 16 (App Router, React Server Components, TailwindCSS)
-- **Backend:** NestJS + Fastify (Node.js 20, TypeScript, Prisma ORM)
+- **Backend:** NestJS + Fastify (Node.js 24, TypeScript, Prisma ORM)
 - **Banco de dados:** PostgreSQL
 - **Cache & Pub/Sub:** Redis
 - **Infraestrutura:** Docker + docker-compose
 - **Autenticação:** JWT com RBAC (Role-Based Access Control)
 - **Storage:** S3 (para relatórios, exportações e atas futuras)
 - **Logs e Auditoria:** Interceptors e middlewares Fastify
+
+---
+
+## 🚀 Como Começar
+
+### Pré-requisitos
+
+- **Docker** 20.10+ e **Docker Compose** 2.0+ instalados
+- **Node.js** 24+ (apenas se for rodar localmente sem Docker)
+- **Git** para clonar o repositório
+
+### Opção 1: Rodar com Docker (Recomendado)
+
+Esta é a forma mais simples e recomendada para começar, pois não requer instalação de dependências localmente.
+
+#### 1. Clone o repositório
+
+```bash
+git clone <url-do-repositorio>
+cd voto-inteligente
+```
+
+#### 2. Configure as variáveis de ambiente (opcional)
+
+Os arquivos `.env` na pasta `docker/` já possuem valores padrão. Para produção, edite:
+
+- `docker/.env.postgres` - Credenciais do PostgreSQL
+- `docker/.env.backend` - Configurações do backend (JWT secrets, etc.)
+- `docker/.env.frontend` - Configurações do frontend
+
+#### 3. Suba o ambiente completo
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+Este comando irá:
+- ✅ Instalar automaticamente todas as dependências de cada projeto
+- ✅ Criar e configurar os containers (PostgreSQL, Redis, Backend, Frontend)
+- ✅ Executar as migrações do Prisma automaticamente
+- ✅ Iniciar todos os serviços
+
+#### 4. Verifique se está tudo funcionando
+
+```bash
+# Ver status dos containers
+docker-compose ps
+
+# Ver logs de todos os serviços
+docker-compose logs -f
+
+# Ver logs de um serviço específico
+docker-compose logs -f backend
+docker-compose logs -f frontend
+```
+
+#### 5. Acesse a aplicação
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:4000
+- **Healthcheck Backend:** http://localhost:4000/health
+- **PostgreSQL:** localhost:5432
+- **Redis:** localhost:6379
+
+### Opção 2: Rodar Localmente (Desenvolvimento)
+
+Se preferir rodar sem Docker para desenvolvimento:
+
+#### 1. Backend
+
+```bash
+cd backend
+
+# Instalar dependências
+npm install
+
+# Gerar Prisma Client
+npm run prisma:generate
+
+# Configurar banco de dados (criar arquivo .env com DATABASE_URL)
+# DATABASE_URL="postgresql://user:password@localhost:5432/voto_inteligente?schema=public"
+
+# Executar migrações
+npm run prisma:migrate
+
+# Iniciar em modo desenvolvimento
+npm run start:dev
+```
+
+#### 2. Frontend
+
+```bash
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Iniciar em modo desenvolvimento
+npm run dev
+```
+
+#### 3. Banco de dados e Redis
+
+Você precisará ter PostgreSQL e Redis rodando localmente ou usar Docker apenas para esses serviços:
+
+```bash
+cd docker
+docker-compose up -d postgres redis
+```
+
+### Comandos Úteis do Docker
+
+```bash
+# Parar todos os serviços
+docker-compose down
+
+# Parar e remover volumes (limpar dados)
+docker-compose down -v
+
+# Rebuild das imagens (após mudanças no código ou package.json)
+docker-compose build --no-cache
+
+# Rebuild e subir
+docker-compose up -d --build
+
+# Rebuild apenas de um serviço específico
+docker-compose build --no-cache backend
+docker-compose build --no-cache frontend
+
+# Entrar no container do backend
+docker-compose exec backend sh
+
+# Executar comandos Prisma manualmente
+docker-compose exec backend npm run prisma:studio
+docker-compose exec backend npm run prisma:migrate
+```
+
+### Quando fazer Rebuild?
+
+Você precisa fazer rebuild das imagens Docker quando:
+
+- ✅ Alterar código dos projetos (backend/frontend)
+- ✅ Atualizar `package.json` ou `package-lock.json`
+- ✅ Alterar Dockerfiles
+- ✅ Mudar configurações do Prisma (`schema.prisma`)
+
+**Comando recomendado após mudanças:**
+```bash
+cd docker
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Migrações do Prisma
+
+As migrações são executadas automaticamente quando o container do backend inicia pela primeira vez. Para executar manualmente:
+
+```bash
+# Via Docker
+docker-compose exec backend npm run prisma:migrate:deploy
+
+# Ou localmente
+cd backend
+npm run prisma:migrate
+```
+
+### Troubleshooting
+
+#### Backend não conecta ao banco
+
+Verifique se o PostgreSQL está saudável:
+```bash
+docker-compose ps
+```
+
+Aguarde o healthcheck do PostgreSQL completar antes do backend iniciar.
+
+#### Erro de permissão
+
+Verifique os logs:
+```bash
+docker-compose logs backend
+```
+
+#### Limpar tudo e recomeçar
+
+```bash
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+#### Portas já em uso
+
+Se as portas 3000, 4000, 5432 ou 6379 estiverem em uso, altere no `docker-compose.yml`:
+
+```yaml
+ports:
+  - "3001:3000"  # Frontend
+  - "4001:4000"  # Backend
+```
 
 ---
 
