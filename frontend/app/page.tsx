@@ -63,6 +63,7 @@ import {
   User,
   LogOut,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -71,13 +72,18 @@ export default function Home() {
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-7xl space-y-12">
         {/* Header */}
-        <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">
-            ShadCN UI Component Showcase
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Explore all available components and their variations
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-4 flex-1 text-center">
+            <h1 className="text-4xl font-bold tracking-tight">
+              ShadCN UI Component Showcase
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Explore all available components and their variations
+            </p>
+          </div>
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Buttons Section */}
