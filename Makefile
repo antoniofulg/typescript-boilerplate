@@ -6,7 +6,7 @@ DOCKER_DIR = docker
 COMPOSE_FILE = $(DOCKER_DIR)/docker-compose.yml
 
 # Environment variables for aliases (with default values)
-FRONTEND_ALIAS ?= voto-inteligente.front.local
+FRONTEND_ALIAS ?= voto-inteligente.frontend.local
 BACKEND_ALIAS ?= voto-inteligente.backend.local
 export FRONTEND_ALIAS
 export BACKEND_ALIAS

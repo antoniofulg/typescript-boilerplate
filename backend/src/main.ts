@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Enable CORS com suporte aos aliases
   const frontendAlias =
-    process.env.FRONTEND_ALIAS || 'voto-inteligente.front.local';
+    process.env.FRONTEND_ALIAS || 'voto-inteligente.frontend.local';
   const frontendUrl = `http://${frontendAlias}:3000`;
 
   app.enableCors({

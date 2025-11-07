@@ -4,7 +4,7 @@
 # Usage: ./manage-hosts.sh [add|remove] [frontend_alias] [backend_alias]
 
 ACTION=${1:-add}
-FRONTEND_ALIAS=${2:-voto-inteligente.front.local}
+FRONTEND_ALIAS=${2:-voto-inteligente.frontend.local}
 BACKEND_ALIAS=${3:-voto-inteligente.backend.local}
 
 HOSTS_FILE="/etc/hosts"
