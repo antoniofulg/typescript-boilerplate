@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,7 +15,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { Info, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { LanguageToggle } from '@/components/language-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -30,8 +28,6 @@ interface Tenant {
 }
 
 export default function Home() {
-  const t = useTranslations('home');
-  const tCommon = useTranslations('common');
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,14 +41,14 @@ export default function Home() {
           process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
         const response = await fetch(`${backendUrl}/api/tenants`);
         if (!response.ok) {
-          throw new Error('Failed to fetch tenants');
+          throw new Error('Falha ao buscar tenants');
         }
         const data = await response.json();
         setTenants(data);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('Error fetching tenants:', err);
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+        console.error('Erro ao buscar tenants:', err);
       } finally {
         setLoading(false);
       }
@@ -67,11 +63,14 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-4 flex-1 text-center">
-            <h1 className="text-4xl font-bold tracking-tight">{t('title')}</h1>
-            <p className="text-muted-foreground text-lg">{t('subtitle')}</p>
+            <h1 className="text-4xl font-bold tracking-tight">
+              Sistema de Votação Inteligente
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Sistema de votação e presença para câmaras de vereadores
+            </p>
           </div>
           <div className="shrink-0 flex gap-2">
-            <LanguageToggle />
             <ThemeToggle />
             <UserMenu />
           </div>
@@ -144,26 +143,26 @@ export default function Home() {
         {/* API Integration Test - Example Data from Backend */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('apiIntegration.title')}</CardTitle>
-            <CardDescription>{t('apiIntegration.description')}</CardDescription>
+            <CardTitle>Integração com API</CardTitle>
+            <CardDescription>
+              Teste de integração com o backend - Lista de Tenants
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading && (
               <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">
-                  {t('apiIntegration.loading')}
-                </p>
+                <p className="text-muted-foreground">Carregando...</p>
               </div>
             )}
             {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>{tCommon('error')}</AlertTitle>
+                <AlertTitle>Erro</AlertTitle>
                 <AlertDescription>
-                  {t('apiIntegration.error')}: {error}
+                  Erro ao buscar dados: {error}
                   <br />
                   <span className="text-xs">
-                    Make sure the backend is running on{' '}
+                    Certifique-se de que o backend está rodando em{' '}
                     {process.env.NEXT_PUBLIC_BACKEND_URL ||
                       'http://localhost:4000'}
                   </span>
@@ -173,9 +172,9 @@ export default function Home() {
             {!loading && !error && tenants.length === 0 && (
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertTitle>{tCommon('error')}</AlertTitle>
+                <AlertTitle>Sem dados</AlertTitle>
                 <AlertDescription>
-                  {t('apiIntegration.noData')}
+                  Nenhum tenant encontrado.
                   <br />
                   <code className="text-xs mt-2 block bg-muted p-2 rounded">
                     cd backend && npm run prisma:seed
@@ -187,9 +186,9 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Found {tenants.length} tenant(s)
+                    Encontrados {tenants.length} tenant(s)
                   </p>
-                  <Badge variant="secondary">API Connected</Badge>
+                  <Badge variant="secondary">API Conectada</Badge>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {tenants.map((tenant) => (
@@ -211,14 +210,14 @@ export default function Home() {
                             {tenant.status}
                           </Badge>
                         </div>
-                        <CardDescription>
-                          {t('apiIntegration.slug')}: {tenant.slug}
-                        </CardDescription>
+                        <CardDescription>Slug: {tenant.slug}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-xs text-muted-foreground">
-                          {t('apiIntegration.createdAt')}:{' '}
-                          {new Date(tenant.createdAt).toLocaleDateString()}
+                          Criado em:{' '}
+                          {new Date(tenant.createdAt).toLocaleDateString(
+                            'pt-BR',
+                          )}
                         </p>
                       </CardContent>
                     </Card>

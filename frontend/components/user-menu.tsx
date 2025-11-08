@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User, LogOut, Settings } from 'lucide-react';
-import { useRouter } from '@/i18n/routing';
+import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
@@ -65,7 +65,10 @@ export function UserMenu() {
               {user.email}
             </p>
             <div className="pt-1">
-              <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+              <Badge
+                variant={getRoleBadgeVariant(user.role)}
+                className="text-xs"
+              >
                 {user.role}
               </Badge>
               {user.tenant && (
@@ -94,4 +97,3 @@ export function UserMenu() {
     </DropdownMenu>
   );
 }
-
