@@ -7,8 +7,8 @@ WORKDIR /app
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma
 
-# Install dependencies (using npm install to handle lock file sync)
-RUN npm install
+# Install dependencies (using npm ci for reproducible builds)
+RUN npm ci
 
 # Copy source code
 COPY backend/ .

@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY frontend/package*.json ./
 
-# Install dependencies (using npm install to handle lock file sync)
-RUN npm install
+# Install dependencies (using npm ci for reproducible builds)
+RUN npm ci
 
 # Stage 2: Builder
 FROM node:24-alpine AS builder
