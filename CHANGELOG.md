@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-11-08
+
+### Added
+
+- **Environment Setup Automation**: New `make setup-env` command to automatically generate all `.env` files from examples
+- **Multiple Clone Support**: Docker Compose configuration now supports multiple clones of the repository on the same machine via `COMPOSE_PROJECT_NAME`
+- **Configurable Ports**: All service ports (PostgreSQL, Redis, Backend, Frontend, Prisma Studio) are now configurable via environment variables
+- **CI/CD Pipeline**: GitHub Actions workflow for automated testing and builds on pull requests
+- **Release Automation**: Automated release creation via GitHub Actions when tags are pushed
+- **Container Cleanup**: Automatic cleanup of old containers with fixed names to prevent conflicts
+
+### Changed
+
+- **Docker Compose Configuration**: 
+  - Container names now use `COMPOSE_PROJECT_NAME` for isolation
+  - All ports are configurable via `docker/.env` file
+  - Volumes are automatically prefixed by Docker Compose based on project name
+- **Vitest Version**: Updated from 3.2.4 to 4.0.8 (along with `@vitest/coverage-v8` and `@vitest/ui`)
+- **ESLint Configuration**: Pre-commit hooks now block commits with ESLint warnings (using `--max-warnings=0`)
+- **Development Scripts**: `scripts/dev.sh` now automatically removes old containers before starting
+
+### Fixed
+
+- **Volume Configuration**: Fixed Docker Compose volume definition to use fixed names (Docker Compose automatically prefixes them)
+- **Container Conflicts**: Resolved conflicts when multiple clones try to use the same container names
+- **Environment Variables**: Fixed Docker Compose not loading `.env` file correctly by ensuring it's created before use
+- **Healthchecks**: Updated healthcheck commands to use dynamic ports from environment variables
+
+### Documentation
+
+- Added comprehensive CI/CD documentation in README.md
+- Added release creation guide (`.github/RELEASE.md`)
+- Updated Docker documentation with multiple clone instructions
+- Added troubleshooting section for port conflicts and container cleanup
+
 ## [1.0.0] - 2025-11-08
 
 ### Added
