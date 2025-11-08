@@ -113,17 +113,17 @@ jobs:
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./docker/backend
+          context: .
           file: ./docker/backend/Dockerfile
           push: false
           tags: app-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
+      
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: .
           file: ./docker/frontend/Dockerfile
           push: false
           tags: app-frontend:test

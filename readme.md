@@ -404,6 +404,83 @@ cd frontend
 npm run lint        # Linter
 npm run test:run    # Tests
 npm run build       # Build
+
+# Docker Build (same as CI)
+cd docker
+docker-compose build backend frontend
+```
+
+### Testing GitHub Actions Workflow Locally
+
+You can test the GitHub Actions workflow locally using [**act**](https://github.com/nektos/act):
+
+1. **Install act:**
+
+   ```bash
+   # macOS
+   brew install act
+
+   # Linux
+   curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+   # Windows (using Chocolatey)
+   choco install act-cli
+   ```
+
+2. **Run the workflow:**
+
+   ```bash
+   # List all workflows
+   act -l
+
+   # Run a specific job
+   act pull_request -j test-backend
+   act pull_request -j test-frontend
+   act pull_request -j build-docker
+
+   # Run all jobs (simulates a PR)
+   act pull_request
+   ```
+
+3. **Note:** `act` runs workflows in Docker containers. For services like PostgreSQL, you may need to adjust the workflow or use `act` with `--container-options` flag.
+
+**Alternative: Manual Testing**
+
+You can also manually test each step that the CI runs:
+
+```bash
+# 1. Test Backend (with PostgreSQL)
+docker run -d --name test-postgres \
+  -e POSTGRES_DB=app_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:16
+
+# Wait for PostgreSQL to be ready
+sleep 5
+
+cd backend
+npm ci
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma generate
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma migrate deploy
+npm run lint:check
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npm test
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npm run test:cov
+
+# Cleanup
+docker stop test-postgres && docker rm test-postgres
+
+# 2. Test Frontend
+cd frontend
+npm ci
+npm run lint
+npm run test:run
+NEXT_PUBLIC_BACKEND_URL=http://localhost:4000 npm run build
+
+# 3. Test Docker Build
+cd docker
+docker-compose build backend frontend
 ```
 
 ---
