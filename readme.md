@@ -343,6 +343,71 @@ make seed
 
 ---
 
+## 🔒 Branch Protection & CI/CD
+
+This project uses **GitHub Actions** for Continuous Integration (CI). All pull requests are automatically validated before they can be merged.
+
+### Automated Checks
+
+When you create or update a Pull Request, the following checks run automatically:
+
+- ✅ **Backend Tests** - Runs unit tests and generates coverage report
+- ✅ **Backend Linter** - Validates code style and quality
+- ✅ **Frontend Tests** - Runs unit tests
+- ✅ **Frontend Linter** - Validates code style and quality
+- ✅ **Frontend Build** - Ensures the application builds successfully
+- ✅ **Docker Build** - Validates that Docker images can be built
+
+### Branch Protection Rules
+
+To ensure code quality, configure branch protection rules for `main` (or `master`) branch:
+
+1. Go to **Repository Settings** → **Branches** → **Add rule**
+2. Set branch name pattern: `main` (or `master`)
+3. Enable the following protections:
+   - ✅ **Require status checks to pass before merging**
+   - ✅ **Require branches to be up to date before merging**
+   - ✅ **Require conversation resolution before merging** (optional but recommended)
+4. Select the required status checks:
+   - `Test Backend`
+   - `Test Frontend`
+   - `Build Docker Images`
+5. Save the rule
+
+### What This Means
+
+- **Pull Requests** cannot be merged until all CI checks pass
+- **Direct pushes** to `main`/`master` are blocked (if enabled)
+- **Outdated branches** must be updated before merging
+- **Failed checks** must be fixed before the PR can be merged
+
+### Viewing CI Results
+
+- Check the **"Checks"** tab in your Pull Request
+- Green ✅ = All checks passed
+- Red ❌ = One or more checks failed (click to see details)
+- Yellow 🟡 = Checks are still running
+
+### Local Testing
+
+Before creating a PR, you can run the same checks locally:
+
+```bash
+# Backend
+cd backend
+npm run lint:check  # Linter
+npm test            # Tests
+npm run test:cov    # Tests with coverage
+
+# Frontend
+cd frontend
+npm run lint        # Linter
+npm run test:run    # Tests
+npm run build       # Build
+```
+
+---
+
 ## 📚 Additional Documentation
 
 - **[docker/README.md](./docker/README.md)** - Docker-specific documentation
