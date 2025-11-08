@@ -15,6 +15,42 @@ export type MockPrismaService = {
   };
   user: {
     findMany: jest.Mock;
+    findFirst: jest.Mock;
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+  superAdmin: {
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+  session: {
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+  project: {
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+  attendance: {
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+  };
+  vote: {
+    findMany: jest.Mock;
     findUnique: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
@@ -38,6 +74,42 @@ export function createMockPrismaService(): MockPrismaService {
       delete: jest.fn(),
     },
     user: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    superAdmin: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    session: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    project: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    attendance: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    vote: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
