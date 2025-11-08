@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -301,4 +301,13 @@ test-backend-coverage: ## Run backend tests with coverage report
 test-backend-e2e: ## Run backend e2e tests
 	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
 	@cd backend && npm run test:e2e
+
+release: ## Create a new release (usage: make release VERSION=1.0.0)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "$(RED)❌ Error: VERSION is required$(NC)"; \
+		echo "Usage: make release VERSION=1.0.0"; \
+		exit 1; \
+	fi
+	@chmod +x scripts/create-release.sh
+	@./scripts/create-release.sh $(VERSION)
 

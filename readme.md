@@ -63,9 +63,9 @@ make seed
 
 ### 5. Access the application
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:4000
-- **Healthcheck:** http://localhost:4000/health
+- **Frontend:** <http://localhost:3000>
+- **Backend API:** <http://localhost:4000>
+- **Healthcheck:** <http://localhost:4000/health>
 
 ### Useful commands (development)
 
@@ -139,10 +139,10 @@ make seed
 
 Run `make urls` to see all URLs:
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:4000
-- **Healthcheck:** http://localhost:4000/health
-- **Prisma Studio:** http://localhost:5555 (run `make prisma-studio` to start)
+- **Frontend:** <http://localhost:3000>
+- **Backend API:** <http://localhost:4000>
+- **Healthcheck:** <http://localhost:4000/health>
+- **Prisma Studio:** <http://localhost:5555> (run `make prisma-studio` to start)
 - **PostgreSQL:** localhost:5432
 - **Redis:** localhost:6379
 
@@ -482,6 +482,34 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:4000 npm run build
 cd docker
 docker-compose build backend frontend
 ```
+
+---
+
+## 🏷️ Releases
+
+This project follows [Semantic Versioning](https://semver.org/). Releases are created automatically via GitHub Actions when a tag is pushed.
+
+### Creating a Release
+
+1. **Update CHANGELOG.md** with the new version and changes
+2. **Commit and push** all changes:
+
+   ```bash
+   git add .
+   git commit -m "chore: prepare release 1.0.0"
+   git push origin main
+   ```
+
+3. **Create and push tag**:
+
+   ```bash
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   git push origin v1.0.0
+   ```
+
+4. **GitHub Actions** will automatically create the release with notes from CHANGELOG.md
+
+For detailed instructions, see [.github/RELEASE.md](.github/RELEASE.md).
 
 ---
 
