@@ -1,9 +1,17 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
+import { CurrentUserPayload } from '../../auth/decorators/current-user.decorator';
 
 @Injectable()
 export class SuperAdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<{
+      user?: CurrentUserPayload;
+    }>();
     const user = request.user;
 
     if (!user) {
@@ -11,10 +19,11 @@ export class SuperAdminGuard implements CanActivate {
     }
 
     if (user.role !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Acesso negado. Apenas Super Admin pode acessar esta rota.');
+      throw new ForbiddenException(
+        'Acesso negado. Apenas Super Admin pode acessar esta rota.',
+      );
     }
 
     return true;
   }
 }
-

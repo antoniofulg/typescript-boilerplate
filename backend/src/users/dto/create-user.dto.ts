@@ -30,4 +30,3 @@ export class CreateUserDto {
   @IsOptional()
   tenantId?: string;
 }
-

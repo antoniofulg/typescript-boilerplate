@@ -12,4 +12,3 @@ export class CreateTenantDto {
   })
   slug: string;
 }
-

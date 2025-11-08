@@ -14,8 +14,9 @@ import { PrismaModule } from '../prisma/prisma.module';
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '7d';
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           secret: configService.get<string>('JWT_SECRET') || 'default-secret',
           signOptions: {

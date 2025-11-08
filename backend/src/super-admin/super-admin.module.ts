@@ -11,4 +11,3 @@ import { PrismaModule } from '../prisma/prisma.module';
   exports: [SuperAdminService, SuperAdminGuard],
 })
 export class SuperAdminModule {}
-

@@ -18,8 +18,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any): Promise<CurrentUserPayload> {
-    const { userId, email, role, tenantId } = payload;
+  async validate(payload: {
+    userId: string;
+    email?: string;
+    role: string;
+    tenantId?: string;
+  }): Promise<CurrentUserPayload> {
+    const { userId, role } = payload;
 
     // Se for SuperAdmin, não precisa validar tenant
     if (role === 'SUPER_ADMIN') {
@@ -60,4 +65,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-

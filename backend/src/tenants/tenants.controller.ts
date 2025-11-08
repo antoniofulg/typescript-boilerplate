@@ -44,4 +44,3 @@ export class TenantsController {
     return this.tenantsService.remove(id);
   }
 }
-

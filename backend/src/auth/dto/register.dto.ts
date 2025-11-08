@@ -30,4 +30,3 @@ export class RegisterDto {
   @IsOptional()
   tenantId?: string;
 }
-

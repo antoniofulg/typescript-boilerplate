@@ -18,9 +18,7 @@ export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}
 
   @Post()
-  create(
-    @Body() body: { name: string; email: string; password: string },
-  ) {
+  create(@Body() body: { name: string; email: string; password: string }) {
     return this.superAdminService.create(body.name, body.email, body.password);
   }
 
@@ -47,4 +45,3 @@ export class SuperAdminController {
     return this.superAdminService.remove(id);
   }
 }
-

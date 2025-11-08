@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import { TenantStatus } from '@prisma/client';
 
 export class UpdateTenantDto {
@@ -19,4 +19,3 @@ export class UpdateTenantDto {
   @IsOptional()
   status?: TenantStatus;
 }
-

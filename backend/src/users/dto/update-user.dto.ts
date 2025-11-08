@@ -25,4 +25,3 @@ export class UpdateUserDto {
   @IsOptional()
   role?: UserRole;
 }
-

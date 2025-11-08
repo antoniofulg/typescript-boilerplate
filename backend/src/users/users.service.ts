@@ -155,11 +155,19 @@ export class UsersService {
     }
 
     // Hash da senha se fornecida
-    const updateData: any = { ...updateUserDto };
+    const updateData: {
+      name?: string;
+      email?: string;
+      passwordHash?: string;
+      role?: import('@prisma/client').UserRole;
+    } = { ...updateUserDto };
     if (updateUserDto.password) {
       const saltRounds = 10;
-      updateData.passwordHash = await bcrypt.hash(updateUserDto.password, saltRounds);
-      delete updateData.password;
+      updateData.passwordHash = await bcrypt.hash(
+        updateUserDto.password,
+        saltRounds,
+      );
+      delete (updateData as { password?: string }).password;
     }
 
     return this.prisma.user.update({
@@ -188,4 +196,3 @@ export class UsersService {
     });
   }
 }
-

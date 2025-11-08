@@ -6,6 +6,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { CurrentUserPayload } from '../decorators/current-user.decorator';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -26,11 +27,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any, info: any) {
+  handleRequest<TUser = CurrentUserPayload>(
+    err: Error | null,
+    user: TUser | false,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    info: unknown,
+  ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Token inválido ou expirado');
     }
-    return user;
+    return user as TUser;
   }
 }
-

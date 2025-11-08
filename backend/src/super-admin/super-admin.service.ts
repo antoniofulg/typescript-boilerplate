@@ -51,7 +51,10 @@ export class SuperAdminService {
     });
   }
 
-  async update(id: string, data: { name?: string; email?: string; password?: string }) {
+  async update(
+    id: string,
+    data: { name?: string; email?: string; password?: string },
+  ) {
     const superAdmin = await this.findOne(id);
 
     // Se email está sendo atualizado, verificar se não está em uso
@@ -65,13 +68,17 @@ export class SuperAdminService {
       }
     }
 
-    const updateData: any = { ...data };
-    
+    const updateData: {
+      name?: string;
+      email?: string;
+      passwordHash?: string;
+    } = { ...data };
+
     // Hash da senha se fornecida
     if (data.password) {
       const saltRounds = 10;
       updateData.passwordHash = await bcrypt.hash(data.password, saltRounds);
-      delete updateData.password;
+      delete (updateData as { password?: string }).password;
     }
 
     return this.prisma.superAdmin.update({
@@ -88,4 +95,3 @@ export class SuperAdminService {
     });
   }
 }
-

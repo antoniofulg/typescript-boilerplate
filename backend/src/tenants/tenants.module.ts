@@ -11,4 +11,3 @@ import { SuperAdminModule } from '../super-admin/super-admin.module';
   exports: [TenantsService],
 })
 export class TenantsModule {}
-

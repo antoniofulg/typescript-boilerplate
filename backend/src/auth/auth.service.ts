@@ -11,7 +11,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +24,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Tentar encontrar como User primeiro
-    let user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: { email },
       include: { tenant: true },
     });
@@ -55,7 +54,9 @@ export class AuthService {
         role: 'SUPER_ADMIN',
       };
 
-      const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+      const expiresIn =
+        this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const accessToken = this.jwtService.sign(payload, {
         expiresIn,
       } as any);
@@ -92,6 +93,7 @@ export class AuthService {
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
     } as any);
@@ -176,6 +178,7 @@ export class AuthService {
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
     } as any);
@@ -236,4 +239,3 @@ export class AuthService {
     };
   }
 }
-
