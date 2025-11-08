@@ -9,9 +9,4 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
-
-  @Get('api/tenants')
-  async getTenants() {
-    return this.appService.getTenants();
-  }
 }
