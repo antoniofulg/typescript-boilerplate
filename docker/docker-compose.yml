@@ -1,11 +1,11 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-app}-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+      POSTGRES_DB: ${POSTGRES_DB:-voto_inteligente_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-app}-redis
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -40,16 +40,16 @@ services:
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME:-app}-backend
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-backend
     env_file:
       - .env.backend
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app_db}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-voto_inteligente_db}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=${BACKEND_PORT:-4000}
-      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
-      - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
       - "${PRISMA_STUDIO_PORT:-5555}:5555"
@@ -73,15 +73,15 @@ services:
     build:
       context: ..
       dockerfile: docker/frontend/Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME:-app}-frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-frontend
     env_file:
       - .env.frontend
     environment:
       - NODE_ENV=production
       - PORT=${FRONTEND_PORT:-3000}
-      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-app.backend.local}:${BACKEND_PORT:-4000}
-      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
-      - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
+      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-voto-inteligente.backend.local}:${BACKEND_PORT:-4000}
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
     ports:
       - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     depends_on:

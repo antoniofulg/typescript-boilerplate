@@ -24,7 +24,7 @@ start() {
 
   # Stop and remove old containers with fixed names (from before COMPOSE_PROJECT_NAME)
   echo -e "${CYAN}🛑 Cleaning up old containers...${NC}"
-  docker rm -f app-postgres app-redis app-backend app-frontend 2>/dev/null || true
+  docker rm -f voto-inteligente-postgres voto-inteligente-redis voto-inteligente-backend voto-inteligente-frontend 2>/dev/null || true
   
   # Stop backend and frontend containers if running (to avoid port conflicts)
   cd "$DOCKER_DIR" && docker-compose stop backend frontend 2>/dev/null || true
@@ -69,7 +69,7 @@ start() {
   # Start backend in background with DATABASE_URL
   echo -e "${CYAN}💻 Starting backend (port 4000)...${NC}"
   cd "$BACKEND_DIR"
-  DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" \
+  DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
   PORT=4000 \
   npm run start:dev > /tmp/backend-dev.log 2>&1 &
   BACKEND_PID=$!
@@ -109,19 +109,41 @@ start() {
   # Wait a bit for services to start
   sleep 3
 
+  # Get aliases from env.example or use defaults
+  FRONTEND_ALIAS="app.frontend.local"
+  BACKEND_ALIAS="app.backend.local"
+  if [ -f "$DOCKER_DIR/env.example" ]; then
+    FRONTEND_ALIAS=$(grep "^FRONTEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$FRONTEND_ALIAS")
+    BACKEND_ALIAS=$(grep "^BACKEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$BACKEND_ALIAS")
+  fi
+
   echo ""
   echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
   echo -e "${GREEN}║     🚀 Development Environment Started${NC}                    ║${NC}"
   echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
   echo ""
-  echo -e "${GREEN}✅ Backend:${NC}  ${CYAN}http://localhost:4000${NC}"
-  echo -e "${GREEN}✅ Frontend:${NC} ${CYAN}http://localhost:3000${NC}"
+  echo -e "${CYAN}📋 Service URLs:${NC}"
+  echo ""
+  echo -e "${GREEN}✅ Backend:${NC}"
+  echo -e "   ${CYAN}🌐 http://localhost:4000${NC}"
+  echo -e "   ${CYAN}🌐 http://${BACKEND_ALIAS}:4000${NC}"
+  echo -e "   ${CYAN}🏥 Health: http://localhost:4000/health${NC}"
+  echo ""
+  echo -e "${GREEN}✅ Frontend:${NC}"
+  echo -e "   ${CYAN}🌐 http://localhost:3000${NC}"
+  echo -e "   ${CYAN}🌐 http://${FRONTEND_ALIAS}:3000${NC}"
+  echo ""
   echo -e "${GREEN}✅ PostgreSQL:${NC} ${CYAN}localhost:5432${NC}"
   echo -e "${GREEN}✅ Redis:${NC}     ${CYAN}localhost:6379${NC}"
   echo ""
   echo -e "${YELLOW}💡 Logs:${NC}"
   echo -e "   Backend:  ${CYAN}tail -f /tmp/backend-dev.log${NC}"
   echo -e "   Frontend: ${CYAN}tail -f /tmp/frontend-dev.log${NC}"
+  echo ""
+  echo -e "${YELLOW}💡 First time setup (if needed):${NC}"
+  echo -e "   ${CYAN}make migrate-dev${NC}  - Create and apply database migrations"
+  echo -e "   ${CYAN}make seed${NC}          - Populate database with example data"
+  echo -e "   ${CYAN}make db-push${NC}       - Quick: apply schema without migrations"
   echo ""
   echo -e "${YELLOW}💡 To stop:${NC} ${CYAN}make dev-stop${NC} or ${CYAN}./scripts/dev.sh stop${NC}"
   echo ""

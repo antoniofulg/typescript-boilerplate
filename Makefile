@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -6,8 +6,8 @@ DOCKER_DIR = docker
 COMPOSE_FILE = $(DOCKER_DIR)/docker-compose.yml
 
 # Environment variables for aliases (with default values)
-FRONTEND_ALIAS ?= app.frontend.local
-BACKEND_ALIAS ?= app.backend.local
+FRONTEND_ALIAS ?= voto-inteligente.frontend.local
+BACKEND_ALIAS ?= voto-inteligente.backend.local
 export FRONTEND_ALIAS
 export BACKEND_ALIAS
 
@@ -149,7 +149,7 @@ ps: ## View container status
 
 clean-old-containers: ## Remove old containers with fixed names (app-*)
 	@echo "$(YELLOW)🧹 Cleaning up old containers with fixed names...$(NC)"
-	@docker rm -f app-postgres app-redis app-backend app-frontend 2>/dev/null || true
+	@docker rm -f voto-inteligente-postgres voto-inteligente-redis voto-inteligente-backend voto-inteligente-frontend 2>/dev/null || true
 	@echo "$(GREEN)✅ Old containers cleaned up$(NC)"
 
 clean: hosts-remove clean-old-containers ## Stop services, remove volumes and remove aliases from hosts
@@ -164,22 +164,22 @@ shell-frontend: ## Enter frontend container
 
 migrate: ## Run Prisma migrations
 	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
-	@if docker ps | grep -q "app-backend.*Up"; then \
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
 		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy; \
 	else \
 		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma migrate deploy; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate deploy; \
 	fi
 
 migrate-dev: ## Create and apply Prisma migrations (development)
 	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
-	@if docker ps | grep -q "app-backend.*Up"; then \
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
 		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev; \
 	else \
 		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma migrate dev; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate dev; \
 	fi
 
 migrate-reset: ## Reset database and apply all migrations (WARNING: deletes all data)
@@ -197,22 +197,22 @@ migrate-resolve: ## Create baseline migration from current database state
 
 db-push: ## Push Prisma schema to database without migrations (development)
 	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
-	@if docker ps | grep -q "app-backend.*Up"; then \
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
 		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push; \
 	else \
 		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npx prisma db push; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma db push; \
 	fi
 
 seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
-	@if docker ps | grep -q "app-backend.*Up"; then \
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
 		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed; \
 	else \
 		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app_db?schema=public" npm run prisma:seed; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
 	fi
 
 prisma-studio: ## Open Prisma Studio
@@ -309,6 +309,12 @@ test-backend-e2e: ## Run backend e2e tests
 
 setup-env: ## Generate .env files from examples (if they don't exist)
 	@echo "$(GREEN)🔧 Setting up environment files...$(NC)"
+	@if [ -f $(DOCKER_DIR)/env.example ]; then \
+		PROJECT_NAME=$$(grep "^COMPOSE_PROJECT_NAME=" $(DOCKER_DIR)/env.example 2>/dev/null | cut -d'=' -f2 || echo "app"); \
+		if [ "$$PROJECT_NAME" != "app" ]; then \
+			echo "$(CYAN)📋 Using project name: $(BOLD)$$PROJECT_NAME$(NC)$(CYAN)${NC}"; \
+		fi; \
+	fi
 	@if [ ! -f $(DOCKER_DIR)/.env ]; then \
 		cp $(DOCKER_DIR)/env.example $(DOCKER_DIR)/.env && \
 		echo "$(GREEN)✅ Created $(DOCKER_DIR)/.env$(NC)"; \
@@ -335,7 +341,22 @@ setup-env: ## Generate .env files from examples (if they don't exist)
 	fi
 	@echo ""
 	@echo "$(GREEN)✅ Environment files setup complete!$(NC)"
+	@if [ -f $(DOCKER_DIR)/env.example ]; then \
+		PROJECT_NAME=$$(grep "^COMPOSE_PROJECT_NAME=" $(DOCKER_DIR)/env.example 2>/dev/null | cut -d'=' -f2 || echo ""); \
+		if [ -n "$$PROJECT_NAME" ] && [ "$$PROJECT_NAME" != "app" ]; then \
+			echo "$(CYAN)💡 Files created with project name: $(BOLD)$$PROJECT_NAME$(NC)$(CYAN)${NC}"; \
+		fi; \
+	fi
 	@echo "$(CYAN)💡 You can now customize the .env files in $(DOCKER_DIR)/ if needed$(NC)"
+
+init-project: ## Initialize project with custom name (usage: make init-project PROJECT_NAME=myproject)
+	@if [ -z "$(PROJECT_NAME)" ]; then \
+		chmod +x scripts/init-project.sh && \
+		./scripts/init-project.sh; \
+	else \
+		chmod +x scripts/init-project.sh && \
+		./scripts/init-project.sh "$(PROJECT_NAME)"; \
+	fi
 
 release: ## Create a new release (usage: make release VERSION=1.0.0)
 	@if [ -z "$(VERSION)" ]; then \

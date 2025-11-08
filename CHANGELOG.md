@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-01-XX
+
+### Added
+
+- **Project Initialization Command**: New `make init-project` command to easily initialize a new project with a custom name
+  - Automatically replaces all references to "app" with the provided project name
+  - Updates environment variables, database names, aliases, and container names
+  - Validates project name (alphanumeric, hyphens, and underscores only)
+  - Supports interactive mode or direct parameter: `make init-project PROJECT_NAME=myproject`
+- **Enhanced Development Output**: Improved `make dev` command output with:
+  - Service URLs with both localhost and alias addresses
+  - Healthcheck endpoint link for backend
+  - First-time setup commands (migrate, seed, db-push) for new users
+  - Better formatted and organized service information
+
+### Changed
+
+- **Environment Setup**: Enhanced `make setup-env` to:
+  - Detect and display project name when creating `.env` files
+  - Show confirmation message with project name after setup
+  - Automatically use project-specific values from modified `.example` files
+- **Development Script**: Updated `scripts/dev.sh` to:
+  - Read and display frontend/backend aliases from `env.example`
+  - Show both localhost and alias URLs for backend and frontend
+  - Include helpful first-time setup commands in the output
+  - Display healthcheck endpoint for backend
+
+### Technical Details
+
+- **Project Initialization Script**: New `scripts/init-project.sh` script that:
+  - Uses Python with base64 encoding for reliable string replacement (handles special characters)
+  - Falls back to sed if Python is not available
+  - Updates files: `docker/env.example`, `docker/env.postgres.example`, `Makefile`, `scripts/manage-hosts.sh`, `scripts/dev.sh`, `backend/src/main.ts`, `docker/docker-compose.yml`
+  - Sanitizes database names (lowercase, replaces hyphens with underscores)
+
 ## [1.0.1] - 2025-11-08
 
 ### Added
