@@ -73,6 +73,16 @@ make seed
 make dev-stop    # Stop all services
 make dev-status  # Check service status
 make logs        # View logs (backend/frontend in /tmp/*-dev.log)
+
+# Testing
+make test-frontend          # Run frontend tests (single run, CI mode)
+make test-frontend-watch    # Run frontend tests in watch mode (development)
+make test-frontend-ui       # Run frontend tests with visual UI
+make test-frontend-coverage # Run frontend tests with coverage report
+make test-backend           # Run backend tests (single run, CI mode)
+make test-backend-watch     # Run backend tests in watch mode (development)
+make test-backend-coverage  # Run backend tests with coverage report
+make test-backend-e2e       # Run backend e2e tests
 ```
 
 ---
@@ -136,6 +146,22 @@ Run `make urls` to see all URLs:
 - **PostgreSQL:** localhost:5432
 - **Redis:** localhost:6379
 
+### 6. Running Tests
+
+```bash
+# Frontend tests
+make test-frontend          # Run once (CI mode)
+make test-frontend-watch    # Watch mode (development)
+make test-frontend-ui       # Visual UI in browser
+make test-frontend-coverage # With coverage report
+
+# Backend tests
+make test-backend           # Run once (CI mode)
+make test-backend-watch     # Watch mode (development)
+make test-backend-coverage  # With coverage report
+make test-backend-e2e       # End-to-end tests
+```
+
 ---
 
 ## 📋 Available Commands
@@ -175,6 +201,16 @@ make seed          # Populate database with example data
 # Prisma Studio
 make prisma-studio      # Open Prisma Studio (http://localhost:5555)
 make prisma-studio-stop # Stop Prisma Studio
+
+# Testing
+make test-frontend          # Run frontend tests (single run, CI mode)
+make test-frontend-watch    # Run frontend tests in watch mode (development)
+make test-frontend-ui       # Run frontend tests with visual UI
+make test-frontend-coverage # Run frontend tests with coverage report
+make test-backend           # Run backend tests (single run, CI mode)
+make test-backend-watch     # Run backend tests in watch mode (development)
+make test-backend-coverage  # Run backend tests with coverage report
+make test-backend-e2e       # Run backend e2e tests
 
 # Utilities
 make shell-backend  # Enter backend container
@@ -309,8 +345,9 @@ make seed
 
 ## 📚 Additional Documentation
 
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Architecture, functional requirements and technical documentation
 - **[docker/README.md](./docker/README.md)** - Docker-specific documentation
+- **[frontend/TESTING.md](./frontend/TESTING.md)** - Frontend testing guide with Vitest, React Testing Library, and MSW
+- **[backend/TESTING.md](./backend/TESTING.md)** - Backend testing guide with Jest and NestJS Testing
 
 ---
 
