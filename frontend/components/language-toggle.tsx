@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTranslations } from 'next-intl';
-import { localeNames } from '@/i18n/config';
 
 export function LanguageToggle() {
   const t = useTranslations('language');
