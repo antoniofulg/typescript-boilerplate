@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -264,4 +264,23 @@ dev-backend: ## Run backend in development mode (local, standalone)
 dev-frontend: ## Run frontend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
 	@cd frontend && npm run dev
+
+test-frontend: ## Run frontend tests (single run, CI mode)
+	@echo "$(GREEN)🧪 Running frontend tests...$(NC)"
+	@cd frontend && npm run test:run
+
+test-frontend-watch: ## Run frontend tests in watch mode (development)
+	@echo "$(GREEN)🧪 Running frontend tests in watch mode...$(NC)"
+	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
+	@cd frontend && npm test
+
+test-frontend-ui: ## Run frontend tests with visual UI
+	@echo "$(GREEN)🧪 Opening frontend test UI...$(NC)"
+	@echo "$(CYAN)💡 Test UI will open in your browser$(NC)"
+	@cd frontend && npm run test:ui
+
+test-frontend-coverage: ## Run frontend tests with coverage report
+	@echo "$(GREEN)🧪 Running frontend tests with coverage...$(NC)"
+	@cd frontend && npm run test:coverage
+	@echo "$(CYAN)💡 Coverage report generated in frontend/coverage/$(NC)"
 
