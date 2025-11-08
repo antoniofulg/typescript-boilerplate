@@ -6,7 +6,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS with support for aliases
-  const frontendAlias = process.env.FRONTEND_ALIAS || 'voto-inteligente.frontend.local';
+  const frontendAlias =
+    process.env.FRONTEND_ALIAS || 'voto-inteligente.frontend.local';
   const frontendUrl = `http://${frontendAlias}:3000`;
 
   app.enableCors({
