@@ -1,14 +1,23 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+set -e
+
+# Get the root directory
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+
 # Run lint-staged on backend if there are staged backend files
 if git diff --cached --name-only --diff-filter=ACM | grep -q "^backend/"; then
   echo "🔍 Running linters on backend..."
-  cd backend && npx lint-staged && cd ..
+  cd "$ROOT_DIR/backend"
+  npx lint-staged
+  cd "$ROOT_DIR"
 fi
 
 # Run lint-staged on frontend if there are staged frontend files
 if git diff --cached --name-only --diff-filter=ACM | grep -q "^frontend/"; then
   echo "🔍 Running linters on frontend..."
-  cd frontend && npx lint-staged && cd ..
+  cd "$ROOT_DIR/frontend"
+  npx lint-staged
+  cd "$ROOT_DIR"
 fi
