@@ -25,13 +25,26 @@ git clone <repository-url>
 cd fullstack-boilerplate
 ```
 
-### 2. Configure environment variables (optional)
+### 2. Setup environment variables
 
-The `.env` files in the `docker/` folder already have default values. To customize, edit:
+Generate all `.env` files with default values:
 
+```bash
+make setup-env
+```
+
+This will create:
+
+- `docker/.env` - Docker Compose configuration (ports, project name, etc.)
 - `docker/.env.postgres` - PostgreSQL credentials
 - `docker/.env.backend` - Backend configuration (JWT secrets, etc.)
 - `docker/.env.frontend` - Frontend configuration
+
+**Important for multiple clones:** If you have multiple clones of this repository on the same machine, edit `docker/.env` and set a unique `COMPOSE_PROJECT_NAME` to avoid conflicts:
+
+```bash
+COMPOSE_PROJECT_NAME=my-project-1
+```
 
 ### 3. Start the development environment
 
@@ -319,12 +332,22 @@ make up
 
 ### Ports already in use
 
-If ports 3000, 4000, 5432, or 6379 are in use, change them in `docker/docker-compose.yml`:
+If ports 3000, 4000, 5432, or 6379 are in use, configure them via environment variables in `docker/.env`:
 
-```yaml
-ports:
-  - "3001:3000" # Frontend
-  - "4001:4000" # Backend
+```bash
+# Create docker/.env file (copy from docker/env.example)
+COMPOSE_PROJECT_NAME=my-project
+POSTGRES_PORT=5433
+REDIS_PORT=6380
+BACKEND_PORT=4001
+FRONTEND_PORT=3001
+PRISMA_STUDIO_PORT=5556
+```
+
+Or set them directly when running docker-compose:
+
+```bash
+POSTGRES_PORT=5433 BACKEND_PORT=4001 docker-compose up
 ```
 
 ### Error running seed

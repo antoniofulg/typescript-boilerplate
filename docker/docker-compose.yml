@@ -1,13 +1,13 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: app-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-app}-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -21,9 +21,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: app-redis
+    container_name: ${COMPOSE_PROJECT_NAME:-app}-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -40,19 +40,19 @@ services:
     build:
       context: ..
       dockerfile: docker/backend/Dockerfile
-    container_name: app-backend
+    container_name: ${COMPOSE_PROJECT_NAME:-app}-backend
     env_file:
       - .env.backend
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app_db}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - PORT=4000
+      - PORT=${BACKEND_PORT:-4000}
       - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
       - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
     ports:
-      - "4000:4000"
-      - "5555:5555"
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
+      - "${PRISMA_STUDIO_PORT:-5555}:5555"
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,7 +61,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:${BACKEND_PORT:-4000}/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,23 +73,23 @@ services:
     build:
       context: ..
       dockerfile: docker/frontend/Dockerfile
-    container_name: app-frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-app}-frontend
     env_file:
       - .env.frontend
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-app.backend.local}:4000
+      - PORT=${FRONTEND_PORT:-3000}
+      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-app.backend.local}:${BACKEND_PORT:-4000}
       - FRONTEND_ALIAS=${FRONTEND_ALIAS:-app.frontend.local}
       - BACKEND_ALIAS=${BACKEND_ALIAS:-app.backend.local}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     depends_on:
       - backend
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:${FRONTEND_PORT:-3000}', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3

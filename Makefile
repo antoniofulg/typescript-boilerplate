@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -147,7 +147,12 @@ urls: ## Show service URLs
 ps: ## View container status
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) ps
 
-clean: hosts-remove ## Stop services, remove volumes and remove aliases from hosts
+clean-old-containers: ## Remove old containers with fixed names (app-*)
+	@echo "$(YELLOW)🧹 Cleaning up old containers with fixed names...$(NC)"
+	@docker rm -f app-postgres app-redis app-backend app-frontend 2>/dev/null || true
+	@echo "$(GREEN)✅ Old containers cleaned up$(NC)"
+
+clean: hosts-remove clean-old-containers ## Stop services, remove volumes and remove aliases from hosts
 	@echo "$(YELLOW)🧹 Cleaning containers, volumes and aliases...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down -v
 
@@ -301,6 +306,36 @@ test-backend-coverage: ## Run backend tests with coverage report
 test-backend-e2e: ## Run backend e2e tests
 	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
 	@cd backend && npm run test:e2e
+
+setup-env: ## Generate .env files from examples (if they don't exist)
+	@echo "$(GREEN)🔧 Setting up environment files...$(NC)"
+	@if [ ! -f $(DOCKER_DIR)/.env ]; then \
+		cp $(DOCKER_DIR)/env.example $(DOCKER_DIR)/.env && \
+		echo "$(GREEN)✅ Created $(DOCKER_DIR)/.env$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  $(DOCKER_DIR)/.env already exists, skipping...$(NC)"; \
+	fi
+	@if [ ! -f $(DOCKER_DIR)/.env.postgres ]; then \
+		cp $(DOCKER_DIR)/env.postgres.example $(DOCKER_DIR)/.env.postgres && \
+		echo "$(GREEN)✅ Created $(DOCKER_DIR)/.env.postgres$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  $(DOCKER_DIR)/.env.postgres already exists, skipping...$(NC)"; \
+	fi
+	@if [ ! -f $(DOCKER_DIR)/.env.backend ]; then \
+		cp $(DOCKER_DIR)/env.backend.example $(DOCKER_DIR)/.env.backend && \
+		echo "$(GREEN)✅ Created $(DOCKER_DIR)/.env.backend$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  $(DOCKER_DIR)/.env.backend already exists, skipping...$(NC)"; \
+	fi
+	@if [ ! -f $(DOCKER_DIR)/.env.frontend ]; then \
+		cp $(DOCKER_DIR)/env.frontend.example $(DOCKER_DIR)/.env.frontend && \
+		echo "$(GREEN)✅ Created $(DOCKER_DIR)/.env.frontend$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  $(DOCKER_DIR)/.env.frontend already exists, skipping...$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(GREEN)✅ Environment files setup complete!$(NC)"
+	@echo "$(CYAN)💡 You can now customize the .env files in $(DOCKER_DIR)/ if needed$(NC)"
 
 release: ## Create a new release (usage: make release VERSION=1.0.0)
 	@if [ -z "$(VERSION)" ]; then \

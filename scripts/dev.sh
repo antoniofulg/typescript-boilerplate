@@ -22,8 +22,11 @@ start() {
   echo -e "${GREEN}🚀 Starting development environment...${NC}"
   echo ""
 
+  # Stop and remove old containers with fixed names (from before COMPOSE_PROJECT_NAME)
+  echo -e "${CYAN}🛑 Cleaning up old containers...${NC}"
+  docker rm -f app-postgres app-redis app-backend app-frontend 2>/dev/null || true
+  
   # Stop backend and frontend containers if running (to avoid port conflicts)
-  echo -e "${CYAN}🛑 Stopping backend/frontend containers if running...${NC}"
   cd "$DOCKER_DIR" && docker-compose stop backend frontend 2>/dev/null || true
   cd "$DOCKER_DIR" && docker-compose rm -f backend frontend 2>/dev/null || true
 
