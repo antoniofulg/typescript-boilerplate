@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -283,4 +283,22 @@ test-frontend-coverage: ## Run frontend tests with coverage report
 	@echo "$(GREEN)🧪 Running frontend tests with coverage...$(NC)"
 	@cd frontend && npm run test:coverage
 	@echo "$(CYAN)💡 Coverage report generated in frontend/coverage/$(NC)"
+
+test-backend: ## Run backend tests (single run, CI mode)
+	@echo "$(GREEN)🧪 Running backend tests...$(NC)"
+	@cd backend && npm test
+
+test-backend-watch: ## Run backend tests in watch mode (development)
+	@echo "$(GREEN)🧪 Running backend tests in watch mode...$(NC)"
+	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
+	@cd backend && npm run test:watch
+
+test-backend-coverage: ## Run backend tests with coverage report
+	@echo "$(GREEN)🧪 Running backend tests with coverage...$(NC)"
+	@cd backend && npm run test:cov
+	@echo "$(CYAN)💡 Coverage report generated in backend/coverage/$(NC)"
+
+test-backend-e2e: ## Run backend e2e tests
+	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
+	@cd backend && npm run test:e2e
 
