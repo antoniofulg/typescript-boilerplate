@@ -33,7 +33,6 @@ describe('AppController', () => {
           slug: faker.lorem.slug(),
           status: 'ACTIVE' as const,
           createdAt: new Date(),
-          updatedAt: new Date(),
         },
       ];
 

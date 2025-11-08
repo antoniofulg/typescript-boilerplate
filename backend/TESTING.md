@@ -135,8 +135,8 @@ describe('AppService', () => {
         id: faker.string.uuid(),
         name: faker.company.name(),
         slug: faker.lorem.slug(),
+        status: 'ACTIVE' as const,
         createdAt: new Date(),
-        updatedAt: new Date(),
       },
     ];
 
