@@ -22,6 +22,7 @@ export class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
+    retryCount = 0,
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
@@ -37,6 +38,62 @@ export class ApiClient {
       ...options,
       headers,
     });
+
+    // If we get a 401 and haven't retried yet, try to refresh the token
+    if (response.status === 401 && retryCount === 0 && this.token) {
+      try {
+        const refreshResponse = await fetch(`${this.baseUrl}/auth/refresh`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          const newToken = refreshData.accessToken;
+
+          // Update token
+          this.setToken(newToken);
+
+          // Update in localStorage and cookie
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth_token', newToken);
+            document.cookie = `auth_token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+          }
+
+          // Dispatch event for AuthContext to update
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('token-refreshed', {
+                detail: { token: newToken },
+              }),
+            );
+          }
+
+          // Retry the original request with new token
+          headers['Authorization'] = `Bearer ${newToken}`;
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers,
+          });
+
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            const error: ApiError = {
+              message: errorData.message || `Erro ${retryResponse.status}`,
+              status: retryResponse.status,
+            };
+            throw error;
+          }
+
+          return retryResponse.json();
+        }
+      } catch {
+        // If refresh fails, continue to throw the original 401 error
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -31,6 +32,76 @@ type TenantsTableProps = {
 };
 
 export function TenantsTable({ tenants, onEdit, onDelete }: TenantsTableProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // This is necessary to avoid hydration mismatch with Radix UI AlertDialog IDs
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  // Only render AlertDialog after mount to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Slug</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Criado em</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tenants.map((tenant) => (
+            <TableRow key={tenant.id}>
+              <TableCell className="font-medium">{tenant.name}</TableCell>
+              <TableCell>
+                <code className="text-xs bg-muted px-2 py-1 rounded">
+                  {tenant.slug}
+                </code>
+              </TableCell>
+              <TableCell>
+                <TenantStatusBadge status={tenant.status} />
+              </TableCell>
+              <TableCell>
+                {new Date(tenant.createdAt).toLocaleDateString('pt-BR')}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(tenant)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (
+                        typeof window !== 'undefined' &&
+                        window.confirm(
+                          `Tem certeza que deseja excluir o tenant "${tenant.name}"? Esta ação não pode ser desfeita.`,
+                        )
+                      ) {
+                        onDelete(tenant.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }
+
   return (
     <Table>
       <TableHeader>

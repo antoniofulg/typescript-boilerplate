@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,14 @@ export function TenantFormDialog({
   error,
   trigger,
 }: TenantFormDialogProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // This is necessary to avoid hydration mismatch with Radix UI Dialog IDs
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
   const form = useForm<CreateTenantFormData | UpdateTenantFormData>({
     resolver: zodResolver(
       editingTenant ? updateTenantSchema : createTenantSchema,
@@ -104,6 +112,11 @@ export function TenantFormDialog({
       });
     }
   };
+
+  // Only render Dialog after mount to avoid hydration mismatch
+  if (!mounted) {
+    return trigger ? <>{trigger}</> : null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

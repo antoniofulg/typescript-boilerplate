@@ -34,6 +34,13 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@CurrentUser() user: CurrentUserPayload) {
+    return this.authService.refreshToken(user.userId, user.role);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@CurrentUser() user: CurrentUserPayload) {
     return this.authService.getProfile(user.userId, user.role);

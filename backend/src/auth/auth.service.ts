@@ -195,6 +195,80 @@ export class AuthService {
     };
   }
 
+  async refreshToken(userId: string, role: string): Promise<AuthResponseDto> {
+    // Validar se o usuário ainda existe e está ativo
+    if (role === 'SUPER_ADMIN') {
+      const superAdmin = await this.prisma.superAdmin.findUnique({
+        where: { id: userId },
+      });
+
+      if (!superAdmin) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      const payload = {
+        userId: superAdmin.id,
+        email: superAdmin.email,
+        role: 'SUPER_ADMIN',
+      };
+
+      const expiresIn =
+        this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn,
+      } as any);
+
+      return {
+        accessToken,
+        user: {
+          id: superAdmin.id,
+          email: superAdmin.email,
+          name: superAdmin.name,
+          role: 'SUPER_ADMIN',
+        },
+      };
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { tenant: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    // Validar tenant ativo
+    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Tenant inativo');
+    }
+
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role as string,
+      tenantId: user.tenantId || undefined,
+    };
+
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn,
+    } as any);
+
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tenantId: user.tenantId || undefined,
+      },
+    };
+  }
+
   async getProfile(userId: string, role: string) {
     if (role === 'SUPER_ADMIN') {
       const superAdmin = await this.prisma.superAdmin.findUnique({

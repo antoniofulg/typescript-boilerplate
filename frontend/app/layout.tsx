@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { TokenRefreshProvider } from '@/components/token-refresh-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,8 +41,10 @@ export default function RootLayout({
         >
           <ErrorBoundary>
             <AuthProvider>
-              {children}
-              <Toaster position="top-right" richColors />
+              <TokenRefreshProvider>
+                {children}
+                <Toaster position="top-right" richColors />
+              </TokenRefreshProvider>
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>

@@ -65,6 +65,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false);
       }
+
+      // Listen for token refresh events
+      const handleTokenRefresh = (event: CustomEvent<{ token: string }>) => {
+        const newToken = event.detail.token;
+        setToken(newToken);
+        // Reload user profile with new token
+        void loadUserProfile(newToken).catch(() => {
+          // Silently fail
+        });
+      };
+
+      window.addEventListener(
+        'token-refreshed',
+        handleTokenRefresh as EventListener,
+      );
+
+      return () => {
+        window.removeEventListener(
+          'token-refreshed',
+          handleTokenRefresh as EventListener,
+        );
+      };
     } else {
       setLoading(false);
     }
