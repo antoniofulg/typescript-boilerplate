@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { TenantStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -27,6 +28,7 @@ export class TenantsService {
       data: {
         name,
         slug,
+        status: TenantStatus.ACTIVE, // Default status for new tenants
       },
     });
   }

@@ -85,7 +85,9 @@ export function TenantFormDialog({
         form.reset({
           name: editingTenant.name,
           slug: editingTenant.slug,
-          status: editingTenant.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
+          status:
+            (editingTenant.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED') ??
+            'ACTIVE',
         });
       } else {
         form.reset({
@@ -103,7 +105,7 @@ export function TenantFormDialog({
       await onSubmit({
         name: data.name,
         slug: data.slug,
-        status: (data as UpdateTenantFormData).status,
+        status: (data as UpdateTenantFormData).status ?? 'ACTIVE',
       });
     } else {
       await onSubmit({
@@ -192,7 +194,7 @@ export function TenantFormDialog({
                       <FormLabel>Status</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}
+                        value={field.value ?? 'ACTIVE'}
                         disabled={submitting}
                       >
                         <FormControl>

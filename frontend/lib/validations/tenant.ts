@@ -27,9 +27,11 @@ export const createTenantSchema = z.object({
     ),
 });
 
-export const updateTenantSchema = createTenantSchema.extend({
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']),
-});
+export const updateTenantSchema = createTenantSchema
+  .extend({
+    status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
+  })
+  .partial();
 
 export type CreateTenantFormData = z.infer<typeof createTenantSchema>;
 export type UpdateTenantFormData = z.infer<typeof updateTenantSchema>;
