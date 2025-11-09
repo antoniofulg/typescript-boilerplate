@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface User {
+type User = {
   id: string;
   email: string;
   name: string;
@@ -14,9 +14,9 @@ interface User {
     slug: string;
     status: string;
   };
-}
+};
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<any>;
@@ -25,15 +25,15 @@ interface AuthContextType {
   getProfile: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
-}
+};
 
-interface RegisterData {
+type RegisterData = {
   name: string;
   email: string;
   password: string;
   role: 'ADMIN' | 'OPERATOR' | 'USER';
   tenantId?: string;
-}
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

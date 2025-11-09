@@ -1,10 +1,10 @@
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export interface ApiError {
+export type ApiError = {
   message: string;
   status?: number;
-}
+};
 
 export class ApiClient {
   private baseUrl: string;

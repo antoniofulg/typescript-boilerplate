@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export interface User {
+export type User = {
   id: string;
   email: string;
   name: string;
@@ -15,7 +15,7 @@ export interface User {
     slug: string;
     status: string;
   };
-}
+};
 
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies();

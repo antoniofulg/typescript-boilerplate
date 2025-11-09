@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +14,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,39 +30,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import {
+  loginSchema,
+  registerSchema,
+  type LoginFormData,
+  type RegisterFormData,
+} from '@/lib/validations/auth';
 
 export default function AuthPage() {
   const router = useRouter();
   const { login, register, isAuthenticated, user } = useAuth();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Removed success state - using toast instead
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-
-  // Register form state
-  const [registerName, setRegisterName] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerRole, setRegisterRole] = useState<
-    'ADMIN' | 'OPERATOR' | 'USER'
-  >('USER');
-  const [registerTenantId, setRegisterTenantId] = useState('');
+  const registerForm = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      role: 'USER',
+      tenantId: '',
+    },
+  });
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Usar replace para evitar adicionar ao histórico
       if (user.role === 'SUPER_ADMIN') {
         router.replace('/dashboard');
       } else {
@@ -62,17 +76,12 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
+  const onLoginSubmit = async (data: LoginFormData) => {
     try {
-      const data = await login(loginEmail, loginPassword);
+      const result = await login(data.email, data.password);
       toast.success('Login realizado com sucesso!');
       setTimeout(() => {
-        // Redirecionar baseado no role
-        if (data?.user?.role === 'SUPER_ADMIN') {
+        if (result?.user?.role === 'SUPER_ADMIN') {
           router.replace('/dashboard');
         } else {
           router.replace('/');
@@ -81,27 +90,20 @@ export default function AuthPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erro ao fazer login';
-      setError(errorMessage);
       toast.error('Erro ao fazer login', {
         description: errorMessage,
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
+  const onRegisterSubmit = async (data: RegisterFormData) => {
     try {
       await register({
-        name: registerName,
-        email: registerEmail,
-        password: registerPassword,
-        role: registerRole,
-        tenantId: registerTenantId || undefined,
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        tenantId: data.tenantId || undefined,
       });
       toast.success('Registro realizado com sucesso!');
       setTimeout(() => {
@@ -110,12 +112,9 @@ export default function AuthPage() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Erro ao registrar';
-      setError(errorMessage);
       toast.error('Erro ao registrar', {
         description: errorMessage,
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -131,138 +130,184 @@ export default function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'login' | 'register')}
-          >
+          <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Registrar</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="space-y-4 mt-4">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                    disabled={loading}
+              <Form {...loginForm}>
+                <form
+                  onSubmit={loginForm.handleSubmit(onLoginSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="seu@email.com"
+                            disabled={loginForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    disabled={loading}
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            disabled={loginForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Erro</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Entrar
-                </Button>
-              </form>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loginForm.formState.isSubmitting}
+                  >
+                    {loginForm.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Entrar
+                  </Button>
+                </form>
+              </Form>
             </TabsContent>
 
             <TabsContent value="register" className="space-y-4 mt-4">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nome</Label>
-                  <Input
-                    id="register-name"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
-                    required
-                    disabled={loading}
+              <Form {...registerForm}>
+                <form
+                  onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={registerForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="Seu nome completo"
+                            disabled={registerForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
-                    required
-                    disabled={loading}
+                  <FormField
+                    control={registerForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="seu@email.com"
+                            disabled={registerForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    disabled={loading}
+                  <FormField
+                    control={registerForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            disabled={registerForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-role">Role</Label>
-                  <Select
-                    value={registerRole}
-                    onValueChange={(v) =>
-                      setRegisterRole(v as 'ADMIN' | 'OPERATOR' | 'USER')
-                    }
-                    disabled={loading}
+                  <FormField
+                    control={registerForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={registerForm.formState.isSubmitting}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                            <SelectItem value="OPERATOR">Operador</SelectItem>
+                            <SelectItem value="USER">Usuário</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="tenantId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tenant ID (opcional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="Deixe vazio se não tiver"
+                            disabled={registerForm.formState.isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={registerForm.formState.isSubmitting}
                   >
-                    <SelectTrigger id="register-role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="OPERATOR">Operador</SelectItem>
-                      <SelectItem value="USER">Usuário</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-tenant-id">
-                    Tenant ID (opcional)
-                  </Label>
-                  <Input
-                    id="register-tenant-id"
-                    type="text"
-                    placeholder="Deixe vazio se não tiver"
-                    value={registerTenantId}
-                    onChange={(e) => setRegisterTenantId(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Erro</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Registrar
-                </Button>
-              </form>
+                    {registerForm.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Registrar
+                  </Button>
+                </form>
+              </Form>
             </TabsContent>
           </Tabs>
         </CardContent>

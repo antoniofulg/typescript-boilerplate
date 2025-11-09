@@ -24,11 +24,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-interface TenantsTableProps {
+type TenantsTableProps = {
   tenants: Tenant[];
   onEdit: (tenant: Tenant) => void;
   onDelete: (id: string) => void;
-}
+};
 
 export function TenantsTable({ tenants, onEdit, onDelete }: TenantsTableProps) {
   return (

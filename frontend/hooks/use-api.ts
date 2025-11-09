@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import { ApiClient, ApiError } from '@/lib/api';
 
-interface UseApiOptions<T> {
+type UseApiOptions<T> = {
   onSuccess?: (data: T) => void;
   onError?: (error: ApiError) => void;
-}
+};
 
 export function useApi(token: string | null) {
   const [loading, setLoading] = useState(false);

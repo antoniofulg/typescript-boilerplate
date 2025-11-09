@@ -2,9 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { Tenant } from '@/types/tenant';
 
-interface StatsCardsProps {
+type StatsCardsProps = {
   tenants: Tenant[];
-}
+};
 
 export function StatsCards({ tenants }: StatsCardsProps) {
   const total = tenants.length;

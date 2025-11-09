@@ -1,6 +1,6 @@
 export type TenantStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
-export interface Tenant {
+export type Tenant = {
   id: string;
   name: string;
   slug: string;
@@ -8,15 +8,15 @@ export interface Tenant {
   createdAt: string;
   users?: number;
   sessions?: number;
-}
+};
 
-export interface CreateTenantDto {
+export type CreateTenantDto = {
   name: string;
   slug: string;
-}
+};
 
-export interface UpdateTenantDto {
+export type UpdateTenantDto = {
   name?: string;
   slug?: string;
   status?: TenantStatus;
-}
+};

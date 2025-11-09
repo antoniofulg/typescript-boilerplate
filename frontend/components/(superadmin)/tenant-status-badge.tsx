@@ -1,9 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import type { TenantStatus } from '@/types/tenant';
 
-interface TenantStatusBadgeProps {
+type TenantStatusBadgeProps = {
   status: TenantStatus;
-}
+};
 
 export function TenantStatusBadge({ status }: TenantStatusBadgeProps) {
   const getVariant = (status: TenantStatus) => {

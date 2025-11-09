@@ -19,9 +19,9 @@ import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
-interface TenantsManagementProps {
+type TenantsManagementProps = {
   initialTenants: Tenant[];
-}
+};
 
 export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   const { token } = useAuth();
