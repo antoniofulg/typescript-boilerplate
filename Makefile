@@ -62,6 +62,14 @@ down: ## Stop all services
 		$(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" 2>/dev/null && \
 		echo "$(GREEN)✅ Prisma Studio stopped$(NC)" || true; \
 	fi
+	@if [ -f /tmp/prisma-studio.pid ]; then \
+		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
+		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+			kill "$$PRISMA_PID" 2>/dev/null || true; \
+			rm -f /tmp/prisma-studio.pid; \
+			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
+		fi; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down
 
 restart: ## Restart all services
@@ -215,16 +223,50 @@ seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
 	fi
 
-prisma-studio: ## Open Prisma Studio
+prisma-studio: ## Open Prisma Studio (works with both dev and docker modes)
 	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
 	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555; \
+	elif [ -f .dev.pids ]; then \
+		echo "$(CYAN)Using local development environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
+		npx prisma studio --hostname 0.0.0.0 --port 5555 > /tmp/prisma-studio.log 2>&1 & \
+		echo $$! > /tmp/prisma-studio.pid && \
+		echo "$(GREEN)✅ Prisma Studio started in background (PID: $$!)$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No running environment detected.$(NC)"; \
+		echo "$(CYAN)💡 Start development environment with: make dev$(NC)"; \
+		echo "$(CYAN)💡 Or start Docker services with: make build && make up$(NC)"; \
+		exit 1; \
+	fi
 	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
 	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma-studio-stop$(NC)"
 
-prisma-studio-stop: ## Stop Prisma Studio
+prisma-studio-stop: ## Stop Prisma Studio (works with both dev and docker modes)
 	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Stopping Prisma Studio in Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running in Docker$(NC)"; \
+	elif [ -f /tmp/prisma-studio.pid ]; then \
+		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
+		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+			echo "$(CYAN)Stopping Prisma Studio (PID: $$PRISMA_PID)...$(NC)"; \
+			kill "$$PRISMA_PID" 2>/dev/null || true; \
+			sleep 1; \
+			if kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+				kill -9 "$$PRISMA_PID" 2>/dev/null || true; \
+			fi; \
+			rm -f /tmp/prisma-studio.pid; \
+			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
+		else \
+			echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+			rm -f /tmp/prisma-studio.pid; \
+		fi; \
+	else \
+		echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+	fi
 
 install-backend: ## Install backend dependencies
 	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"

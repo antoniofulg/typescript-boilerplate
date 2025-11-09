@@ -145,6 +145,10 @@ start() {
   echo -e "   ${CYAN}make seed${NC}          - Populate database with example data"
   echo -e "   ${CYAN}make db-push${NC}       - Quick: apply schema without migrations"
   echo ""
+  echo -e "${YELLOW}💡 Prisma Studio:${NC}"
+  echo -e "   ${CYAN}make prisma-studio${NC}     - Open Prisma Studio (http://localhost:5555)"
+  echo -e "   ${CYAN}make prisma-studio-stop${NC} - Stop Prisma Studio"
+  echo ""
   echo -e "${YELLOW}💡 To stop:${NC} ${CYAN}make dev-stop${NC} or ${CYAN}./scripts/dev.sh stop${NC}"
   echo ""
 }
@@ -180,6 +184,20 @@ stop() {
     echo -e "${CYAN}Stopping process on port 3000...${NC}"
     lsof -ti :3000 | xargs kill -9 2>/dev/null || true
     sleep 1
+  fi
+
+  # Stop Prisma Studio if running
+  if [ -f /tmp/prisma-studio.pid ]; then
+    PRISMA_PID=$(cat /tmp/prisma-studio.pid 2>/dev/null)
+    if [ -n "$PRISMA_PID" ] && kill -0 "$PRISMA_PID" 2>/dev/null; then
+      echo -e "${CYAN}Stopping Prisma Studio (PID: $PRISMA_PID)...${NC}"
+      kill "$PRISMA_PID" 2>/dev/null || true
+      sleep 1
+      if kill -0 "$PRISMA_PID" 2>/dev/null; then
+        kill -9 "$PRISMA_PID" 2>/dev/null || true
+      fi
+      rm -f /tmp/prisma-studio.pid
+    fi
   fi
 
   # Stop Docker services (only postgres and redis, keep backend/frontend stopped)
