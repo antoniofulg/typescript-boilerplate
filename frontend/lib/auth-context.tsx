@@ -74,10 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Token inválido, remover
         localStorage.removeItem('auth_token');
+        document.cookie = 'auth_token=; path=/; max-age=0';
         setToken(null);
       }
     } catch {
       localStorage.removeItem('auth_token');
+      document.cookie = 'auth_token=; path=/; max-age=0';
       setToken(null);
     } finally {
       setLoading(false);
@@ -102,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.accessToken);
     setUser(data.user);
     localStorage.setItem('auth_token', data.accessToken);
+    // Também salvar em cookie para server-side
+    document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
     return data;
   };
 
@@ -123,12 +127,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(data.accessToken);
     setUser(data.user);
     localStorage.setItem('auth_token', data.accessToken);
+    // Também salvar em cookie para server-side
+    document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('auth_token');
+    // Remover cookie também
+    document.cookie = 'auth_token=; path=/; max-age=0';
   };
 
   const getProfile = async () => {
