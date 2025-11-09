@@ -15,10 +15,16 @@ import { PrismaModule } from '../prisma/prisma.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        const jwtSecret = configService.get<string>('JWT_SECRET');
+        if (!jwtSecret) {
+          throw new Error(
+            'JWT_SECRET environment variable is required. Please set it in your environment configuration.',
+          );
+        }
         const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '7d';
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
-          secret: configService.get<string>('JWT_SECRET') || 'default-secret',
+          secret: jwtSecret,
           signOptions: {
             expiresIn,
           },
