@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -10,11 +10,17 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
-import type { Tenant, CreateTenantDto, UpdateTenantDto } from '@/types/tenant';
+import type {
+  Tenant,
+  CreateTenantDto,
+  UpdateTenantDto,
+  TenantStatus,
+} from '@/types/tenant';
 import { Button } from '@/components/ui/button';
 import { TenantsTable } from './tenants-table';
 import { TenantsTableSkeleton } from './tenants-table-skeleton';
 import { TenantFormDialog } from './tenant-form-dialog';
+import { TenantsFilters } from './tenants-filters';
 import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +38,8 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
 
   // Sync initialTenants when they change from parent
   useEffect(() => {
@@ -117,6 +125,23 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
     }
   };
 
+  // Filter and search tenants
+  const filteredTenants = useMemo(() => {
+    return tenants.filter((tenant) => {
+      // Search filter
+      const matchesSearch =
+        searchQuery === '' ||
+        tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tenant.slug.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Status filter
+      const matchesStatus =
+        statusFilter === 'ALL' || tenant.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [tenants, searchQuery, statusFilter]);
+
   return (
     <Card>
       <CardHeader>
@@ -149,6 +174,17 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
           </Alert>
         )}
 
+        {!loading && tenants.length > 0 && (
+          <div className="mb-4">
+            <TenantsFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          </div>
+        )}
+
         {loading && <TenantsTableSkeleton />}
 
         {!loading && tenants.length === 0 && !error && (
@@ -159,9 +195,17 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
           </div>
         )}
 
-        {!loading && tenants.length > 0 && (
+        {!loading && tenants.length > 0 && filteredTenants.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Nenhum tenant encontrado com os filtros aplicados.
+            </p>
+          </div>
+        )}
+
+        {!loading && filteredTenants.length > 0 && (
           <TenantsTable
-            tenants={tenants}
+            tenants={filteredTenants}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />

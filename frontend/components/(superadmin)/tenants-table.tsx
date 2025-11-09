@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Tenant } from '@/types/tenant';
 import { TenantStatusBadge } from './tenant-status-badge';
 import {
@@ -25,6 +25,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+type SortField = 'name' | 'slug' | 'status' | 'createdAt';
+type SortDirection = 'asc' | 'desc' | null;
+
 type TenantsTableProps = {
   tenants: Tenant[];
   onEdit: (tenant: Tenant) => void;
@@ -33,6 +36,8 @@ type TenantsTableProps = {
 
 export function TenantsTable({ tenants, onEdit, onDelete }: TenantsTableProps) {
   const [mounted, setMounted] = useState(false);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   useEffect(() => {
     // This is necessary to avoid hydration mismatch with Radix UI AlertDialog IDs
@@ -40,21 +45,125 @@ export function TenantsTable({ tenants, onEdit, onDelete }: TenantsTableProps) {
     setMounted(true);
   }, []);
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortField(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="ml-2 h-4 w-4" />;
+    }
+    if (sortDirection === 'desc') {
+      return <ArrowDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
+
+  const sortedTenants = [...tenants].sort((a, b) => {
+    if (!sortField || !sortDirection) return 0;
+
+    let aValue: string | number;
+    let bValue: string | number;
+
+    switch (sortField) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'slug':
+        aValue = a.slug.toLowerCase();
+        bValue = b.slug.toLowerCase();
+        break;
+      case 'status':
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      case 'createdAt':
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === 'asc' ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
   // Only render AlertDialog after mount to avoid hydration mismatch
   if (!mounted) {
     return (
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Criado em</TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 -ml-3 data-[state=open]:bg-accent"
+                onClick={() => handleSort('name')}
+              >
+                Nome
+                {getSortIcon('name')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 -ml-3 data-[state=open]:bg-accent"
+                onClick={() => handleSort('slug')}
+              >
+                Slug
+                {getSortIcon('slug')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 -ml-3 data-[state=open]:bg-accent"
+                onClick={() => handleSort('status')}
+              >
+                Status
+                {getSortIcon('status')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 -ml-3 data-[state=open]:bg-accent"
+                onClick={() => handleSort('createdAt')}
+              >
+                Criado em
+                {getSortIcon('createdAt')}
+              </Button>
+            </TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tenants.map((tenant) => (
+          {sortedTenants.map((tenant) => (
             <TableRow key={tenant.id}>
               <TableCell className="font-medium">{tenant.name}</TableCell>
               <TableCell>
@@ -106,15 +215,55 @@ export function TenantsTable({ tenants, onEdit, onDelete }: TenantsTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Nome</TableHead>
-          <TableHead>Slug</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Criado em</TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 -ml-3 data-[state=open]:bg-accent"
+              onClick={() => handleSort('name')}
+            >
+              Nome
+              {getSortIcon('name')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 -ml-3 data-[state=open]:bg-accent"
+              onClick={() => handleSort('slug')}
+            >
+              Slug
+              {getSortIcon('slug')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 -ml-3 data-[state=open]:bg-accent"
+              onClick={() => handleSort('status')}
+            >
+              Status
+              {getSortIcon('status')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 -ml-3 data-[state=open]:bg-accent"
+              onClick={() => handleSort('createdAt')}
+            >
+              Criado em
+              {getSortIcon('createdAt')}
+            </Button>
+          </TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {tenants.map((tenant) => (
+        {sortedTenants.map((tenant) => (
           <TableRow key={tenant.id}>
             <TableCell className="font-medium">{tenant.name}</TableCell>
             <TableCell>
