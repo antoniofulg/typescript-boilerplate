@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { TenantStatus } from '@prisma/client';
 import { TenantsService } from './tenants.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -52,7 +53,10 @@ describe('TenantsService', () => {
 
       expect(result).toEqual(mockTenant);
       expect(prismaService.tenant.create).toHaveBeenCalledWith({
-        data: createTenantDto,
+        data: {
+          ...createTenantDto,
+          status: TenantStatus.ACTIVE,
+        },
       });
     });
 
