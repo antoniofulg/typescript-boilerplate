@@ -1,8 +1,21 @@
 import { getAuthToken } from './auth-server';
 import type { Tenant } from '@/types/tenant';
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+// Use the same logic as auth-server to determine the backend URL
+const getBackendUrl = (): string => {
+  if (process.env.BACKEND_URL) {
+    return process.env.BACKEND_URL;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const backendPort = process.env.BACKEND_PORT || '4000';
+    return `http://backend:${backendPort}`;
+  }
+
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+};
+
+const BACKEND_URL = getBackendUrl();
 
 export async function getTenants(): Promise<Tenant[]> {
   const token = await getAuthToken();
@@ -16,7 +29,7 @@ export async function getTenants(): Promise<Tenant[]> {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      cache: 'no-store', // Sempre buscar dados atualizados
+      cache: 'no-store', // Always fetch fresh data
     });
 
     if (!response.ok) {

@@ -7,10 +7,10 @@ export type ApiError = {
 };
 
 /**
- * Extrai a mensagem de erro de uma resposta HTTP do NestJS
+ * Extracts error message from a NestJS HTTP response
  */
 async function extractErrorMessage(response: Response): Promise<string> {
-  // Mensagens padrão baseadas no status HTTP
+  // Default messages based on HTTP status
   const statusMessages: Record<number, string> = {
     400: 'Requisição inválida',
     401: 'Não autenticado',
@@ -25,30 +25,30 @@ async function extractErrorMessage(response: Response): Promise<string> {
     statusMessages[response.status] || `Erro ${response.status}`;
 
   try {
-    // Clonar a resposta para poder ler o body sem consumir o original
+    // Clone response to read body without consuming the original
     const clonedResponse = response.clone();
     const contentType = clonedResponse.headers.get('content-type');
 
-    // Só tentar parsear se for JSON
+    // Only try to parse if it's JSON
     if (contentType && contentType.includes('application/json')) {
       const errorData = await clonedResponse.json();
 
       // NestJS error format: { statusCode, message, error }
       if (errorData.message) {
-        // Se message é um array (erros de validação), juntar as mensagens
+        // If message is an array (validation errors), join the messages
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join(', ');
         } else if (typeof errorData.message === 'string') {
           errorMessage = errorData.message;
         }
       } else if (errorData.error && typeof errorData.error === 'string') {
-        // Fallback para o campo error
+        // Fallback to error field
         errorMessage = errorData.error;
       }
     }
   } catch {
-    // Se não conseguir parsear JSON, usar mensagem padrão baseada no status
-    // Isso já está definido acima como fallback
+    // If unable to parse JSON, use default message based on status
+    // This is already defined above as fallback
   }
 
   return errorMessage;

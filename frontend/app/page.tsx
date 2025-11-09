@@ -35,7 +35,7 @@ export default function Home() {
       return;
     }
 
-    // Para outros usuários autenticados, mostrar página de boas-vindas
+    // For other authenticated users, show welcome page
   }, [isAuthenticated, loading, user, router]);
 
   if (loading) {
@@ -46,8 +46,8 @@ export default function Home() {
     );
   }
 
-  // Se não está autenticado ou é SUPER_ADMIN, o useEffect já redirecionou
-  // Este conteúdo só será renderizado para usuários autenticados não-SUPER_ADMIN
+  // If not authenticated or is SUPER_ADMIN, useEffect already redirected
+  // This content will only be rendered for authenticated non-SUPER_ADMIN users
   if (!isAuthenticated || user?.role === 'SUPER_ADMIN') {
     return null;
   }

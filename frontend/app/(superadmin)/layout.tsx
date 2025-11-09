@@ -16,7 +16,7 @@ export default async function SuperAdminLayout({
     if (errorMessage === 'UNAUTHORIZED') {
       redirect('/');
     }
-    // Para outros erros, também redirecionar para auth
+    // For other errors, also redirect to auth
     redirect('/auth');
   }
 

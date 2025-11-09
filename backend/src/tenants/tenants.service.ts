@@ -15,7 +15,7 @@ export class TenantsService {
   async create(createTenantDto: CreateTenantDto) {
     const { name, slug } = createTenantDto;
 
-    // Verificar se slug já existe
+    // Check if slug already exists
     const existingTenant = await this.prisma.tenant.findUnique({
       where: { slug },
     });
@@ -70,7 +70,7 @@ export class TenantsService {
   async update(id: string, updateTenantDto: UpdateTenantDto) {
     const tenant = await this.findOne(id);
 
-    // Se slug está sendo atualizado, verificar se não está em uso
+    // If slug is being updated, check if it's not already in use
     if (updateTenantDto.slug && updateTenantDto.slug !== tenant.slug) {
       const existingTenant = await this.prisma.tenant.findUnique({
         where: { slug: updateTenantDto.slug },

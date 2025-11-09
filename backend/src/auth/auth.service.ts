@@ -29,7 +29,7 @@ export class AuthService {
       include: { tenant: true },
     });
 
-    // Se não encontrar, tentar como SuperAdmin
+    // If not found, try as SuperAdmin
     if (!user) {
       const superAdmin = await this.prisma.superAdmin.findUnique({
         where: { email },
@@ -113,7 +113,7 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { name, email, password, role, tenantId } = registerDto;
 
-    // Verificar se email já existe
+    // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
       where: { email },
     });
@@ -122,7 +122,7 @@ export class AuthService {
       throw new ConflictException('Email já está em uso');
     }
 
-    // Se tenantId foi fornecido, validar se existe e está ativo
+    // If tenantId was provided, validate if it exists and is active
     if (tenantId) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
@@ -136,7 +136,7 @@ export class AuthService {
         throw new BadRequestException('Tenant inativo');
       }
 
-      // Verificar se email já existe neste tenant
+      // Check if email already exists in this tenant
       const existingUserInTenant = await this.prisma.user.findUnique({
         where: {
           tenantId_email: {
@@ -151,11 +151,11 @@ export class AuthService {
       }
     }
 
-    // Hash da senha
+    // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Criar usuário
+    // Create user
     const user = await this.prisma.user.create({
       data: {
         name,
@@ -196,7 +196,7 @@ export class AuthService {
   }
 
   async refreshToken(userId: string, role: string): Promise<AuthResponseDto> {
-    // Validar se o usuário ainda existe e está ativo
+    // Validate if user still exists and is active
     if (role === 'SUPER_ADMIN') {
       const superAdmin = await this.prisma.superAdmin.findUnique({
         where: { id: userId },

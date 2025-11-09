@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }): Promise<CurrentUserPayload> {
     const { userId, role } = payload;
 
-    // Se for SuperAdmin, não precisa validar tenant
+    // If SuperAdmin, no need to validate tenant
     if (role === 'SUPER_ADMIN') {
       const superAdmin = await this.prisma.superAdmin.findUnique({
         where: { id: userId },
@@ -49,7 +49,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       };
     }
 
-    // Para usuários normais, validar se existe e se o tenant está ativo
+    // For regular users, validate if exists and if tenant is active
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },

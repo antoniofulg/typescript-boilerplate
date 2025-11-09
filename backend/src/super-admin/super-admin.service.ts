@@ -58,7 +58,7 @@ export class SuperAdminService {
       throw new NotFoundException('Super Admin não encontrado');
     }
 
-    // Se email está sendo atualizado, verificar se não está em uso
+    // If email is being updated, check if it's not already in use
     if (
       updateSuperAdminDto.email &&
       updateSuperAdminDto.email !== superAdmin.email

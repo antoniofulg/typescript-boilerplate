@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedToken = localStorage.getItem('auth_token');
       if (storedToken) {
         setToken(storedToken);
-        // Tentar carregar perfil do usuário
+        // Try to load user profile
         void loadUserProfile(storedToken).catch(() => {
           setLoading(false);
         });
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await response.json();
         setUser(userData);
       } else {
-        // Token inválido, remover
+        // Invalid token, remove it
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
           document.cookie = 'auth_token=; path=/; max-age=0';
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
-      // Também salvar em cookie para server-side
+      // Also save in cookie for server-side
       document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
     }
     return data;
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
-      // Também salvar em cookie para server-side
+      // Also save in cookie for server-side
       document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
     }
   };
@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
-      // Remover cookie também
+      // Also remove cookie
       document.cookie = 'auth_token=; path=/; max-age=0';
     }
   };

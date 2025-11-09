@@ -16,7 +16,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto, currentUserTenantId?: string) {
     const { name, email, password, role, tenantId } = createUserDto;
 
-    // Se o usuário atual tem tenantId, só pode criar usuários no mesmo tenant
+    // If current user has tenantId, can only create users in the same tenant
     const targetTenantId = currentUserTenantId || tenantId;
 
     if (currentUserTenantId && tenantId && tenantId !== currentUserTenantId) {
@@ -25,7 +25,7 @@ export class UsersService {
       );
     }
 
-    // Verificar se email já existe
+    // Check if email already exists
     if (targetTenantId) {
       const existingUser = await this.prisma.user.findUnique({
         where: {
@@ -64,11 +64,11 @@ export class UsersService {
       }
     }
 
-    // Hash da senha
+    // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Criar usuário
+    // Create user
     return this.prisma.user.create({
       data: {
         name,
@@ -108,7 +108,7 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Verificar se o usuário pertence ao mesmo tenant
+    // Check if user belongs to the same tenant
     if (
       currentUserTenantId &&
       user.tenantId &&
@@ -129,7 +129,7 @@ export class UsersService {
   ) {
     const user = await this.findOne(id, currentUserTenantId);
 
-    // Verificar se o usuário pertence ao mesmo tenant
+    // Check if user belongs to the same tenant
     if (
       currentUserTenantId &&
       user.tenantId &&
@@ -140,7 +140,7 @@ export class UsersService {
       );
     }
 
-    // Se email está sendo atualizado, verificar se não está em uso
+    // If email is being updated, check if it's not already in use
     if (updateUserDto.email && updateUserDto.email !== user.email) {
       const existingUser = await this.prisma.user.findFirst({
         where: {
@@ -154,7 +154,7 @@ export class UsersService {
       }
     }
 
-    // Hash da senha se fornecida
+    // Hash password if provided
     const updateData: {
       name?: string;
       email?: string;
@@ -180,7 +180,7 @@ export class UsersService {
   async remove(id: string, currentUserTenantId?: string) {
     const user = await this.findOne(id, currentUserTenantId);
 
-    // Verificar se o usuário pertence ao mesmo tenant
+    // Check if user belongs to the same tenant
     if (
       currentUserTenantId &&
       user.tenantId &&
