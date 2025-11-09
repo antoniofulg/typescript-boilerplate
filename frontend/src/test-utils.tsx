@@ -1,12 +1,13 @@
 import React, { type ReactElement } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/lib/auth-context';
 
 // Custom render function that includes providers
 function AllTheProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
   );
 }
