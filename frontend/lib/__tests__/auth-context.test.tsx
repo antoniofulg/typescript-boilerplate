@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@/src/test-utils';
+import { render as rtlRender } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/src/mocks/server';
+import { ThemeProvider } from '@/components/theme-provider';
 
 // Test component that uses auth context
 function TestComponent() {
@@ -110,19 +112,25 @@ describe('useAuth hook', () => {
   it('throws error when used outside AuthProvider', () => {
     // Suppress console.error for this test
     const originalError = console.error;
-    const errorSpy = vi.fn();
-    console.error = errorSpy;
+    console.error = vi.fn();
 
-    // React 19 throws errors during render, but we need to catch them properly
-    try {
-      render(<TestComponent />);
-    } catch (error) {
-      expect(error).toBeDefined();
-    }
+    // Use rtlRender directly (not from test-utils) to avoid AuthProvider wrapper
+    // Wrap only with ThemeProvider to match minimal setup
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+      >
+        {children}
+      </ThemeProvider>
+    );
 
-    // The error should be logged or thrown
-    // In React 19, errors might be caught by error boundaries or logged
-    expect(errorSpy).toHaveBeenCalled();
+    // React 19 throws errors during render
+    // The error should be thrown when the component tries to use the context
+    expect(() => {
+      rtlRender(<TestComponent />, { wrapper: Wrapper });
+    }).toThrow('useAuth must be used within an AuthProvider');
 
     console.error = originalError;
   });

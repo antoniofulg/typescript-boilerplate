@@ -36,7 +36,8 @@ describe('StatsCards', () => {
 
   it('renders active tenants count', () => {
     render(<StatsCards tenants={mockTenants} />);
-    expect(screen.getByText(/ativos/i)).toBeInTheDocument();
+    // Use a more specific query to avoid matching "Tenants Inativos"
+    expect(screen.getByText(/^Tenants Ativos$/i)).toBeInTheDocument();
     // There might be multiple "2" texts, so we check for at least one
     const activeCounts = screen.getAllByText('2');
     expect(activeCounts.length).toBeGreaterThanOrEqual(1);
