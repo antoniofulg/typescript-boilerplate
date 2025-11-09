@@ -23,16 +23,19 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AuthPage() {
   const router = useRouter();
   const { login, register, isAuthenticated, user } = useAuth();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // Removed success state - using toast instead
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -62,12 +65,11 @@ export default function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     try {
       const data = await login(loginEmail, loginPassword);
-      setSuccess('Login realizado com sucesso!');
+      toast.success('Login realizado com sucesso!');
       setTimeout(() => {
         // Redirecionar baseado no role
         if (data?.user?.role === 'SUPER_ADMIN') {
@@ -75,9 +77,14 @@ export default function AuthPage() {
         } else {
           router.replace('/');
         }
-      }, 1000);
+      }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erro ao fazer login';
+      setError(errorMessage);
+      toast.error('Erro ao fazer login', {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -86,7 +93,6 @@ export default function AuthPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     try {
@@ -97,12 +103,17 @@ export default function AuthPage() {
         role: registerRole,
         tenantId: registerTenantId || undefined,
       });
-      setSuccess('Registro realizado com sucesso!');
+      toast.success('Registro realizado com sucesso!');
       setTimeout(() => {
         router.replace('/');
-      }, 1000);
+      }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao registrar');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erro ao registrar';
+      setError(errorMessage);
+      toast.error('Erro ao registrar', {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -160,13 +171,6 @@ export default function AuthPage() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Erro</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {success && (
-                  <Alert>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertTitle>Sucesso</AlertTitle>
-                    <AlertDescription>{success}</AlertDescription>
                   </Alert>
                 )}
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -252,13 +256,6 @@ export default function AuthPage() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Erro</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {success && (
-                  <Alert>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertTitle>Sucesso</AlertTitle>
-                    <AlertDescription>{success}</AlertDescription>
                   </Alert>
                 )}
                 <Button type="submit" className="w-full" disabled={loading}>

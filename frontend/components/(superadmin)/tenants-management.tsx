@@ -16,6 +16,7 @@ import { TenantsTable } from './tenants-table';
 import { TenantFormDialog } from './tenant-form-dialog';
 import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 interface TenantsManagementProps {
   initialTenants: Tenant[];
@@ -23,6 +24,7 @@ interface TenantsManagementProps {
 
 export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   const { token } = useAuth();
+  const toast = useToast();
   const { loading, error, get, post, patch, delete: del } = useApi(token);
   const [tenants, setTenants] = useState<Tenant[]>(initialTenants);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,12 +55,20 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   };
 
   const handleDelete = async (id: string) => {
+    const tenant = tenants.find((t) => t.id === id);
     await del(`/tenants/${id}`, {
       onSuccess: () => {
+        toast.success('Tenant excluído com sucesso!', {
+          description: tenant
+            ? `O tenant "${tenant.name}" foi removido.`
+            : undefined,
+        });
         void fetchTenants();
       },
-      onError: () => {
-        // Error is handled by useApi
+      onError: (err) => {
+        toast.error('Erro ao excluir tenant', {
+          description: err.message,
+        });
       },
     });
   };
@@ -71,21 +81,33 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
       if (editingTenant) {
         await patch(`/tenants/${editingTenant.id}`, data, {
           onSuccess: () => {
+            toast.success('Tenant atualizado com sucesso!', {
+              description: `O tenant "${data.name || editingTenant.name}" foi atualizado.`,
+            });
             setDialogOpen(false);
             void fetchTenants();
           },
           onError: (err) => {
             setFormError(err.message);
+            toast.error('Erro ao atualizar tenant', {
+              description: err.message,
+            });
           },
         });
       } else {
         await post('/tenants', data, {
           onSuccess: () => {
+            toast.success('Tenant criado com sucesso!', {
+              description: `O tenant "${data.name}" foi criado.`,
+            });
             setDialogOpen(false);
             void fetchTenants();
           },
           onError: (err) => {
             setFormError(err.message);
+            toast.error('Erro ao criar tenant', {
+              description: err.message,
+            });
           },
         });
       }
