@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTenants } from '@/lib/api-server';
 import type { Tenant } from '@/types/tenant';
-import { DashboardHeader } from '@/components/(superadmin)/dashboard-header';
-import { StatsCards } from '@/components/(superadmin)/stats-cards';
-import { TenantsManagement } from '@/components/(superadmin)/tenants-management';
+import { DashboardWrapper } from '@/components/(superadmin)/dashboard-wrapper';
 
 export default async function DashboardPage() {
   let tenants: Tenant[] = [];
@@ -18,13 +16,5 @@ export default async function DashboardPage() {
     tenants = [];
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      <main className="container mx-auto px-4 py-8">
-        <StatsCards tenants={tenants} />
-        <TenantsManagement initialTenants={tenants} />
-      </main>
-    </div>
-  );
+  return <DashboardWrapper tenants={tenants} />;
 }
