@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserProfile = async (authToken: string) => {
     try {
-      console.log('[Auth] Carregando perfil do usuário...');
       const response = await fetch(`${BACKEND_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -71,20 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log('[Auth] Perfil carregado com sucesso:', userData);
         setUser(userData);
       } else {
-        console.error(
-          '[Auth] Erro ao carregar perfil:',
-          response.status,
-          response.statusText,
-        );
         // Token inválido, remover
         localStorage.removeItem('auth_token');
         setToken(null);
       }
-    } catch (error) {
-      console.error('[Auth] Erro ao carregar perfil:', error);
+    } catch {
       localStorage.removeItem('auth_token');
       setToken(null);
     } finally {
@@ -93,7 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    console.log('[Auth] Fazendo login...', { email });
     const response = await fetch(`${BACKEND_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -104,15 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('[Auth] Erro no login:', response.status, error);
       throw new Error(error.message || 'Erro ao fazer login');
     }
 
     const data = await response.json();
-    console.log('[Auth] Login realizado com sucesso:', {
-      user: data.user,
-      hasToken: !!data.accessToken,
-    });
     setToken(data.accessToken);
     setUser(data.user);
     localStorage.setItem('auth_token', data.accessToken);
@@ -120,10 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (registerData: RegisterData) => {
-    console.log('[Auth] Registrando novo usuário...', {
-      email: registerData.email,
-      role: registerData.role,
-    });
     const response = await fetch(`${BACKEND_URL}/auth/register`, {
       method: 'POST',
       headers: {
@@ -134,15 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('[Auth] Erro no registro:', response.status, error);
       throw new Error(error.message || 'Erro ao registrar');
     }
 
     const data = await response.json();
-    console.log('[Auth] Registro realizado com sucesso:', {
-      user: data.user,
-      hasToken: !!data.accessToken,
-    });
     setToken(data.accessToken);
     setUser(data.user);
     localStorage.setItem('auth_token', data.accessToken);
@@ -158,7 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     try {
-      console.log('[Auth] Buscando perfil do usuário...');
       const response = await fetch(`${BACKEND_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -167,17 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
-        console.log('[Auth] Perfil obtido com sucesso:', userData);
         setUser(userData);
-      } else {
-        console.error(
-          '[Auth] Erro ao buscar perfil:',
-          response.status,
-          response.statusText,
-        );
       }
-    } catch (error) {
-      console.error('[Auth] Erro ao buscar perfil:', error);
+    } catch {
+      // Silently fail
     }
   };
 
