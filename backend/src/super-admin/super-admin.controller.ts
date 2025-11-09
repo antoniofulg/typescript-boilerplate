@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -11,16 +10,16 @@ import {
 import { SuperAdminService } from './super-admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from './guards/super-admin.guard';
+import { UpdateSuperAdminDto } from './dto/update-super-admin.dto';
 
 @Controller('super-admin')
 @UseGuards(JwtAuthGuard, SuperAdminGuard)
 export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}
 
-  @Post()
-  create(@Body() body: { name: string; email: string; password: string }) {
-    return this.superAdminService.create(body.name, body.email, body.password);
-  }
+  // POST endpoint removed for security reasons
+  // Super admin accounts should only be created through database seeding
+  // or a separate secure administrative process, not through the API
 
   @Get()
   findAll() {
@@ -35,9 +34,9 @@ export class SuperAdminController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; password?: string },
+    @Body() updateSuperAdminDto: UpdateSuperAdminDto,
   ) {
-    return this.superAdminService.update(id, body);
+    return this.superAdminService.update(id, updateSuperAdminDto);
   }
 
   @Delete(':id')

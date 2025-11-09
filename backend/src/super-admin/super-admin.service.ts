@@ -4,19 +4,37 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SuperAdminResponseDto } from './dto/super-admin-response.dto';
+import { UpdateSuperAdminDto } from './dto/update-super-admin.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SuperAdminService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.superAdmin.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  /**
+   * Helper method to exclude passwordHash from SuperAdmin objects
+   */
+  private excludePasswordHash(superAdmin: {
+    id: string;
+    name: string;
+    email: string;
+    passwordHash: string;
+    createdAt: Date;
+  }): SuperAdminResponseDto {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...result } = superAdmin;
+    return result;
   }
 
-  async findOne(id: string) {
+  async findAll(): Promise<SuperAdminResponseDto[]> {
+    const superAdmins = await this.prisma.superAdmin.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return superAdmins.map((admin) => this.excludePasswordHash(admin));
+  }
+
+  async findOne(id: string): Promise<SuperAdminResponseDto> {
     const superAdmin = await this.prisma.superAdmin.findUnique({
       where: { id },
     });
@@ -25,42 +43,28 @@ export class SuperAdminService {
       throw new NotFoundException('Super Admin não encontrado');
     }
 
-    return superAdmin;
-  }
-
-  async create(name: string, email: string, password: string) {
-    // Verificar se email já existe
-    const existingSuperAdmin = await this.prisma.superAdmin.findUnique({
-      where: { email },
-    });
-
-    if (existingSuperAdmin) {
-      throw new ConflictException('Email já está em uso');
-    }
-
-    // Hash da senha
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    return this.prisma.superAdmin.create({
-      data: {
-        name,
-        email,
-        passwordHash,
-      },
-    });
+    return this.excludePasswordHash(superAdmin);
   }
 
   async update(
     id: string,
-    data: { name?: string; email?: string; password?: string },
-  ) {
-    const superAdmin = await this.findOne(id);
+    updateSuperAdminDto: UpdateSuperAdminDto,
+  ): Promise<SuperAdminResponseDto> {
+    const superAdmin = await this.prisma.superAdmin.findUnique({
+      where: { id },
+    });
+
+    if (!superAdmin) {
+      throw new NotFoundException('Super Admin não encontrado');
+    }
 
     // Se email está sendo atualizado, verificar se não está em uso
-    if (data.email && data.email !== superAdmin.email) {
+    if (
+      updateSuperAdminDto.email &&
+      updateSuperAdminDto.email !== superAdmin.email
+    ) {
       const existingSuperAdmin = await this.prisma.superAdmin.findUnique({
-        where: { email: data.email },
+        where: { email: updateSuperAdminDto.email },
       });
 
       if (existingSuperAdmin) {
@@ -72,26 +76,39 @@ export class SuperAdminService {
       name?: string;
       email?: string;
       passwordHash?: string;
-    } = { ...data };
+    } = { ...updateSuperAdminDto };
 
     // Hash da senha se fornecida
-    if (data.password) {
+    if (updateSuperAdminDto.password) {
       const saltRounds = 10;
-      updateData.passwordHash = await bcrypt.hash(data.password, saltRounds);
+      updateData.passwordHash = await bcrypt.hash(
+        updateSuperAdminDto.password,
+        saltRounds,
+      );
       delete (updateData as { password?: string }).password;
     }
 
-    return this.prisma.superAdmin.update({
+    const updated = await this.prisma.superAdmin.update({
       where: { id },
       data: updateData,
     });
+
+    return this.excludePasswordHash(updated);
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-
-    return this.prisma.superAdmin.delete({
+  async remove(id: string): Promise<SuperAdminResponseDto> {
+    const superAdmin = await this.prisma.superAdmin.findUnique({
       where: { id },
     });
+
+    if (!superAdmin) {
+      throw new NotFoundException('Super Admin não encontrado');
+    }
+
+    const deleted = await this.prisma.superAdmin.delete({
+      where: { id },
+    });
+
+    return this.excludePasswordHash(deleted);
   }
 }
