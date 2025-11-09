@@ -8,8 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
 import type {
   Tenant,
   CreateTenantDto,
@@ -48,6 +46,13 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   useEffect(() => {
     setTenants(initialTenants);
   }, [initialTenants]);
+
+  // Clear form error when dialog closes
+  useEffect(() => {
+    if (!dialogOpen) {
+      setFormError(null);
+    }
+  }, [dialogOpen]);
 
   const fetchTenants = async () => {
     const data = await get<Tenant[]>('/tenants', {
@@ -186,14 +191,6 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Erro</AlertTitle>
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-        )}
-
         {!loading && tenants.length > 0 && (
           <div className="mb-4 space-y-4">
             <TenantsFilters

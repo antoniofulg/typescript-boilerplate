@@ -25,10 +25,22 @@ export function useApi(token: string | null) {
         options?.onSuccess?.(data);
         return data;
       } catch (err) {
-        const apiError: ApiError =
-          err instanceof Error && 'message' in err
-            ? (err as ApiError)
-            : { message: 'Erro desconhecido' };
+        // ApiError pode ser um objeto simples com message e status, ou uma instância de Error
+        let apiError: ApiError;
+
+        if (err && typeof err === 'object' && 'message' in err) {
+          // É um ApiError (objeto com message)
+          apiError = err as ApiError;
+        } else if (err instanceof Error) {
+          // É uma instância de Error
+          apiError = {
+            message: err.message || 'Erro desconhecido',
+          };
+        } else {
+          // Erro desconhecido
+          apiError = { message: 'Erro desconhecido' };
+        }
+
         setError(apiError);
         options?.onError?.(apiError);
         return null;

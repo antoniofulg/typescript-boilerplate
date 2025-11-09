@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -303,6 +303,40 @@ dev-stop: ## Stop development environment
 dev-status: ## Show development environment status
 	@chmod +x scripts/dev.sh
 	@./scripts/dev.sh status
+
+dev-logs: ## View logs from backend and frontend (development mode)
+	@echo "$(GREEN)📋 Viewing development logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/backend-dev.log ] || [ -f /tmp/frontend-dev.log ]; then \
+		tail -f /tmp/backend-dev.log /tmp/frontend-dev.log 2>/dev/null || \
+		(if [ -f /tmp/backend-dev.log ]; then tail -f /tmp/backend-dev.log; fi) || \
+		(if [ -f /tmp/frontend-dev.log ]; then tail -f /tmp/frontend-dev.log; fi); \
+	else \
+		echo "$(YELLOW)⚠️  No log files found. Make sure development environment is running with: make dev$(NC)"; \
+	fi
+
+dev-logs-backend: ## View backend logs only (development mode)
+	@echo "$(GREEN)📋 Viewing backend logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/backend-dev.log ]; then \
+		tail -f /tmp/backend-dev.log; \
+	else \
+		echo "$(YELLOW)⚠️  Backend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(CYAN)💡 If backend is running, logs should be at: /tmp/backend-dev.log$(NC)"; \
+	fi
+
+dev-logs-frontend: ## View frontend logs only (development mode)
+	@echo "$(GREEN)📋 Viewing frontend logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/frontend-dev.log ]; then \
+		tail -f /tmp/frontend-dev.log; \
+	else \
+		echo "$(YELLOW)⚠️  Frontend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(CYAN)💡 If frontend is running, logs should be at: /tmp/frontend-dev.log$(NC)"; \
+	fi
 
 dev-backend: ## Run backend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"

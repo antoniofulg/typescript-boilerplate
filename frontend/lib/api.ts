@@ -6,6 +6,54 @@ export type ApiError = {
   status?: number;
 };
 
+/**
+ * Extrai a mensagem de erro de uma resposta HTTP do NestJS
+ */
+async function extractErrorMessage(response: Response): Promise<string> {
+  // Mensagens padrão baseadas no status HTTP
+  const statusMessages: Record<number, string> = {
+    400: 'Requisição inválida',
+    401: 'Não autenticado',
+    403: 'Acesso negado',
+    404: 'Recurso não encontrado',
+    409: 'Conflito: o recurso já existe',
+    422: 'Erro de validação',
+    500: 'Erro interno do servidor',
+  };
+
+  let errorMessage =
+    statusMessages[response.status] || `Erro ${response.status}`;
+
+  try {
+    // Clonar a resposta para poder ler o body sem consumir o original
+    const clonedResponse = response.clone();
+    const contentType = clonedResponse.headers.get('content-type');
+
+    // Só tentar parsear se for JSON
+    if (contentType && contentType.includes('application/json')) {
+      const errorData = await clonedResponse.json();
+
+      // NestJS error format: { statusCode, message, error }
+      if (errorData.message) {
+        // Se message é um array (erros de validação), juntar as mensagens
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(', ');
+        } else if (typeof errorData.message === 'string') {
+          errorMessage = errorData.message;
+        }
+      } else if (errorData.error && typeof errorData.error === 'string') {
+        // Fallback para o campo error
+        errorMessage = errorData.error;
+      }
+    }
+  } catch {
+    // Se não conseguir parsear JSON, usar mensagem padrão baseada no status
+    // Isso já está definido acima como fallback
+  }
+
+  return errorMessage;
+}
+
 export class ApiClient {
   private baseUrl: string;
   private token: string | null;
@@ -80,9 +128,9 @@ export class ApiClient {
           });
 
           if (!retryResponse.ok) {
-            const errorData = await retryResponse.json().catch(() => ({}));
+            const errorMessage = await extractErrorMessage(retryResponse);
             const error: ApiError = {
-              message: errorData.message || `Erro ${retryResponse.status}`,
+              message: errorMessage,
               status: retryResponse.status,
             };
             throw error;
@@ -96,9 +144,9 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = await extractErrorMessage(response);
       const error: ApiError = {
-        message: errorData.message || `Erro ${response.status}`,
+        message: errorMessage,
         status: response.status,
       };
       throw error;
