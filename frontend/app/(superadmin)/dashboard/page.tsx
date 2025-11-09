@@ -1,44 +1,21 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { Loader2 } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { getTenants } from '@/lib/api-server';
+import type { Tenant } from '@/types/tenant';
 import { DashboardHeader } from '@/components/(superadmin)/dashboard-header';
 import { StatsCards } from '@/components/(superadmin)/stats-cards';
 import { TenantsManagement } from '@/components/(superadmin)/tenants-management';
-import { useApi } from '@/hooks/use-api';
-import type { Tenant } from '@/types/tenant';
 
-export default function DashboardPage() {
-  const { token, loading: authLoading } = useAuth();
-  const { get } = useApi(token);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [initialLoad, setInitialLoad] = useState(true);
-
-  useEffect(() => {
-    if (authLoading || !token || !initialLoad) {
-      return;
+export default async function DashboardPage() {
+  let tenants: Tenant[] = [];
+  try {
+    tenants = await getTenants();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'UNKNOWN';
+    if (errorMessage === 'UNAUTHENTICATED') {
+      redirect('/auth');
     }
-
-    setInitialLoad(false);
-    void get<Tenant[]>('/tenants', {
-      onSuccess: (data) => {
-        if (data) setTenants(data);
-      },
-      onError: () => {
-        // Error handled by component
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, token, initialLoad]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="ml-4 text-muted-foreground">Carregando dashboard...</p>
-      </div>
-    );
+    // Para outros erros, retornar array vazio e deixar o componente client-side lidar
+    tenants = [];
   }
 
   return (

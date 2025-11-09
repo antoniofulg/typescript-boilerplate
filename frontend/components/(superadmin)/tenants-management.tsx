@@ -9,10 +9,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { Tenant, CreateTenantDto, UpdateTenantDto } from '@/types/tenant';
 import { Button } from '@/components/ui/button';
 import { TenantsTable } from './tenants-table';
+import { TenantsTableSkeleton } from './tenants-table-skeleton';
 import { TenantFormDialog } from './tenant-form-dialog';
 import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/lib/auth-context';
@@ -148,12 +149,7 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
           </Alert>
         )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <p className="ml-2 text-muted-foreground">Carregando tenants...</p>
-          </div>
-        )}
+        {loading && <TenantsTableSkeleton />}
 
         {!loading && tenants.length === 0 && !error && (
           <div className="text-center py-8">

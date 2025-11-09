@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,8 +17,31 @@ import { User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted after component mounts to avoid hydration mismatch
+  // This is a common pattern for client-only rendering
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  // Show loading state during hydration
+  if (!mounted || loading) {
+    return (
+      <Button
+        variant="ghost"
+        className="relative h-10 w-10 rounded-full"
+        disabled
+      >
+        <Avatar className="h-10 w-10">
+          <AvatarFallback>...</AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
 
   if (!user) {
     return (

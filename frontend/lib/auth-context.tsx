@@ -44,17 +44,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Mark as mounted first to avoid hydration issues
+    // This is a common pattern to prevent hydration mismatches
+
+    setMounted(true);
+
     // Carregar token do localStorage ao inicializar
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      // Tentar carregar perfil do usuário
-      void loadUserProfile(storedToken).catch((error) => {
-        console.error('Error loading user profile:', error);
+    // Only access localStorage after component has mounted (client-side only)
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('auth_token');
+      if (storedToken) {
+        setToken(storedToken);
+        // Tentar carregar perfil do usuário
+        void loadUserProfile(storedToken).catch(() => {
+          setLoading(false);
+        });
+      } else {
         setLoading(false);
-      });
+      }
     } else {
       setLoading(false);
     }
@@ -73,13 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
       } else {
         // Token inválido, remover
-        localStorage.removeItem('auth_token');
-        document.cookie = 'auth_token=; path=/; max-age=0';
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+          document.cookie = 'auth_token=; path=/; max-age=0';
+        }
         setToken(null);
       }
     } catch {
-      localStorage.removeItem('auth_token');
-      document.cookie = 'auth_token=; path=/; max-age=0';
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        document.cookie = 'auth_token=; path=/; max-age=0';
+      }
       setToken(null);
     } finally {
       setLoading(false);
@@ -103,9 +117,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await response.json();
     setToken(data.accessToken);
     setUser(data.user);
-    localStorage.setItem('auth_token', data.accessToken);
-    // Também salvar em cookie para server-side
-    document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', data.accessToken);
+      // Também salvar em cookie para server-side
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+    }
     return data;
   };
 
@@ -126,17 +142,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await response.json();
     setToken(data.accessToken);
     setUser(data.user);
-    localStorage.setItem('auth_token', data.accessToken);
-    // Também salvar em cookie para server-side
-    document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', data.accessToken);
+      // Também salvar em cookie para server-side
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+    }
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('auth_token');
-    // Remover cookie também
-    document.cookie = 'auth_token=; path=/; max-age=0';
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      // Remover cookie também
+      document.cookie = 'auth_token=; path=/; max-age=0';
+    }
   };
 
   const getProfile = async () => {
@@ -168,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         getProfile,
         isAuthenticated: !!token && !!user,
-        loading,
+        loading: !mounted || loading, // Show loading during hydration
       }}
     >
       {children}

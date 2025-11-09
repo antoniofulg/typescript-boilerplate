@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 
 export default function Home() {
   const router = useRouter();
@@ -30,8 +31,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
+      <div className="min-h-screen">
+        <LoadingSkeleton className="min-h-screen" />
       </div>
     );
   }
