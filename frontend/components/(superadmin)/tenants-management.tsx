@@ -21,6 +21,7 @@ import { TenantsTable } from './tenants-table';
 import { TenantsTableSkeleton } from './tenants-table-skeleton';
 import { TenantFormDialog } from './tenant-form-dialog';
 import { TenantsFilters } from './tenants-filters';
+import { Pagination } from '@/components/ui/pagination';
 import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +41,8 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Sync initialTenants when they change from parent
   useEffect(() => {
@@ -142,6 +145,23 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
     });
   }, [tenants, searchQuery, statusFilter]);
 
+  // Paginate filtered tenants
+  const paginatedTenants = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredTenants.slice(startIndex, endIndex);
+  }, [filteredTenants, currentPage, itemsPerPage]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredTenants.length / itemsPerPage),
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
   return (
     <Card>
       <CardHeader>
@@ -175,13 +195,22 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
         )}
 
         {!loading && tenants.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-4 space-y-4">
             <TenantsFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
             />
+            {filteredTenants.length > 0 && (
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <div>
+                  Mostrando {paginatedTenants.length} de{' '}
+                  {filteredTenants.length} tenant
+                  {filteredTenants.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -204,11 +233,20 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
         )}
 
         {!loading && filteredTenants.length > 0 && (
-          <TenantsTable
-            tenants={filteredTenants}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <>
+            <TenantsTable
+              tenants={paginatedTenants}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </>
         )}
       </CardContent>
     </Card>
