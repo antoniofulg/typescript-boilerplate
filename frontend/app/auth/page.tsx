@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import Link from 'next/link';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, register, isAuthenticated } = useAuth();
+  const { login, register, isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +48,16 @@ export default function AuthPage() {
   const [registerTenantId, setRegisterTenantId] = useState('');
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push('/');
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Usar replace para evitar adicionar ao histórico
+      if (user.role === 'SUPER_ADMIN') {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/');
+      }
+    }
+  }, [isAuthenticated, user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,10 +66,15 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      await login(loginEmail, loginPassword);
+      const data = await login(loginEmail, loginPassword);
       setSuccess('Login realizado com sucesso!');
       setTimeout(() => {
-        router.push('/');
+        // Redirecionar baseado no role
+        if (data?.user?.role === 'SUPER_ADMIN') {
+          router.replace('/dashboard');
+        } else {
+          router.replace('/');
+        }
       }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login');
@@ -88,7 +99,7 @@ export default function AuthPage() {
       });
       setSuccess('Registro realizado com sucesso!');
       setTimeout(() => {
-        router.push('/');
+        router.replace('/');
       }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao registrar');
