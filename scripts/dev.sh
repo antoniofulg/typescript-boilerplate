@@ -66,11 +66,27 @@ start() {
     exit 1
   fi
 
-  # Start backend in background with DATABASE_URL
+  # Load backend environment variables
+  JWT_SECRET_VALUE="your-super-secret-jwt-key-change-in-production"
+  JWT_EXPIRES_IN_VALUE="7d"
+  if [ -f "$DOCKER_DIR/env.backend.example" ]; then
+    JWT_SECRET_VALUE=$(grep "^JWT_SECRET=" "$DOCKER_DIR/env.backend.example" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_SECRET_VALUE")
+    JWT_EXPIRES_IN_VALUE=$(grep "^JWT_EXPIRES_IN=" "$DOCKER_DIR/env.backend.example" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_EXPIRES_IN_VALUE")
+  fi
+  # Also check for .env.backend file (if it exists)
+  if [ -f "$DOCKER_DIR/.env.backend" ]; then
+    JWT_SECRET_VALUE=$(grep "^JWT_SECRET=" "$DOCKER_DIR/.env.backend" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_SECRET_VALUE")
+    JWT_EXPIRES_IN_VALUE=$(grep "^JWT_EXPIRES_IN=" "$DOCKER_DIR/.env.backend" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_EXPIRES_IN_VALUE")
+  fi
+
+  # Start backend in background with environment variables
   echo -e "${CYAN}💻 Starting backend (port 4000)...${NC}"
   cd "$BACKEND_DIR"
   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
   PORT=4000 \
+  JWT_SECRET="$JWT_SECRET_VALUE" \
+  JWT_EXPIRES_IN="$JWT_EXPIRES_IN_VALUE" \
+  NODE_ENV=development \
   npm run start:dev > /tmp/backend-dev.log 2>&1 &
   BACKEND_PID=$!
   echo "$BACKEND_PID" > "$PID_FILE"
@@ -90,10 +106,19 @@ start() {
     exit 1
   fi
 
+  # Get aliases from env.example or use defaults (needed for frontend config)
+  FRONTEND_ALIAS_VALUE="voto-inteligente.frontend.local"
+  BACKEND_ALIAS_VALUE="voto-inteligente.backend.local"
+  if [ -f "$DOCKER_DIR/env.example" ]; then
+    FRONTEND_ALIAS_VALUE=$(grep "^FRONTEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$FRONTEND_ALIAS_VALUE")
+    BACKEND_ALIAS_VALUE=$(grep "^BACKEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$BACKEND_ALIAS_VALUE")
+  fi
+
   # Start frontend in background
   echo -e "${CYAN}💻 Starting frontend (port 3000)...${NC}"
   cd "$FRONTEND_DIR"
   NEXT_PUBLIC_BACKEND_URL="http://localhost:4000" \
+  FRONTEND_ALIAS="$FRONTEND_ALIAS_VALUE" \
   npm run dev > /tmp/frontend-dev.log 2>&1 &
   FRONTEND_PID=$!
   echo "$FRONTEND_PID" >> "$PID_FILE"
@@ -109,14 +134,6 @@ start() {
   # Wait a bit for services to start
   sleep 3
 
-  # Get aliases from env.example or use defaults
-  FRONTEND_ALIAS="app.frontend.local"
-  BACKEND_ALIAS="app.backend.local"
-  if [ -f "$DOCKER_DIR/env.example" ]; then
-    FRONTEND_ALIAS=$(grep "^FRONTEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$FRONTEND_ALIAS")
-    BACKEND_ALIAS=$(grep "^BACKEND_ALIAS=" "$DOCKER_DIR/env.example" 2>/dev/null | cut -d'=' -f2 || echo "$BACKEND_ALIAS")
-  fi
-
   echo ""
   echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
   echo -e "${GREEN}║     🚀 Development Environment Started${NC}                    ║${NC}"
@@ -126,12 +143,12 @@ start() {
   echo ""
   echo -e "${GREEN}✅ Backend:${NC}"
   echo -e "   ${CYAN}🌐 http://localhost:4000${NC}"
-  echo -e "   ${CYAN}🌐 http://${BACKEND_ALIAS}:4000${NC}"
+  echo -e "   ${CYAN}🌐 http://${BACKEND_ALIAS_VALUE}:4000${NC}"
   echo -e "   ${CYAN}🏥 Health: http://localhost:4000/health${NC}"
   echo ""
   echo -e "${GREEN}✅ Frontend:${NC}"
   echo -e "   ${CYAN}🌐 http://localhost:3000${NC}"
-  echo -e "   ${CYAN}🌐 http://${FRONTEND_ALIAS}:3000${NC}"
+  echo -e "   ${CYAN}🌐 http://${FRONTEND_ALIAS_VALUE}:3000${NC}"
   echo ""
   echo -e "${GREEN}✅ PostgreSQL:${NC} ${CYAN}localhost:5432${NC}"
   echo -e "${GREEN}✅ Redis:${NC}     ${CYAN}localhost:6379${NC}"
@@ -144,6 +161,10 @@ start() {
   echo -e "   ${CYAN}make migrate-dev${NC}  - Create and apply database migrations"
   echo -e "   ${CYAN}make seed${NC}          - Populate database with example data"
   echo -e "   ${CYAN}make db-push${NC}       - Quick: apply schema without migrations"
+  echo ""
+  echo -e "${YELLOW}💡 Prisma Studio:${NC}"
+  echo -e "   ${CYAN}make prisma-studio${NC}     - Open Prisma Studio (http://localhost:5555)"
+  echo -e "   ${CYAN}make prisma-studio-stop${NC} - Stop Prisma Studio"
   echo ""
   echo -e "${YELLOW}💡 To stop:${NC} ${CYAN}make dev-stop${NC} or ${CYAN}./scripts/dev.sh stop${NC}"
   echo ""
@@ -180,6 +201,20 @@ stop() {
     echo -e "${CYAN}Stopping process on port 3000...${NC}"
     lsof -ti :3000 | xargs kill -9 2>/dev/null || true
     sleep 1
+  fi
+
+  # Stop Prisma Studio if running
+  if [ -f /tmp/prisma-studio.pid ]; then
+    PRISMA_PID=$(cat /tmp/prisma-studio.pid 2>/dev/null)
+    if [ -n "$PRISMA_PID" ] && kill -0 "$PRISMA_PID" 2>/dev/null; then
+      echo -e "${CYAN}Stopping Prisma Studio (PID: $PRISMA_PID)...${NC}"
+      kill "$PRISMA_PID" 2>/dev/null || true
+      sleep 1
+      if kill -0 "$PRISMA_PID" 2>/dev/null; then
+        kill -9 "$PRISMA_PID" 2>/dev/null || true
+      fi
+      rm -f /tmp/prisma-studio.pid
+    fi
   fi
 
   # Stop Docker services (only postgres and redis, keep backend/frontend stopped)

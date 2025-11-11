@@ -1,9 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
+
+  // Create super admin
+  const superAdminPassword = 'admin';
+  const saltRounds = 10;
+  const superAdminPasswordHash = await bcrypt.hash(
+    superAdminPassword,
+    saltRounds,
+  );
+
+  const superAdmin = await prisma.superAdmin.upsert({
+    where: { email: 'admin@voto-inteligente.com' },
+    update: {},
+    create: {
+      name: 'Super Administrador',
+      email: 'admin@voto-inteligente.com',
+      passwordHash: superAdminPasswordHash,
+    },
+  });
+
+  console.log('✅ Created super admin:', {
+    email: superAdmin.email,
+    name: superAdmin.name,
+    password: superAdminPassword, // Log apenas para desenvolvimento
+  });
 
   // Create example tenants
   const tenant1 = await prisma.tenant.upsert({

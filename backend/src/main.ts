@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AppModule } from './app.module';
 
@@ -14,6 +15,15 @@ async function bootstrap() {
     origin: ['http://localhost:3000', frontendUrl],
     credentials: true,
   });
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // Healthcheck endpoint
   app.getHttpAdapter().get('/health', (_req: Request, res: Response) => {

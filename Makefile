@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -61,6 +61,14 @@ down: ## Stop all services
 	if $(DOCKER_COMPOSE) ps 2>/dev/null | grep -q "backend.*Up"; then \
 		$(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" 2>/dev/null && \
 		echo "$(GREEN)✅ Prisma Studio stopped$(NC)" || true; \
+	fi
+	@if [ -f /tmp/prisma-studio.pid ]; then \
+		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
+		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+			kill "$$PRISMA_PID" 2>/dev/null || true; \
+			rm -f /tmp/prisma-studio.pid; \
+			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
+		fi; \
 	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down
 
@@ -215,16 +223,50 @@ seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
 	fi
 
-prisma-studio: ## Open Prisma Studio
+prisma-studio: ## Open Prisma Studio (works with both dev and docker modes)
 	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
 	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555; \
+	elif [ -f .dev.pids ]; then \
+		echo "$(CYAN)Using local development environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
+		npx prisma studio --hostname 0.0.0.0 --port 5555 > /tmp/prisma-studio.log 2>&1 & \
+		echo $$! > /tmp/prisma-studio.pid && \
+		echo "$(GREEN)✅ Prisma Studio started in background (PID: $$!)$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No running environment detected.$(NC)"; \
+		echo "$(CYAN)💡 Start development environment with: make dev$(NC)"; \
+		echo "$(CYAN)💡 Or start Docker services with: make build && make up$(NC)"; \
+		exit 1; \
+	fi
 	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
 	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma-studio-stop$(NC)"
 
-prisma-studio-stop: ## Stop Prisma Studio
+prisma-studio-stop: ## Stop Prisma Studio (works with both dev and docker modes)
 	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Stopping Prisma Studio in Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running in Docker$(NC)"; \
+	elif [ -f /tmp/prisma-studio.pid ]; then \
+		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
+		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+			echo "$(CYAN)Stopping Prisma Studio (PID: $$PRISMA_PID)...$(NC)"; \
+			kill "$$PRISMA_PID" 2>/dev/null || true; \
+			sleep 1; \
+			if kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+				kill -9 "$$PRISMA_PID" 2>/dev/null || true; \
+			fi; \
+			rm -f /tmp/prisma-studio.pid; \
+			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
+		else \
+			echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+			rm -f /tmp/prisma-studio.pid; \
+		fi; \
+	else \
+		echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+	fi
 
 install-backend: ## Install backend dependencies
 	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"
@@ -261,6 +303,40 @@ dev-stop: ## Stop development environment
 dev-status: ## Show development environment status
 	@chmod +x scripts/dev.sh
 	@./scripts/dev.sh status
+
+dev-logs: ## View logs from backend and frontend (development mode)
+	@echo "$(GREEN)📋 Viewing development logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/backend-dev.log ] || [ -f /tmp/frontend-dev.log ]; then \
+		tail -f /tmp/backend-dev.log /tmp/frontend-dev.log 2>/dev/null || \
+		(if [ -f /tmp/backend-dev.log ]; then tail -f /tmp/backend-dev.log; fi) || \
+		(if [ -f /tmp/frontend-dev.log ]; then tail -f /tmp/frontend-dev.log; fi); \
+	else \
+		echo "$(YELLOW)⚠️  No log files found. Make sure development environment is running with: make dev$(NC)"; \
+	fi
+
+dev-logs-backend: ## View backend logs only (development mode)
+	@echo "$(GREEN)📋 Viewing backend logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/backend-dev.log ]; then \
+		tail -f /tmp/backend-dev.log; \
+	else \
+		echo "$(YELLOW)⚠️  Backend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(CYAN)💡 If backend is running, logs should be at: /tmp/backend-dev.log$(NC)"; \
+	fi
+
+dev-logs-frontend: ## View frontend logs only (development mode)
+	@echo "$(GREEN)📋 Viewing frontend logs...$(NC)"
+	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
+	@echo ""
+	@if [ -f /tmp/frontend-dev.log ]; then \
+		tail -f /tmp/frontend-dev.log; \
+	else \
+		echo "$(YELLOW)⚠️  Frontend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(CYAN)💡 If frontend is running, logs should be at: /tmp/frontend-dev.log$(NC)"; \
+	fi
 
 dev-backend: ## Run backend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
