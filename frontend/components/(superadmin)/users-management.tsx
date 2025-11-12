@@ -96,7 +96,7 @@ export function UsersManagement({
         });
         void fetchUsers();
       },
-      onError: (err) => {
+      onError: (err: Error) => {
         toast.error('Erro ao excluir usuário', {
           description: err.message,
         });

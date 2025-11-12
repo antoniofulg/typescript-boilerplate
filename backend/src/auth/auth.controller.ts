@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RedirectIfAuthenticatedGuard } from './guards/redirect-if-authenticated.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { CurrentUserPayload } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -20,6 +21,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @UseGuards(RedirectIfAuthenticatedGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
@@ -27,6 +29,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(RedirectIfAuthenticatedGuard)
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {

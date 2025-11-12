@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
+import { RedirectIfAuthenticatedGuard } from './guards/redirect-if-authenticated.guard';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RedirectIfAuthenticatedGuard],
   exports: [AuthService],
 })
 export class AuthModule {}
