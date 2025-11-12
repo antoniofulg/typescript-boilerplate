@@ -24,8 +24,26 @@ help: ## Show this help message
 	@echo "$(GREEN)║     🚀 Full-Stack Boilerplate - Available Commands     ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Docker Commands:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@echo "$(BOLD)$(YELLOW)🐳 Docker & Services:$(NC)"
+	@grep -E '^build|^build-fast|^up|^down|^restart|^logs|^logs-backend|^logs-frontend|^urls|^ps|^clean|^clean-old-containers:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)💻 Development:$(NC)"
+	@grep -E '^dev|^dev-stop|^dev-status|^dev-logs|^dev-logs-backend|^dev-logs-frontend|^dev-backend|^dev-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
+	@grep -E '^migrate|^migrate-dev|^migrate-reset|^migrate-resolve|^db-push|^seed|^prisma-studio|^prisma-studio-stop:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)🧪 Testing:$(NC)"
+	@grep -E '^test-(frontend|backend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)🔍 Code Quality:$(NC)"
+	@grep -E '^lint-backend|^lint-frontend|^format-backend|^format-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)📦 Installation & Setup:$(NC)"
+	@grep -E '^install-backend|^install-frontend|^setup-env|^init-project:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)🛠️  Utilities:$(NC)"
+	@grep -E '^hosts-add|^hosts-remove|^shell-backend|^shell-frontend|^release:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
 hosts-add: ## Add aliases to /etc/hosts file
