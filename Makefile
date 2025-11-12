@@ -40,7 +40,7 @@ help: ## Show this help message
 	@grep -E '^(backend|frontend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
-	@grep -E '^migrate|^migrate\.dev|^migrate\.reset|^migrate\.resolve|^db\.push|^seed|^prisma\.studio|^prisma\.studio\.stop:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^(migrate:|migrate\.dev:|migrate\.reset:|migrate\.resolve:|db\.push:|seed:|prisma\.studio:|prisma\.studio\.stop:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🧪 Testing:$(NC)"
 	@grep -E '^test\.(frontend|backend).*:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
