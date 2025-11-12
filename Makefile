@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev.build dev.stop dev.restart dev.status dev.logs dev.logs.backend dev.logs.frontend local local.stop local.status local.logs local.logs.backend local.logs.frontend backend frontend dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-backend dev-frontend dev-local dev-local.stop dev-local.status dev-local.logs dev-local.logs.backend dev-local.logs.frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -25,28 +25,37 @@ help: ## Show this help message
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🐳 Docker & Services:$(NC)"
-	@grep -E '^build|^build-fast|^up|^down|^restart|^logs|^logs-backend|^logs-frontend|^urls|^ps|^clean|^clean-old-containers:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^build|^build\.fast|^up|^down|^restart|^logs|^logs\.backend|^logs\.frontend|^urls|^ps|^clean|^clean\.old\.containers|^shell\.backend|^shell\.frontend:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {if ($$2 != "" && $$2 !~ /^[a-z]/) printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)💻 Development:$(NC)"
-	@grep -E '^dev|^dev-docker|^dev-stop|^dev-status|^dev-logs|^dev-logs-backend|^dev-logs-frontend|^dev-backend|^dev-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🐳 Docker (with hot-reload):$(NC)"
+	@printf "    $(GREEN)%-23s$(NC) %s\n" "dev" "Start development environment in Docker with hot-reload"
+	@grep -E '^dev\.(build|stop|restart|status|logs).*:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/ hosts-add//' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)💻 Local (PostgreSQL/Redis in Docker):$(NC)"
+	@grep -E '^local.*:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/ hosts\.add//' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🔧 Standalone:$(NC)"
+	@grep -E '^(backend|frontend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
-	@grep -E '^migrate|^migrate-dev|^migrate-reset|^migrate-resolve|^db-push|^seed|^prisma-studio|^prisma-studio-stop:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^migrate|^migrate\.dev|^migrate\.reset|^migrate\.resolve|^db\.push|^seed|^prisma\.studio|^prisma\.studio\.stop:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🧪 Testing:$(NC)"
-	@grep -E '^test-(frontend|backend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^test\.(frontend|backend).*:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🔍 Code Quality:$(NC)"
-	@grep -E '^lint-backend|^lint-frontend|^format-backend|^format-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^lint\.backend|^lint\.frontend|^format\.backend|^format\.frontend:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)📦 Installation & Setup:$(NC)"
-	@grep -E '^install-backend|^install-frontend|^setup-env|^init-project:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^install\.backend|^install\.frontend|^setup\.env|^init\.project:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🛠️  Utilities:$(NC)"
-	@grep -E '^hosts-add|^hosts-remove|^shell-backend|^shell-frontend|^release:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^hosts\.add|^hosts\.remove|^shell\.backend|^shell\.frontend|^release:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 
-hosts-add: ## Add aliases to /etc/hosts file
+hosts.add: ## Add aliases to /etc/hosts file
 	@echo "$(GREEN)📝 Adding aliases to /etc/hosts...$(NC)"
 	@chmod +x scripts/manage-hosts.sh
 	@./scripts/manage-hosts.sh add $(FRONTEND_ALIAS) $(BACKEND_ALIAS)
@@ -54,16 +63,16 @@ hosts-add: ## Add aliases to /etc/hosts file
 	@echo "   Frontend: $(BOLD)http://$(FRONTEND_ALIAS):3000$(NC)"
 	@echo "   Backend:  $(BOLD)http://$(BACKEND_ALIAS):4000$(NC)"
 
-hosts-remove: ## Remove aliases from /etc/hosts file
+hosts.remove: ## Remove aliases from /etc/hosts file
 	@echo "$(YELLOW)🗑️  Removing aliases from /etc/hosts...$(NC)"
 	@chmod +x scripts/manage-hosts.sh
 	@./scripts/manage-hosts.sh remove $(FRONTEND_ALIAS) $(BACKEND_ALIAS)
 
-build: hosts-add ## Build Docker images (no cache) and add aliases to hosts
+build: hosts.add ## Build Docker images (no cache) and add aliases to hosts
 	@echo "$(GREEN)🔨 Building Docker images...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build --no-cache
 
-build-fast: hosts-add ## Build Docker images (with cache) and add aliases to hosts
+build.fast: hosts.add ## Build Docker images (with cache) and add aliases to hosts
 	@echo "$(GREEN)🔨 Building Docker images (with cache)...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build
 
@@ -99,10 +108,10 @@ restart: ## Restart all services
 logs: ## View logs from all services
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f
 
-logs-backend: ## View backend logs
+logs.backend: ## View backend logs
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f backend
 
-logs-frontend: ## View frontend logs
+logs.frontend: ## View frontend logs
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f frontend
 
 urls: ## Show service URLs
@@ -153,10 +162,10 @@ urls: ## Show service URLs
 	if $(DOCKER_COMPOSE) exec backend pgrep -f "prisma studio" > /dev/null 2>&1; then \
 		echo "   $(GREEN)✅ Prisma Studio$(NC)"; \
 		echo "      $(BLUE)🎨 URL:$(NC) $(BOLD)http://localhost:5555$(NC)"; \
-		echo "      $(CYAN)💡 To stop:$(NC) $(BOLD)make prisma-studio-stop$(NC)"; \
+		echo "      $(CYAN)💡 To stop:$(NC) $(BOLD)make prisma.studio.stop$(NC)"; \
 	else \
 		echo "   $(YELLOW)⚪ Prisma Studio is not running$(NC)"; \
-		echo "      $(CYAN)💡 To start:$(NC) $(BOLD)make prisma-studio$(NC)"; \
+		echo "      $(CYAN)💡 To start:$(NC) $(BOLD)make prisma.studio$(NC)"; \
 	fi
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
@@ -166,26 +175,26 @@ urls: ## Show service URLs
 	@echo "   $(CYAN)View logs:$(NC)        $(BOLD)make logs$(NC)"
 	@echo "   $(CYAN)Stop services:$(NC)  $(BOLD)make down$(NC)"
 	@echo "   $(CYAN)Status:$(NC)          $(BOLD)make ps$(NC)"
-	@echo "   $(CYAN)Prisma Studio:$(NC)   $(BOLD)make prisma-studio$(NC)"
+	@echo "   $(CYAN)Prisma Studio:$(NC)   $(BOLD)make prisma.studio$(NC)"
 	@echo "   $(CYAN)View URLs again:$(NC) $(BOLD)make urls$(NC)"
 	@echo ""
 
 ps: ## View container status
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) ps
 
-clean-old-containers: ## Remove old containers with fixed names (app-*)
+clean.old.containers: ## Remove old containers with fixed names (app-*)
 	@echo "$(YELLOW)🧹 Cleaning up old containers with fixed names...$(NC)"
 	@docker rm -f voto-inteligente-postgres voto-inteligente-redis voto-inteligente-backend voto-inteligente-frontend 2>/dev/null || true
 	@echo "$(GREEN)✅ Old containers cleaned up$(NC)"
 
-clean: hosts-remove clean-old-containers ## Stop services, remove volumes and remove aliases from hosts
+clean: hosts.remove clean.old.containers ## Stop services, remove volumes and remove aliases from hosts
 	@echo "$(YELLOW)🧹 Cleaning containers, volumes and aliases...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) down -v
 
-shell-backend: ## Enter backend container
+shell.backend: ## Enter backend container
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend sh
 
-shell-frontend: ## Enter frontend container
+shell.frontend: ## Enter frontend container
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec frontend sh
 
 migrate: ## Run Prisma migrations
@@ -198,7 +207,7 @@ migrate: ## Run Prisma migrations
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate deploy; \
 	fi
 
-migrate-dev: ## Create and apply Prisma migrations (development)
+migrate.dev: ## Create and apply Prisma migrations (development)
 	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
 	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
@@ -208,12 +217,12 @@ migrate-dev: ## Create and apply Prisma migrations (development)
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate dev; \
 	fi
 
-migrate-reset: ## Reset database and apply all migrations (WARNING: deletes all data)
+migrate.reset: ## Reset database and apply all migrations (WARNING: deletes all data)
 	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
 	@echo "$(CYAN)Resetting database and applying migrations...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force
 
-migrate-resolve: ## Create baseline migration from current database state
+migrate.resolve: ## Create baseline migration from current database state
 	@echo "$(GREEN)📊 Creating baseline migration from current database...$(NC)"
 	@echo "$(CYAN)This creates an initial migration matching your current database state$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev --name init --create-only
@@ -221,7 +230,7 @@ migrate-resolve: ## Create baseline migration from current database state
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate resolve --applied init || \
 		(cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend bash -c "MIGRATION_NAME=\$$(ls -1 prisma/migrations | head -1) && npx prisma migrate resolve --applied \$$MIGRATION_NAME")
 
-db-push: ## Push Prisma schema to database without migrations (development)
+db.push: ## Push Prisma schema to database without migrations (development)
 	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
 	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Using Docker container...$(NC)"; \
@@ -241,7 +250,7 @@ seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
 	fi
 
-prisma-studio: ## Open Prisma Studio (works with both dev and docker modes)
+prisma.studio: ## Open Prisma Studio (works with both dev and docker modes)
 	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
 	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
 	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
@@ -260,9 +269,9 @@ prisma-studio: ## Open Prisma Studio (works with both dev and docker modes)
 		exit 1; \
 	fi
 	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
-	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma-studio-stop$(NC)"
+	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma.studio.stop$(NC)"
 
-prisma-studio-stop: ## Stop Prisma Studio (works with both dev and docker modes)
+prisma.studio.stop: ## Stop Prisma Studio (works with both dev and docker modes)
 	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
 	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
 		echo "$(CYAN)Stopping Prisma Studio in Docker container...$(NC)"; \
@@ -286,43 +295,67 @@ prisma-studio-stop: ## Stop Prisma Studio (works with both dev and docker modes)
 		echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
 	fi
 
-install-backend: ## Install backend dependencies
+install.backend: ## Install backend dependencies
 	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"
 	@cd backend && npm install
 
-install-frontend: ## Install frontend dependencies
+install.frontend: ## Install frontend dependencies
 	@echo "$(GREEN)📦 Installing frontend dependencies...$(NC)"
 	@cd frontend && npm install
 
-lint-backend: ## Run lint on backend
+lint.backend: ## Run lint on backend
 	@echo "$(GREEN)🔍 Running lint on backend...$(NC)"
 	@cd backend && npm run lint
 
-lint-frontend: ## Run lint on frontend
+lint.frontend: ## Run lint on frontend
 	@echo "$(GREEN)🔍 Running lint on frontend...$(NC)"
 	@cd frontend && npm run lint
 
-format-backend: ## Format backend code
+format.backend: ## Format backend code
 	@echo "$(GREEN)✨ Formatting backend code...$(NC)"
 	@cd backend && npm run format
 
-format-frontend: ## Format frontend code
+format.frontend: ## Format frontend code
 	@echo "$(GREEN)✨ Formatting frontend code...$(NC)"
 	@cd frontend && npm run format
 
-dev: hosts-add ## Start development environment with hot-reload (PostgreSQL/Redis in Docker, backend/frontend locally)
+dev: hosts.add ## Start development environment in Docker with hot-reload
+	@echo "$(GREEN)🚀 Starting development environment in Docker (with hot-reload)...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
+	@sleep 5
+	@$(MAKE) urls.dev
+
+local: hosts.add ## Start development environment locally (PostgreSQL/Redis in Docker, backend/frontend locally)
+	@echo "$(GREEN)🚀 Starting development environment locally...$(NC)"
 	@chmod +x scripts/dev.sh
 	@./scripts/dev.sh start
 
-dev-stop: ## Stop development environment
+dev.stop: ## Stop development environment in Docker
+	@echo "$(YELLOW)🛑 Stopping development environment in Docker...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml down
+
+local.stop: ## Stop local development environment
+	@echo "$(YELLOW)🛑 Stopping local development environment...$(NC)"
 	@chmod +x scripts/dev.sh
 	@./scripts/dev.sh stop
 
-dev-status: ## Show development environment status
+dev.status: ## Show development environment status (Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml ps
+
+local.status: ## Show local development environment status
 	@chmod +x scripts/dev.sh
 	@./scripts/dev.sh status
 
-dev-logs: ## View logs from backend and frontend (development mode)
+dev.logs: ## View logs from development environment in Docker
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f
+
+dev.logs.backend: ## View backend logs (Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f backend
+
+dev.logs.frontend: ## View frontend logs (Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f frontend
+
+local.logs: ## View logs from local development environment
 	@echo "$(GREEN)📋 Viewing development logs...$(NC)"
 	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
 	@echo ""
@@ -331,69 +364,97 @@ dev-logs: ## View logs from backend and frontend (development mode)
 		(if [ -f /tmp/backend-dev.log ]; then tail -f /tmp/backend-dev.log; fi) || \
 		(if [ -f /tmp/frontend-dev.log ]; then tail -f /tmp/frontend-dev.log; fi); \
 	else \
-		echo "$(YELLOW)⚠️  No log files found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(YELLOW)⚠️  No log files found. Make sure development environment is running with: make local$(NC)"; \
 	fi
 
-dev-logs-backend: ## View backend logs only (development mode)
+local.logs.backend: ## View backend logs only (local)
 	@echo "$(GREEN)📋 Viewing backend logs...$(NC)"
 	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
 	@echo ""
 	@if [ -f /tmp/backend-dev.log ]; then \
 		tail -f /tmp/backend-dev.log; \
 	else \
-		echo "$(YELLOW)⚠️  Backend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(YELLOW)⚠️  Backend log file not found. Make sure development environment is running with: make local$(NC)"; \
 		echo "$(CYAN)💡 If backend is running, logs should be at: /tmp/backend-dev.log$(NC)"; \
 	fi
 
-dev-logs-frontend: ## View frontend logs only (development mode)
+local.logs.frontend: ## View frontend logs only (local)
 	@echo "$(GREEN)📋 Viewing frontend logs...$(NC)"
 	@echo "$(CYAN)Press Ctrl+C to exit$(NC)"
 	@echo ""
 	@if [ -f /tmp/frontend-dev.log ]; then \
 		tail -f /tmp/frontend-dev.log; \
 	else \
-		echo "$(YELLOW)⚠️  Frontend log file not found. Make sure development environment is running with: make dev$(NC)"; \
+		echo "$(YELLOW)⚠️  Frontend log file not found. Make sure development environment is running with: make local$(NC)"; \
 		echo "$(CYAN)💡 If frontend is running, logs should be at: /tmp/frontend-dev.log$(NC)"; \
 	fi
 
-dev-backend: ## Run backend in development mode (local, standalone)
+backend: ## Run backend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
 	@cd backend && npm run start:dev
 
-dev-frontend: ## Run frontend in development mode (local, standalone)
+frontend: ## Run frontend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
 	@cd frontend && npm run dev
 
-dev-docker-build: hosts-add ## Build Docker images for development (with hot-reload)
+dev.build: hosts.add ## Build Docker images for development (with hot-reload)
 	@echo "$(GREEN)🔨 Building Docker images for development...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml build
 
-dev-docker: hosts-add ## Start development environment in Docker with hot-reload
-	@echo "$(GREEN)🚀 Starting development environment in Docker (with hot-reload)...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
-	@sleep 5
-	@$(MAKE) urls-dev
-
-dev-docker-stop: ## Stop development environment in Docker
-	@echo "$(YELLOW)🛑 Stopping development environment in Docker...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml down
-
-dev-docker-restart: ## Restart development environment in Docker
+dev.restart: ## Restart development environment in Docker
 	@echo "$(YELLOW)🔄 Restarting development environment in Docker...$(NC)"
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml restart
 	@sleep 3
-	@$(MAKE) urls-dev
+	@$(MAKE) urls.dev
 
-dev-docker-logs: ## View logs from development environment in Docker
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f
+# Legacy aliases for backward compatibility
+dev-stop: dev.stop
+dev-status: dev.status
+dev-logs: dev.logs
+dev-logs-backend: dev.logs.backend
+dev-logs-frontend: dev.logs.frontend
+dev-backend: backend
+dev-frontend: frontend
+dev-docker-build: dev.build
+dev-docker: dev
+dev-docker-stop: dev.stop
+dev-docker-restart: dev.restart
+dev-docker-logs: dev.logs
+dev-docker-logs-backend: dev.logs.backend
+dev-docker-logs-frontend: dev.logs.frontend
+build-fast: build.fast
+logs-backend: logs.backend
+logs-frontend: logs.frontend
+clean-old-containers: clean.old.containers
+shell-backend: shell.backend
+shell-frontend: shell.frontend
+migrate-dev: migrate.dev
+migrate-reset: migrate.reset
+migrate-resolve: migrate.resolve
+db-push: db.push
+prisma-studio: prisma.studio
+prisma-studio-stop: prisma.studio.stop
+install-backend: install.backend
+install-frontend: install.frontend
+lint-backend: lint.backend
+lint-frontend: lint.frontend
+format-backend: format.backend
+format-frontend: format.frontend
+hosts-add: hosts.add
+hosts-remove: hosts.remove
+test-frontend: test.frontend
+test-frontend-watch: test.frontend.watch
+test-frontend-ui: test.frontend.ui
+test-frontend-coverage: test.frontend.coverage
+test-backend: test.backend
+test-backend-watch: test.backend.watch
+test-backend-coverage: test.backend.coverage
+test-backend-e2e: test.backend.e2e
+setup-env: setup.env
+init-project: init.project
+urls-dev: urls.dev
 
-dev-docker-logs-backend: ## View backend logs (development Docker)
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f backend
-
-dev-docker-logs-frontend: ## View frontend logs (development Docker)
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f frontend
-
-urls-dev: ## Show service URLs (development Docker)
+urls.dev: ## Show service URLs (development Docker)
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(GREEN)║  $(BOLD)🚀 Development Environment (Docker) - Running Services$(NC)$(GREEN)  ║$(NC)"
@@ -440,44 +501,44 @@ urls-dev: ## Show service URLs (development Docker)
 	@echo "$(CYAN)💡 Hot-reload is enabled - changes to code will automatically reload$(NC)"
 	@echo ""
 
-test-frontend: ## Run frontend tests (single run, CI mode)
+test.frontend: ## Run frontend tests (single run, CI mode)
 	@echo "$(GREEN)🧪 Running frontend tests...$(NC)"
 	@cd frontend && npm run test:run
 
-test-frontend-watch: ## Run frontend tests in watch mode (development)
+test.frontend.watch: ## Run frontend tests in watch mode (development)
 	@echo "$(GREEN)🧪 Running frontend tests in watch mode...$(NC)"
 	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
 	@cd frontend && npm test
 
-test-frontend-ui: ## Run frontend tests with visual UI
+test.frontend.ui: ## Run frontend tests with visual UI
 	@echo "$(GREEN)🧪 Opening frontend test UI...$(NC)"
 	@echo "$(CYAN)💡 Test UI will open in your browser$(NC)"
 	@cd frontend && npm run test:ui
 
-test-frontend-coverage: ## Run frontend tests with coverage report
+test.frontend.coverage: ## Run frontend tests with coverage report
 	@echo "$(GREEN)🧪 Running frontend tests with coverage...$(NC)"
 	@cd frontend && npm run test:coverage
 	@echo "$(CYAN)💡 Coverage report generated in frontend/coverage/$(NC)"
 
-test-backend: ## Run backend tests (single run, CI mode)
+test.backend: ## Run backend tests (single run, CI mode)
 	@echo "$(GREEN)🧪 Running backend tests...$(NC)"
 	@cd backend && npm test
 
-test-backend-watch: ## Run backend tests in watch mode (development)
+test.backend.watch: ## Run backend tests in watch mode (development)
 	@echo "$(GREEN)🧪 Running backend tests in watch mode...$(NC)"
 	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
 	@cd backend && npm run test:watch
 
-test-backend-coverage: ## Run backend tests with coverage report
+test.backend.coverage: ## Run backend tests with coverage report
 	@echo "$(GREEN)🧪 Running backend tests with coverage...$(NC)"
 	@cd backend && npm run test:cov
 	@echo "$(CYAN)💡 Coverage report generated in backend/coverage/$(NC)"
 
-test-backend-e2e: ## Run backend e2e tests
+test.backend.e2e: ## Run backend e2e tests
 	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
 	@cd backend && npm run test:e2e
 
-setup-env: ## Generate .env files from examples (if they don't exist)
+setup.env: ## Generate .env files from examples (if they don't exist)
 	@echo "$(GREEN)🔧 Setting up environment files...$(NC)"
 	@if [ -f $(DOCKER_DIR)/env.example ]; then \
 		PROJECT_NAME=$$(grep "^COMPOSE_PROJECT_NAME=" $(DOCKER_DIR)/env.example 2>/dev/null | cut -d'=' -f2 || echo "app"); \
@@ -519,7 +580,7 @@ setup-env: ## Generate .env files from examples (if they don't exist)
 	fi
 	@echo "$(CYAN)💡 You can now customize the .env files in $(DOCKER_DIR)/ if needed$(NC)"
 
-init-project: ## Initialize project with custom name (usage: make init-project PROJECT_NAME=myproject)
+init.project: ## Initialize project with custom name (usage: make init.project PROJECT_NAME=myproject)
 	@if [ -z "$(PROJECT_NAME)" ]; then \
 		chmod +x scripts/init-project.sh && \
 		./scripts/init-project.sh; \
