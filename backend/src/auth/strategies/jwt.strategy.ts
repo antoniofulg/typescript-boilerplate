@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CurrentUserPayload } from '../decorators/current-user.decorator';
+import { TenantStatus } from '@prisma/client';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -44,7 +45,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // For SUPER_USER, no need to validate tenant (tenantId is null)
     // For regular users, validate if tenant is active
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Tenant inativo');
     }
 

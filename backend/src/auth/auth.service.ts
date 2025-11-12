@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { TenantStatus } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -41,7 +42,11 @@ export class AuthService {
     }
 
     // Validar tenant ativo (apenas para usuários com tenant)
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Tenant inativo');
     }
 
@@ -93,7 +98,7 @@ export class AuthService {
         throw new BadRequestException('Tenant não encontrado');
       }
 
-      if (tenant.status !== 'ACTIVE') {
+      if (tenant.status !== TenantStatus.ACTIVE) {
         throw new BadRequestException('Tenant inativo');
       }
 
@@ -168,7 +173,11 @@ export class AuthService {
     }
 
     // Validar tenant ativo (apenas para usuários com tenant)
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Tenant inativo');
     }
 

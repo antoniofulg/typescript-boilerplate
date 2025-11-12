@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole, TenantStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -120,7 +120,7 @@ export class UsersService {
         throw new NotFoundException('Tenant não encontrado');
       }
 
-      if (tenant.status !== 'ACTIVE') {
+      if (tenant.status !== TenantStatus.ACTIVE) {
         throw new ForbiddenException('Tenant inativo');
       }
     }
@@ -261,7 +261,7 @@ export class UsersService {
         throw new NotFoundException('Tenant não encontrado');
       }
 
-      if (tenant.status !== 'ACTIVE') {
+      if (tenant.status !== TenantStatus.ACTIVE) {
         throw new ForbiddenException('Tenant inativo');
       }
 
