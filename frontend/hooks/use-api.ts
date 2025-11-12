@@ -73,8 +73,30 @@ export function useApi(token: string | null) {
   );
 
   const del = useCallback(
-    <T>(endpoint: string, options?: UseApiOptions<T>) => {
-      return request<T>((client) => client.delete<T>(endpoint), options);
+    <T>(
+      endpoint: string,
+      dataOrOptions?: unknown | UseApiOptions<T>,
+      options?: UseApiOptions<T>,
+    ) => {
+      // Handle both signatures: del(endpoint, options) and del(endpoint, data, options)
+      let body: unknown | undefined;
+      let opts: UseApiOptions<T> | undefined;
+
+      if (
+        dataOrOptions &&
+        typeof dataOrOptions === 'object' &&
+        !('onSuccess' in dataOrOptions) &&
+        !('onError' in dataOrOptions)
+      ) {
+        // It's data (body)
+        body = dataOrOptions;
+        opts = options;
+      } else {
+        // It's options
+        opts = dataOrOptions as UseApiOptions<T> | undefined;
+      }
+
+      return request<T>((client) => client.delete<T>(endpoint, body), opts);
     },
     [request],
   );
