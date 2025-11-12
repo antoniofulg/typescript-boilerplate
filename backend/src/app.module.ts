@@ -11,6 +11,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AttendancesModule } from './attendances/attendances.module';
 import { VotesModule } from './votes/votes.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { VotesModule } from './votes/votes.module';
     ProjectsModule,
     AttendancesModule,
     VotesModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

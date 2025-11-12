@@ -58,6 +58,14 @@ export type MockPrismaService = {
     update: Mock;
     delete: Mock;
   };
+  log: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+    count: Mock;
+  };
   $connect: Mock;
   $disconnect: Mock;
   $transaction: Mock;
@@ -117,6 +125,14 @@ export function createMockPrismaService(): MockPrismaService {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    log: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
     },
     $connect: vi.fn(),
     $disconnect: vi.fn(),
