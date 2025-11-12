@@ -70,6 +70,11 @@ hosts.remove: ## Remove aliases from /etc/hosts file
 
 build: hosts.add ## Build Docker images (no cache) and add aliases to hosts
 	@echo "$(GREEN)🔨 Building Docker images...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build --no-cache
 
 build.fast: hosts.add ## Build Docker images (with cache) and add aliases to hosts
@@ -78,6 +83,11 @@ build.fast: hosts.add ## Build Docker images (with cache) and add aliases to hos
 
 up: ## Start all services
 	@echo "$(GREEN)🚀 Starting services...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) up -d
 	@sleep 3
 	@$(MAKE) urls
@@ -321,6 +331,11 @@ format.frontend: ## Format frontend code
 
 dev: hosts.add ## Start development environment in Docker with hot-reload
 	@echo "$(GREEN)🚀 Starting development environment in Docker (with hot-reload)...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 	@sleep 5
 	@$(MAKE) urls.dev
@@ -399,6 +414,11 @@ frontend: ## Run frontend in development mode (local, standalone)
 
 dev.build: hosts.add ## Build Docker images for development (with hot-reload)
 	@echo "$(GREEN)🔨 Building Docker images for development...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml build
 
 dev.restart: ## Restart development environment in Docker
