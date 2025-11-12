@@ -136,8 +136,14 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   private extractEntityName(url: string): string {
+    // Remove query parameters and hash fragments before processing
+    // Example: /users?notify=true -> /users
+    const urlWithoutQuery = url.split('?')[0].split('#')[0];
+
     // Remove leading slash and split by /
-    const parts = url.split('/').filter((p) => p && !p.match(/^\d+$/));
+    const parts = urlWithoutQuery
+      .split('/')
+      .filter((p) => p && !p.match(/^\d+$/));
     if (parts.length === 0) {
       return 'Unknown';
     }
@@ -231,16 +237,25 @@ export class LoggingInterceptor implements NestInterceptor {
         continue;
       }
 
-      // Recursively filter nested objects
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        filtered[key] = this.filterSensitiveFields(
-          value as Record<string, unknown>,
-        );
-      } else {
-        filtered[key] = value;
-      }
+      // Recursively filter the value (handles objects, arrays, and primitives)
+      filtered[key] = this.filterValue(value);
     }
 
     return filtered;
+  }
+
+  private filterValue(value: unknown): unknown {
+    // Handle arrays - recursively filter each element
+    if (Array.isArray(value)) {
+      return value.map((item) => this.filterValue(item));
+    }
+
+    // Handle plain objects - recursively filter all properties
+    if (value && typeof value === 'object') {
+      return this.filterSensitiveFields(value as Record<string, unknown>);
+    }
+
+    // Return primitives as-is
+    return value;
   }
 }
