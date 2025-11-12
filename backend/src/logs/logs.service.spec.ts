@@ -384,6 +384,24 @@ describe('LogsService', () => {
       );
     });
 
+    it('should return empty results for ADMIN users without tenantId (security fix)', async () => {
+      // This test verifies the security fix: ADMIN without tenantId
+      // should not see all logs, but instead get empty results
+      const result = await service.findAll(
+        { page: 1, limit: 20 },
+        'ADMIN',
+        undefined, // No tenantId
+      );
+
+      expect(result.logs).toHaveLength(0);
+      expect(result.total).toBe(0);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      // Verify that Prisma was never called, as we return early
+      expect(prismaService.log.findMany).not.toHaveBeenCalled();
+      expect(prismaService.log.count).not.toHaveBeenCalled();
+    });
+
     it('should allow SUPER_USER to filter by tenantId', async () => {
       const tenantId = faker.string.uuid();
       const mockLogs: unknown[] = [];

@@ -105,7 +105,17 @@ export class LogsService {
 
     // Tenant isolation: ADMIN only sees logs from their tenant
     if (currentUserRole !== 'SUPER_USER') {
-      where.tenantId = currentUserTenantId || undefined;
+      // Security: If ADMIN doesn't have a tenantId, return empty results
+      // to prevent seeing all logs across all tenants
+      if (!currentUserTenantId) {
+        return {
+          logs: [],
+          total: 0,
+          page,
+          limit,
+        };
+      }
+      where.tenantId = currentUserTenantId;
     } else if (filters.tenantId) {
       // SUPER_USER can filter by tenant
       where.tenantId = filters.tenantId;
