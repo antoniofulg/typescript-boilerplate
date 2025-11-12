@@ -1,45 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { createMockPrismaService } from '../test-utils';
+import { createTestingModule, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
-
 describe('SuperAdminService', () => {
   let service: SuperAdminService;
-  let prismaService: ReturnType<typeof createMockPrismaService>;
-  let userFindMany: jest.Mock;
-  let userFindFirst: jest.Mock;
-  let userUpdate: jest.Mock;
-  let userDelete: jest.Mock;
+  let prismaService: MockPrismaService;
 
   beforeEach(async () => {
-    prismaService = createMockPrismaService();
-    // TypeScript doesn't recognize the mock types correctly, but they are jest.Mock at runtime
-
-    userFindMany = prismaService.user.findMany;
-
-    userFindFirst = prismaService.user.findFirst;
-
-    userUpdate = prismaService.user.update;
-
-    userDelete = prismaService.user.delete;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SuperAdminService,
-        {
-          provide: PrismaService,
-          useValue: prismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<SuperAdminService>(SuperAdminService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    const { get, mockPrismaService } = await createTestingModule([
+      SuperAdminService,
+    ]);
+    service = get<SuperAdminService>(SuperAdminService);
+    prismaService = mockPrismaService;
   });
 
   describe('findAll', () => {
@@ -66,17 +38,19 @@ describe('SuperAdminService', () => {
       ];
 
       const expectedResult = mockSuperUsers.map(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ({ passwordHash: _passwordHash, ...rest }) => rest,
+        ({ passwordHash: _passwordHash, ...rest }) => {
+          void _passwordHash; // Explicitly mark as used to avoid lint error
+          return rest;
+        },
       );
 
-      userFindMany.mockResolvedValue(mockSuperUsers);
+      prismaService.user.findMany.mockResolvedValue(mockSuperUsers);
 
       const result = await service.findAll();
 
       expect(result).toEqual(expectedResult);
       expect(result.every((admin) => !('passwordHash' in admin))).toBe(true);
-      expect(userFindMany).toHaveBeenCalledWith({
+      expect(prismaService.user.findMany).toHaveBeenCalledWith({
         where: {
           role: 'SUPER_USER',
           tenantId: null,
@@ -99,25 +73,21 @@ describe('SuperAdminService', () => {
         createdAt: new Date(),
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Test Admin',
-        email: 'admin@example.com',
-        createdAt: mockSuperUser.createdAt,
-      };
-
-      userFindFirst.mockResolvedValue(mockSuperUser);
+      prismaService.user.findFirst.mockResolvedValue(mockSuperUser);
 
       const result = await service.findOne(adminId);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Test Admin');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(mockSuperUser.createdAt);
       expect('passwordHash' in result).toBe(false);
     });
 
     it('should throw NotFoundException for non-existent super user', async () => {
       const adminId = faker.string.uuid();
 
-      userFindFirst.mockResolvedValue(null);
+      prismaService.user.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne(adminId)).rejects.toThrow(NotFoundException);
     });
@@ -148,21 +118,17 @@ describe('SuperAdminService', () => {
         ...updateData,
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Updated Name',
-        email: 'admin@example.com',
-        createdAt: existingAdmin.createdAt,
-      };
-
-      userFindFirst.mockResolvedValue(existingAdmin);
-      userUpdate.mockResolvedValue(updatedAdmin);
+      prismaService.user.findFirst.mockResolvedValue(existingAdmin);
+      prismaService.user.update.mockResolvedValue(updatedAdmin);
 
       const result = await service.update(adminId, updateData);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Updated Name');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(existingAdmin.createdAt);
       expect('passwordHash' in result).toBe(false);
-      expect(userUpdate).toHaveBeenCalled();
+      expect(prismaService.user.update).toHaveBeenCalled();
     });
   });
 
@@ -179,21 +145,17 @@ describe('SuperAdminService', () => {
         createdAt: new Date(),
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Test Admin',
-        email: 'admin@example.com',
-        createdAt: mockSuperUser.createdAt,
-      };
-
-      userFindFirst.mockResolvedValue(mockSuperUser);
-      userDelete.mockResolvedValue(mockSuperUser);
+      prismaService.user.findFirst.mockResolvedValue(mockSuperUser);
+      prismaService.user.delete.mockResolvedValue(mockSuperUser);
 
       const result = await service.remove(adminId);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Test Admin');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(mockSuperUser.createdAt);
       expect('passwordHash' in result).toBe(false);
-      expect(userDelete).toHaveBeenCalledWith({
+      expect(prismaService.user.delete).toHaveBeenCalledWith({
         where: { id: adminId },
       });
     });

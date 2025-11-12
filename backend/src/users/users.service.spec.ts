@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
   NotFoundException,
   ConflictException,
@@ -6,38 +5,26 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { createMockPrismaService } from '../test-utils';
+import { createTestingModule, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { UserRole, type User } from '@prisma/client';
+import { vi } from 'vitest';
 
-jest.mock('bcrypt');
+vi.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
-  let prismaService: ReturnType<typeof createMockPrismaService>;
+  let prismaService: MockPrismaService;
 
   beforeEach(async () => {
-    prismaService = createMockPrismaService();
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        {
-          provide: PrismaService,
-          useValue: prismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<UsersService>(UsersService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    const { get, mockPrismaService } = await createTestingModule([
+      UsersService,
+    ]);
+    service = get<UsersService>(UsersService);
+    prismaService = mockPrismaService;
   });
 
   describe('create', () => {
@@ -76,9 +63,7 @@ describe('UsersService', () => {
         status: 'ACTIVE',
         createdAt: new Date(),
       });
-      (
-        bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>
-      ).mockResolvedValue('hashed-password');
+      vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.create.mockResolvedValue(mockUser);
 
       const result = await service.create(
@@ -114,9 +99,7 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findFirst.mockResolvedValue(null);
-      (
-        bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>
-      ).mockResolvedValue('hashed-password');
+      vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.create.mockResolvedValue(mockUser);
 
       const result = await service.create(createUserDto, currentSuperUserId);
@@ -151,12 +134,8 @@ describe('UsersService', () => {
       prismaService.user.findUnique
         .mockResolvedValueOnce(mockSuperUser) // For password verification
         .mockResolvedValueOnce(null); // For email check
-      (
-        bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
-      ).mockResolvedValue(true);
-      (
-        bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>
-      ).mockResolvedValue('hashed-password');
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.findFirst.mockResolvedValue(null);
       prismaService.user.create.mockResolvedValue(mockNewSuperUser);
 
@@ -201,9 +180,7 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findUnique.mockResolvedValue(mockSuperUser);
-      (
-        bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
-      ).mockResolvedValue(false);
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
       await expect(
         service.create(
@@ -433,9 +410,7 @@ describe('UsersService', () => {
       prismaService.user.findUnique
         .mockResolvedValueOnce(existingUser)
         .mockResolvedValueOnce(mockSuperUser);
-      (
-        bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
-      ).mockResolvedValue(true);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
       prismaService.user.update.mockResolvedValue(updatedUser);
 
       const result = await service.update(
@@ -572,9 +547,7 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findUnique.mockResolvedValue(mockSuperUser);
-      (
-        bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
-      ).mockResolvedValue(true);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       await expect(
         service.verifyPasswordForSuperUserOperation(superUserId, 'password'),
@@ -594,9 +567,7 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findUnique.mockResolvedValue(mockSuperUser);
-      (
-        bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>
-      ).mockResolvedValue(false);
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
       await expect(
         service.verifyPasswordForSuperUserOperation(superUserId, 'wrong'),

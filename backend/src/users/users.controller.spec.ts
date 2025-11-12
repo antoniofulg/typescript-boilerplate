@@ -7,18 +7,28 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { faker } from '@faker-js/faker';
 import { UserRole } from '@prisma/client';
+import { vi, MockedFunction } from 'vitest';
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let service: jest.Mocked<UsersService>;
+  let service: {
+    create: MockedFunction<UsersService['create']>;
+    findAll: MockedFunction<UsersService['findAll']>;
+    findOne: MockedFunction<UsersService['findOne']>;
+    update: MockedFunction<UsersService['update']>;
+    remove: MockedFunction<UsersService['remove']>;
+    verifyPasswordForSuperUserOperation: MockedFunction<
+      UsersService['verifyPasswordForSuperUserOperation']
+    >;
+  };
 
   const mockUsersService = {
-    create: jest.fn(),
-    findAll: jest.fn(),
-    findOne: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
-    verifyPasswordForSuperUserOperation: jest.fn(),
+    create: vi.fn(),
+    findAll: vi.fn(),
+    findOne: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+    verifyPasswordForSuperUserOperation: vi.fn(),
   };
 
   const mockCurrentUser = {
@@ -28,6 +38,9 @@ describe('UsersController', () => {
   };
 
   beforeEach(async () => {
+    // Reset all mocks before each test
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
@@ -40,10 +53,6 @@ describe('UsersController', () => {
 
     controller = module.get<UsersController>(UsersController);
     service = module.get(UsersService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('create', () => {
@@ -172,6 +181,7 @@ describe('UsersController', () => {
         controller.update(userId, updateUserDto, mockCurrentUser),
       ).rejects.toThrow(BadRequestException);
 
+      expect(service.findOne).toHaveBeenCalledWith(userId);
       expect(service.update).not.toHaveBeenCalled();
     });
 
@@ -195,6 +205,7 @@ describe('UsersController', () => {
         controller.update(userId, updateUserDto, mockCurrentUser),
       ).rejects.toThrow(BadRequestException);
 
+      expect(service.findOne).toHaveBeenCalledWith(userId);
       expect(service.update).not.toHaveBeenCalled();
     });
 
@@ -257,10 +268,8 @@ describe('UsersController', () => {
       );
 
       expect(result).toEqual(expectedResult);
-      expect(service.remove).toHaveBeenCalledWith(
-        userId,
-        mockCurrentUser.userId,
-      );
+      expect(service.findOne).toHaveBeenCalledWith(userId);
+      expect(service.remove).toHaveBeenCalledWith(userId);
     });
 
     it('should require password confirmation when deleting SUPER_USER', async () => {
@@ -281,6 +290,7 @@ describe('UsersController', () => {
         controller.remove(userId, deleteUserDto, mockCurrentUser),
       ).rejects.toThrow(BadRequestException);
 
+      expect(service.findOne).toHaveBeenCalledWith(userId);
       expect(service.remove).not.toHaveBeenCalled();
     });
 

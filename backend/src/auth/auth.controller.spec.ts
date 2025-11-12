@@ -4,19 +4,24 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { faker } from '@faker-js/faker';
+import { vi, MockedFunction } from 'vitest';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: jest.Mocked<AuthService>;
-  let loginSpy: jest.SpyInstance;
-  let registerSpy: jest.SpyInstance;
-  let getProfileSpy: jest.SpyInstance;
+  let authService: {
+    login: MockedFunction<AuthService['login']>;
+    register: MockedFunction<AuthService['register']>;
+    getProfile: MockedFunction<AuthService['getProfile']>;
+  };
+  let loginSpy: ReturnType<typeof vi.spyOn>;
+  let registerSpy: ReturnType<typeof vi.spyOn>;
+  let getProfileSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     const mockAuthService = {
-      login: jest.fn(),
-      register: jest.fn(),
-      getProfile: jest.fn(),
+      login: vi.fn(),
+      register: vi.fn(),
+      getProfile: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -33,13 +38,9 @@ describe('AuthController', () => {
     authService = module.get(AuthService);
 
     // Create spies for the mock methods
-    loginSpy = jest.spyOn(authService, 'login');
-    registerSpy = jest.spyOn(authService, 'register');
-    getProfileSpy = jest.spyOn(authService, 'getProfile');
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    loginSpy = vi.spyOn(authService, 'login');
+    registerSpy = vi.spyOn(authService, 'register');
+    getProfileSpy = vi.spyOn(authService, 'getProfile');
   });
 
   describe('login', () => {

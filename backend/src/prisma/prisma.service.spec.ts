@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from './prisma.service';
+import { vi, Mock } from 'vitest';
 
 type MockPrismaClient = {
-  $connect: jest.Mock<Promise<void>>;
-  $disconnect: jest.Mock<Promise<void>>;
+  $connect: Mock<[], Promise<void>>;
+  $disconnect: Mock<[], Promise<void>>;
 };
 
 describe('PrismaService', () => {
@@ -11,11 +12,11 @@ describe('PrismaService', () => {
   let mockPrismaClient: MockPrismaClient;
 
   beforeEach(async () => {
-    const $connectMock = jest
-      .fn<Promise<void>, []>()
+    const $connectMock = vi
+      .fn<[], Promise<void>>()
       .mockResolvedValue(undefined);
-    const $disconnectMock = jest
-      .fn<Promise<void>, []>()
+    const $disconnectMock = vi
+      .fn<[], Promise<void>>()
       .mockResolvedValue(undefined);
 
     mockPrismaClient = {
@@ -29,10 +30,10 @@ describe('PrismaService', () => {
           provide: PrismaService,
           useValue: {
             ...mockPrismaClient,
-            onModuleInit: jest.fn().mockImplementation(async () => {
+            onModuleInit: vi.fn().mockImplementation(async () => {
               await mockPrismaClient.$connect();
             }),
-            onModuleDestroy: jest.fn().mockImplementation(async () => {
+            onModuleDestroy: vi.fn().mockImplementation(async () => {
               await mockPrismaClient.$disconnect();
             }),
           },
@@ -44,7 +45,7 @@ describe('PrismaService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('onModuleInit', () => {

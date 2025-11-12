@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
-    "resolvePackageJsonExports": false
+    "resolvePackageJsonExports": false,
+    "types": ["vitest/globals", "node"]
   },
   "include": ["src/**/*.spec.ts"]
 }

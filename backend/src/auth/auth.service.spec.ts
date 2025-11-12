@@ -13,25 +13,30 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { createMockPrismaService, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
+import { vi } from 'vitest';
 
-jest.mock('bcrypt');
+vi.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
   let prismaService: MockPrismaService;
-  let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
-  let jwtSignSpy: jest.SpyInstance;
+  let jwtService: {
+    sign: ReturnType<typeof vi.fn>;
+  };
+  let configService: {
+    get: ReturnType<typeof vi.fn>;
+  };
+  let jwtSignSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
     prismaService = createMockPrismaService();
 
     const mockJwtService = {
-      sign: jest.fn(),
+      sign: vi.fn(),
     };
 
     const mockConfigService = {
-      get: jest.fn(),
+      get: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -57,7 +62,7 @@ describe('AuthService', () => {
     configService = module.get(ConfigService);
 
     // Create spy for jwtService.sign
-    jwtSignSpy = jest.spyOn(jwtService, 'sign');
+    jwtSignSpy = vi.spyOn(jwtService, 'sign');
 
     // Default config values
     configService.get.mockImplementation((key: string) => {
@@ -70,7 +75,7 @@ describe('AuthService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('login', () => {
@@ -98,7 +103,7 @@ describe('AuthService', () => {
 
       const userFindFirstMock = prismaService.user.findFirst;
       userFindFirstMock.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       const result = await service.login(loginDto);
 
@@ -128,7 +133,7 @@ describe('AuthService', () => {
       const userFindFirstMock = prismaService.user.findFirst;
 
       userFindFirstMock.mockResolvedValue(mockSuperUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       const result = await service.login(loginDto);
 
@@ -168,7 +173,7 @@ describe('AuthService', () => {
 
       const userFindFirstMock = prismaService.user.findFirst;
       userFindFirstMock.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
@@ -222,7 +227,7 @@ describe('AuthService', () => {
       const userFindFirstMock = prismaService.user.findFirst;
       const userCreateMock = prismaService.user.create;
       userFindFirstMock.mockResolvedValue(null);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+      vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
 
       const result = await service.register(registerDto);
@@ -284,7 +289,7 @@ describe('AuthService', () => {
       userFindFirstMock.mockResolvedValue(null);
       tenantFindUniqueMock.mockResolvedValue(mockTenant);
       userFindUniqueMock.mockResolvedValue(null);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+      vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
 
       const result = await service.register(registerDtoWithTenant);
