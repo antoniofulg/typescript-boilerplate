@@ -1,64 +1,66 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Type } from '@nestjs/common';
+import { Type, Provider } from '@nestjs/common';
+import { DynamicModule } from '@nestjs/common/interfaces';
 import { PrismaService } from './prisma/prisma.service';
+import { Mock, vi } from 'vitest';
 
 /**
  * Type for mock PrismaService
  */
 export type MockPrismaService = {
   tenant: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   user: {
-    findMany: jest.Mock;
-    findFirst: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findFirst: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   superAdmin: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   session: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   project: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   attendance: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
   vote: {
-    findMany: jest.Mock;
-    findUnique: jest.Mock;
-    create: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
   };
-  $connect: jest.Mock;
-  $disconnect: jest.Mock;
-  $transaction: jest.Mock;
+  $connect: Mock;
+  $disconnect: Mock;
+  $transaction: Mock;
 };
 
 /**
@@ -67,58 +69,58 @@ export type MockPrismaService = {
 export function createMockPrismaService(): MockPrismaService {
   return {
     tenant: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     user: {
-      findMany: jest.fn(),
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     superAdmin: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     session: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     project: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     attendance: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     vote: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
-    $connect: jest.fn(),
-    $disconnect: jest.fn(),
-    $transaction: jest.fn(),
+    $connect: vi.fn(),
+    $disconnect: vi.fn(),
+    $transaction: vi.fn(),
   };
 }
 
@@ -135,9 +137,9 @@ export type TestingModuleResult = {
  * Creates a testing module with mocked PrismaService
  */
 export async function createTestingModule(
-  providers: unknown[],
-  controllers: unknown[] = [],
-  imports: unknown[] = [],
+  providers: (Provider | Type)[],
+  controllers: Type[] = [],
+  imports: (Type | DynamicModule | Promise<DynamicModule>)[] = [],
 ): Promise<TestingModuleResult> {
   const mockPrismaService = createMockPrismaService();
 

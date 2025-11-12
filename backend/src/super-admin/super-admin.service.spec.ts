@@ -1,55 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { createMockPrismaService } from '../test-utils';
+import { createTestingModule, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
-
 describe('SuperAdminService', () => {
   let service: SuperAdminService;
-  let prismaService: ReturnType<typeof createMockPrismaService>;
-  let superAdminFindMany: jest.Mock;
-  let superAdminFindUnique: jest.Mock;
-  let superAdminUpdate: jest.Mock;
-  let superAdminDelete: jest.Mock;
+  let prismaService: MockPrismaService;
 
   beforeEach(async () => {
-    prismaService = createMockPrismaService();
-    // TypeScript doesn't recognize the mock types correctly, but they are jest.Mock at runtime
-
-    superAdminFindMany = prismaService.superAdmin.findMany;
-
-    superAdminFindUnique = prismaService.superAdmin.findUnique;
-
-    superAdminUpdate = prismaService.superAdmin.update;
-
-    superAdminDelete = prismaService.superAdmin.delete;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SuperAdminService,
-        {
-          provide: PrismaService,
-          useValue: prismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<SuperAdminService>(SuperAdminService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    const { get, mockPrismaService } = await createTestingModule([
+      SuperAdminService,
+    ]);
+    service = get<SuperAdminService>(SuperAdminService);
+    prismaService = mockPrismaService;
   });
 
   describe('findAll', () => {
-    it('should return all super admins without passwordHash', async () => {
-      const mockSuperAdmins = [
+    it('should return all super users without passwordHash', async () => {
+      const mockSuperUsers = [
         {
           id: faker.string.uuid(),
           name: 'Admin 1',
           email: 'admin1@example.com',
           passwordHash: 'hashed',
+          role: 'SUPER_USER' as const,
+          tenantId: null,
           createdAt: new Date(),
         },
         {
@@ -57,57 +31,63 @@ describe('SuperAdminService', () => {
           name: 'Admin 2',
           email: 'admin2@example.com',
           passwordHash: 'hashed',
+          role: 'SUPER_USER' as const,
+          tenantId: null,
           createdAt: new Date(),
         },
       ];
 
-      const expectedResult = mockSuperAdmins.map(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ({ passwordHash: _passwordHash, ...rest }) => rest,
+      const expectedResult = mockSuperUsers.map(
+        ({ passwordHash: _passwordHash, ...rest }) => {
+          void _passwordHash; // Explicitly mark as used to avoid lint error
+          return rest;
+        },
       );
 
-      superAdminFindMany.mockResolvedValue(mockSuperAdmins);
+      prismaService.user.findMany.mockResolvedValue(mockSuperUsers);
 
       const result = await service.findAll();
 
       expect(result).toEqual(expectedResult);
       expect(result.every((admin) => !('passwordHash' in admin))).toBe(true);
-      expect(superAdminFindMany).toHaveBeenCalledWith({
+      expect(prismaService.user.findMany).toHaveBeenCalledWith({
+        where: {
+          role: 'SUPER_USER',
+          tenantId: null,
+        },
         orderBy: { createdAt: 'desc' },
       });
     });
   });
 
   describe('findOne', () => {
-    it('should return a super admin by id without passwordHash', async () => {
+    it('should return a super user by id without passwordHash', async () => {
       const adminId = faker.string.uuid();
-      const mockSuperAdmin = {
+      const mockSuperUser = {
         id: adminId,
         name: 'Test Admin',
         email: 'admin@example.com',
         passwordHash: 'hashed',
+        role: 'SUPER_USER' as const,
+        tenantId: null,
         createdAt: new Date(),
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Test Admin',
-        email: 'admin@example.com',
-        createdAt: mockSuperAdmin.createdAt,
-      };
-
-      superAdminFindUnique.mockResolvedValue(mockSuperAdmin);
+      prismaService.user.findFirst.mockResolvedValue(mockSuperUser);
 
       const result = await service.findOne(adminId);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Test Admin');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(mockSuperUser.createdAt);
       expect('passwordHash' in result).toBe(false);
     });
 
-    it('should throw NotFoundException for non-existent super admin', async () => {
+    it('should throw NotFoundException for non-existent super user', async () => {
       const adminId = faker.string.uuid();
 
-      superAdminFindUnique.mockResolvedValue(null);
+      prismaService.user.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne(adminId)).rejects.toThrow(NotFoundException);
     });
@@ -117,7 +97,7 @@ describe('SuperAdminService', () => {
   // Super admin accounts should only be created through database seeding
 
   describe('update', () => {
-    it('should update a super admin successfully without passwordHash', async () => {
+    it('should update a super user successfully without passwordHash', async () => {
       const adminId = faker.string.uuid();
       const updateData = {
         name: 'Updated Name',
@@ -128,6 +108,8 @@ describe('SuperAdminService', () => {
         name: 'Original Name',
         email: 'admin@example.com',
         passwordHash: 'hashed',
+        role: 'SUPER_USER' as const,
+        tenantId: null,
         createdAt: new Date(),
       };
 
@@ -136,52 +118,44 @@ describe('SuperAdminService', () => {
         ...updateData,
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Updated Name',
-        email: 'admin@example.com',
-        createdAt: existingAdmin.createdAt,
-      };
-
-      superAdminFindUnique
-        .mockResolvedValueOnce(existingAdmin)
-        .mockResolvedValueOnce(existingAdmin);
-      superAdminUpdate.mockResolvedValue(updatedAdmin);
+      prismaService.user.findFirst.mockResolvedValue(existingAdmin);
+      prismaService.user.update.mockResolvedValue(updatedAdmin);
 
       const result = await service.update(adminId, updateData);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Updated Name');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(existingAdmin.createdAt);
       expect('passwordHash' in result).toBe(false);
-      expect(superAdminUpdate).toHaveBeenCalled();
+      expect(prismaService.user.update).toHaveBeenCalled();
     });
   });
 
   describe('remove', () => {
-    it('should delete a super admin successfully without passwordHash', async () => {
+    it('should delete a super user successfully without passwordHash', async () => {
       const adminId = faker.string.uuid();
-      const mockSuperAdmin = {
+      const mockSuperUser = {
         id: adminId,
         name: 'Test Admin',
         email: 'admin@example.com',
         passwordHash: 'hashed',
+        role: 'SUPER_USER' as const,
+        tenantId: null,
         createdAt: new Date(),
       };
 
-      const expectedResult = {
-        id: adminId,
-        name: 'Test Admin',
-        email: 'admin@example.com',
-        createdAt: mockSuperAdmin.createdAt,
-      };
-
-      superAdminFindUnique.mockResolvedValue(mockSuperAdmin);
-      superAdminDelete.mockResolvedValue(mockSuperAdmin);
+      prismaService.user.findFirst.mockResolvedValue(mockSuperUser);
+      prismaService.user.delete.mockResolvedValue(mockSuperUser);
 
       const result = await service.remove(adminId);
 
-      expect(result).toEqual(expectedResult);
+      expect(result.id).toBe(adminId);
+      expect(result.name).toBe('Test Admin');
+      expect(result.email).toBe('admin@example.com');
+      expect(result.createdAt).toEqual(mockSuperUser.createdAt);
       expect('passwordHash' in result).toBe(false);
-      expect(superAdminDelete).toHaveBeenCalledWith({
+      expect(prismaService.user.delete).toHaveBeenCalledWith({
         where: { id: adminId },
       });
     });

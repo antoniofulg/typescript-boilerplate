@@ -75,9 +75,7 @@ describe('AuthProvider', () => {
         expect(screen.getByTestId('user-email')).toHaveTextContent(
           'admin@test.com',
         );
-        expect(screen.getByTestId('user-role')).toHaveTextContent(
-          'SUPER_ADMIN',
-        );
+        expect(screen.getByTestId('user-role')).toHaveTextContent('SUPER_USER');
       },
       { timeout: 3000 },
     );

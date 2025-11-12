@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { TenantStatus } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -23,58 +24,14 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    // Tentar encontrar como User primeiro
+    // Buscar usuário (pode ser SUPER_USER ou usuário normal)
     const user = await this.prisma.user.findFirst({
       where: { email },
       include: { tenant: true },
     });
 
-    // If not found, try as SuperAdmin
     if (!user) {
-      const superAdmin = await this.prisma.superAdmin.findUnique({
-        where: { email },
-      });
-
-      if (!superAdmin) {
-        throw new UnauthorizedException('Credenciais inválidas');
-      }
-
-      const isPasswordValid = await bcrypt.compare(
-        password,
-        superAdmin.passwordHash,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Credenciais inválidas');
-      }
-
-      const payload = {
-        userId: superAdmin.id,
-        email: superAdmin.email,
-        role: 'SUPER_ADMIN',
-      };
-
-      const expiresIn =
-        this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn,
-      } as any);
-
-      return {
-        accessToken,
-        user: {
-          id: superAdmin.id,
-          email: superAdmin.email,
-          name: superAdmin.name,
-          role: 'SUPER_ADMIN',
-        },
-      };
-    }
-
-    // Validar tenant ativo
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
-      throw new UnauthorizedException('Tenant inativo');
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
     // Validar senha
@@ -82,6 +39,15 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Credenciais inválidas');
+    }
+
+    // Validar tenant ativo (apenas para usuários com tenant)
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
+      throw new UnauthorizedException('Tenant inativo');
     }
 
     // Gerar token JWT
@@ -132,7 +98,7 @@ export class AuthService {
         throw new BadRequestException('Tenant não encontrado');
       }
 
-      if (tenant.status !== 'ACTIVE') {
+      if (tenant.status !== TenantStatus.ACTIVE) {
         throw new BadRequestException('Tenant inativo');
       }
 
@@ -195,41 +161,8 @@ export class AuthService {
     };
   }
 
-  async refreshToken(userId: string, role: string): Promise<AuthResponseDto> {
+  async refreshToken(userId: string): Promise<AuthResponseDto> {
     // Validate if user still exists and is active
-    if (role === 'SUPER_ADMIN') {
-      const superAdmin = await this.prisma.superAdmin.findUnique({
-        where: { id: userId },
-      });
-
-      if (!superAdmin) {
-        throw new UnauthorizedException('Usuário não encontrado');
-      }
-
-      const payload = {
-        userId: superAdmin.id,
-        email: superAdmin.email,
-        role: 'SUPER_ADMIN',
-      };
-
-      const expiresIn =
-        this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn,
-      } as any);
-
-      return {
-        accessToken,
-        user: {
-          id: superAdmin.id,
-          email: superAdmin.email,
-          name: superAdmin.name,
-          role: 'SUPER_ADMIN',
-        },
-      };
-    }
-
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
@@ -239,8 +172,12 @@ export class AuthService {
       throw new UnauthorizedException('Usuário não encontrado');
     }
 
-    // Validar tenant ativo
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+    // Validar tenant ativo (apenas para usuários com tenant)
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Tenant inativo');
     }
 
@@ -269,24 +206,7 @@ export class AuthService {
     };
   }
 
-  async getProfile(userId: string, role: string) {
-    if (role === 'SUPER_ADMIN') {
-      const superAdmin = await this.prisma.superAdmin.findUnique({
-        where: { id: userId },
-      });
-
-      if (!superAdmin) {
-        throw new UnauthorizedException('Usuário não encontrado');
-      }
-
-      return {
-        id: superAdmin.id,
-        email: superAdmin.email,
-        name: superAdmin.name,
-        role: 'SUPER_ADMIN',
-      };
-    }
-
+  async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },

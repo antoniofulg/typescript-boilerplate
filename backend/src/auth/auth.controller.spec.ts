@@ -1,22 +1,40 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { RedirectIfAuthenticatedGuard } from './guards/redirect-if-authenticated.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { faker } from '@faker-js/faker';
+import { vi, MockedFunction, type MockInstance } from 'vitest';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: jest.Mocked<AuthService>;
-  let loginSpy: jest.SpyInstance;
-  let registerSpy: jest.SpyInstance;
-  let getProfileSpy: jest.SpyInstance;
+  let authService: {
+    login: MockedFunction<AuthService['login']>;
+    register: MockedFunction<AuthService['register']>;
+    getProfile: MockedFunction<AuthService['getProfile']>;
+  };
+  let loginSpy: MockInstance<AuthService['login']>;
+  let registerSpy: MockInstance<AuthService['register']>;
+  let getProfileSpy: MockInstance<AuthService['getProfile']>;
 
   beforeEach(async () => {
     const mockAuthService = {
-      login: jest.fn(),
-      register: jest.fn(),
-      getProfile: jest.fn(),
+      login: vi.fn(),
+      register: vi.fn(),
+      getProfile: vi.fn(),
+    };
+
+    const mockJwtService = {
+      verify: vi.fn(),
+      sign: vi.fn(),
+    };
+
+    const mockConfigService = {
+      get: vi.fn().mockReturnValue('test-secret'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -26,20 +44,47 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: mockAuthService,
         },
+        {
+          provide: RedirectIfAuthenticatedGuard,
+          useValue: {
+            canActivate: vi.fn().mockReturnValue(true),
+          },
+        },
+        {
+          provide: Reflector,
+          useValue: {
+            getAllAndOverride: vi.fn().mockReturnValue(true), // Route is public
+          },
+        },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(RedirectIfAuthenticatedGuard)
+      .useValue({
+        canActivate: vi.fn().mockReturnValue(true),
+      })
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
 
     // Create spies for the mock methods
-    loginSpy = jest.spyOn(authService, 'login');
-    registerSpy = jest.spyOn(authService, 'register');
-    getProfileSpy = jest.spyOn(authService, 'getProfile');
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    loginSpy = vi.spyOn(authService, 'login') as MockInstance<
+      AuthService['login']
+    >;
+    registerSpy = vi.spyOn(authService, 'register') as MockInstance<
+      AuthService['register']
+    >;
+    getProfileSpy = vi.spyOn(authService, 'getProfile') as MockInstance<
+      AuthService['getProfile']
+    >;
   });
 
   describe('login', () => {
@@ -123,10 +168,7 @@ describe('AuthController', () => {
 
       const result = await controller.getProfile(mockUser);
 
-      expect(getProfileSpy).toHaveBeenCalledWith(
-        mockUser.userId,
-        mockUser.role,
-      );
+      expect(getProfileSpy).toHaveBeenCalledWith(mockUser.userId);
       expect(result).toEqual(mockProfile);
     });
   });

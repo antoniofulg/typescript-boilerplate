@@ -1,5 +1,6 @@
 import { AppService } from './app.service';
 import { createTestingModule } from './test-utils';
+import { vi } from 'vitest';
 
 describe('AppService', () => {
   let service: AppService;
@@ -10,7 +11,7 @@ describe('AppService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('getHello', () => {

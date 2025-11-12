@@ -29,7 +29,7 @@ export type User = {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR' | 'USER';
+  role: 'SUPER_USER' | 'ADMIN' | 'OPERATOR' | 'USER';
   tenantId?: string;
   tenant?: {
     id: string;
@@ -77,7 +77,7 @@ export async function requireSuperAdmin(): Promise<User> {
     throw new Error('UNAUTHENTICATED');
   }
 
-  if (user.role !== 'SUPER_ADMIN') {
+  if (user.role !== 'SUPER_USER') {
     throw new Error('UNAUTHORIZED');
   }
 

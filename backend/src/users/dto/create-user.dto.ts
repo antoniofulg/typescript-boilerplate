@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
@@ -28,5 +29,14 @@ export class CreateUserDto {
 
   @IsString({ message: 'Tenant ID deve ser uma string' })
   @IsOptional()
+  @ValidateIf((o: CreateUserDto) => o.role !== UserRole.SUPER_USER)
   tenantId?: string;
+
+  @IsString({ message: 'Confirmação de senha deve ser uma string' })
+  @IsOptional()
+  @ValidateIf((o: CreateUserDto) => o.role === UserRole.SUPER_USER)
+  @IsNotEmpty({
+    message: 'Confirmação de senha é obrigatória para criar SUPER_USER',
+  })
+  passwordConfirmation?: string;
 }

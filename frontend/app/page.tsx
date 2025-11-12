@@ -29,8 +29,8 @@ export default function Home() {
       return;
     }
 
-    // Redirecionar SUPER_ADMIN para dashboard
-    if (user?.role === 'SUPER_ADMIN') {
+    // Redirecionar SUPER_USER para dashboard
+    if (user?.role === 'SUPER_USER') {
       router.replace('/dashboard');
       return;
     }
@@ -46,9 +46,9 @@ export default function Home() {
     );
   }
 
-  // If not authenticated or is SUPER_ADMIN, useEffect already redirected
-  // This content will only be rendered for authenticated non-SUPER_ADMIN users
-  if (!isAuthenticated || user?.role === 'SUPER_ADMIN') {
+  // If not authenticated or is SUPER_USER, useEffect already redirected
+  // This content will only be rendered for authenticated non-SUPER_USER users
+  if (!isAuthenticated || user?.role === 'SUPER_USER') {
     return null;
   }
 

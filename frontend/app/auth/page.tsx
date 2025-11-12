@@ -65,10 +65,11 @@ export default function AuthPage() {
     },
   });
 
-  // Redirect if already authenticated
+  // Note: Server-side redirect is handled in layout.tsx
+  // This useEffect is kept as a fallback for client-side navigation
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'SUPER_ADMIN') {
+      if (user.role === 'SUPER_USER') {
         router.replace('/dashboard');
       } else {
         router.replace('/');
@@ -81,13 +82,24 @@ export default function AuthPage() {
       const result = await login(data.email, data.password);
       toast.success('Login realizado com sucesso!');
       setTimeout(() => {
-        if (result?.user?.role === 'SUPER_ADMIN') {
+        if (result?.user?.role === 'SUPER_USER') {
           router.replace('/dashboard');
         } else {
           router.replace('/');
         }
       }, 500);
     } catch (err) {
+      // Check if error has redirectTo (user already authenticated)
+      if (err instanceof Error && 'redirectTo' in err && err.redirectTo) {
+        toast.info('Você já está autenticado', {
+          description: 'Redirecionando...',
+        });
+        setTimeout(() => {
+          router.replace(err.redirectTo as string);
+        }, 500);
+        return;
+      }
+
       const errorMessage =
         err instanceof Error ? err.message : 'Erro ao fazer login';
       toast.error('Erro ao fazer login', {
@@ -110,6 +122,17 @@ export default function AuthPage() {
         router.replace('/');
       }, 500);
     } catch (err) {
+      // Check if error has redirectTo (user already authenticated)
+      if (err instanceof Error && 'redirectTo' in err && err.redirectTo) {
+        toast.info('Você já está autenticado', {
+          description: 'Redirecionando...',
+        });
+        setTimeout(() => {
+          router.replace(err.redirectTo as string);
+        }, 500);
+        return;
+      }
+
       const errorMessage =
         err instanceof Error ? err.message : 'Erro ao registrar';
       toast.error('Erro ao registrar', {

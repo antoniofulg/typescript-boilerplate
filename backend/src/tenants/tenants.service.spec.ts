@@ -1,35 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { TenantStatus } from '@prisma/client';
 import { TenantsService } from './tenants.service';
-import { PrismaService } from '../prisma/prisma.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { createMockPrismaService } from '../test-utils';
+import { createTestingModule, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
 
 describe('TenantsService', () => {
   let service: TenantsService;
-  let prismaService: ReturnType<typeof createMockPrismaService>;
+  let prismaService: MockPrismaService;
 
   beforeEach(async () => {
-    prismaService = createMockPrismaService();
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TenantsService,
-        {
-          provide: PrismaService,
-          useValue: prismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<TenantsService>(TenantsService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    const { get, mockPrismaService } = await createTestingModule([
+      TenantsService,
+    ]);
+    service = get<TenantsService>(TenantsService);
+    prismaService = mockPrismaService;
   });
 
   describe('create', () => {

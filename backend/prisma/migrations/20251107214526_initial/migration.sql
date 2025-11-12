@@ -2,7 +2,7 @@
 CREATE TYPE "TenantStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
 
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'OPERATOR', 'USER');
+CREATE TYPE "UserRole" AS ENUM ('SUPER_USER', 'ADMIN', 'OPERATOR', 'USER');
 
 -- CreateEnum
 CREATE TYPE "SessionStatus" AS ENUM ('OPEN', 'CLOSED');
@@ -12,17 +12,6 @@ CREATE TYPE "ProjectStatus" AS ENUM ('PENDING', 'VOTING', 'CLOSED');
 
 -- CreateEnum
 CREATE TYPE "VoteType" AS ENUM ('YES', 'NO', 'ABSTAIN');
-
--- CreateTable
-CREATE TABLE "superadmins" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "superadmins_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "tenants" (
@@ -96,9 +85,6 @@ CREATE TABLE "votes" (
 
     CONSTRAINT "votes_pkey" PRIMARY KEY ("id")
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "superadmins_email_key" ON "superadmins"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants"("slug");

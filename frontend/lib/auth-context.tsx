@@ -6,7 +6,7 @@ type User = {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR' | 'USER';
+  role: 'SUPER_USER' | 'ADMIN' | 'OPERATOR' | 'USER';
   tenantId?: string;
   tenant?: {
     id: string;
@@ -133,6 +133,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       const error = await response.json();
+
+      // If user is already authenticated, handle redirect
+      if (response.status === 403 && error.redirectTo) {
+        // Update user state if user info is provided
+        if (error.user) {
+          setUser(error.user);
+          // Try to get token from localStorage if available
+          const existingToken =
+            typeof window !== 'undefined'
+              ? localStorage.getItem('auth_token')
+              : null;
+          if (existingToken) {
+            setToken(existingToken);
+          }
+        }
+        // Throw a special error with redirect info
+        const redirectError = new Error(
+          error.message || 'Usuário já autenticado',
+        ) as Error & { redirectTo?: string };
+        redirectError.redirectTo = error.redirectTo;
+        throw redirectError;
+      }
+
       throw new Error(error.message || 'Erro ao fazer login');
     }
 
@@ -158,6 +181,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!response.ok) {
       const error = await response.json();
+
+      // If user is already authenticated, handle redirect
+      if (response.status === 403 && error.redirectTo) {
+        // Update user state if user info is provided
+        if (error.user) {
+          setUser(error.user);
+          // Try to get token from localStorage if available
+          const existingToken =
+            typeof window !== 'undefined'
+              ? localStorage.getItem('auth_token')
+              : null;
+          if (existingToken) {
+            setToken(existingToken);
+          }
+        }
+        // Throw a special error with redirect info
+        const redirectError = new Error(
+          error.message || 'Usuário já autenticado',
+        ) as Error & { redirectTo?: string };
+        redirectError.redirectTo = error.redirectTo;
+        throw redirectError;
+      }
+
       throw new Error(error.message || 'Erro ao registrar');
     }
 

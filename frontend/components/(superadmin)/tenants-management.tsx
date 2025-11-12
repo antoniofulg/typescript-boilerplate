@@ -82,7 +82,7 @@ export function TenantsManagement({ initialTenants }: TenantsManagementProps) {
         });
         void fetchTenants();
       },
-      onError: (err) => {
+      onError: (err: Error) => {
         toast.error('Erro ao excluir tenant', {
           description: err.message,
         });

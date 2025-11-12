@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CurrentUserPayload } from '../decorators/current-user.decorator';
+import { TenantStatus } from '@prisma/client';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -30,26 +31,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     role: string;
     tenantId?: string;
   }): Promise<CurrentUserPayload> {
-    const { userId, role } = payload;
+    const { userId } = payload;
 
-    // If SuperAdmin, no need to validate tenant
-    if (role === 'SUPER_ADMIN') {
-      const superAdmin = await this.prisma.superAdmin.findUnique({
-        where: { id: userId },
-      });
-
-      if (!superAdmin) {
-        throw new UnauthorizedException('Usuário não encontrado');
-      }
-
-      return {
-        userId: superAdmin.id,
-        email: superAdmin.email,
-        role: 'SUPER_ADMIN',
-      };
-    }
-
-    // For regular users, validate if exists and if tenant is active
+    // Validate if user exists
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
@@ -59,7 +43,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Usuário não encontrado');
     }
 
-    if (user.tenantId && user.tenant && user.tenant.status !== 'ACTIVE') {
+    // For SUPER_USER, no need to validate tenant (tenantId is null)
+    // For regular users, validate if tenant is active
+    if (
+      user.tenantId &&
+      user.tenant &&
+      user.tenant.status !== TenantStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Tenant inativo');
     }
 

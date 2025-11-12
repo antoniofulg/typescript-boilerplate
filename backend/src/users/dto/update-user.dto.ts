@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
@@ -24,4 +25,13 @@ export class UpdateUserDto {
   @IsEnum(UserRole, { message: 'Role deve ser ADMIN, OPERATOR ou USER' })
   @IsOptional()
   role?: UserRole;
+
+  @IsString({ message: 'Tenant ID deve ser uma string' })
+  @IsOptional()
+  @ValidateIf((o: UpdateUserDto) => o.role !== UserRole.SUPER_USER)
+  tenantId?: string;
+
+  @IsString({ message: 'Confirmação de senha deve ser uma string' })
+  @IsOptional()
+  passwordConfirmation?: string;
 }

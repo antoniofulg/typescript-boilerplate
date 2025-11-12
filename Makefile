@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev.build dev.stop dev.restart dev.status dev.logs dev.logs.backend dev.logs.frontend local local.stop local.status local.logs local.logs.backend local.logs.frontend backend frontend dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-backend dev-frontend dev-local dev-local.stop dev-local.status dev-local.logs dev-local.logs.backend dev-local.logs.frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push prisma-generate seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev.build dev.stop dev.restart dev.status dev.logs dev.logs.backend dev.logs.frontend local local.stop local.status local.logs local.logs.backend local.logs.frontend backend frontend dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-backend dev-frontend dev-local dev-local.stop dev-local.status dev-local.logs dev-local.logs.backend dev-local.logs.frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -40,7 +40,7 @@ help: ## Show this help message
 	@grep -E '^(backend|frontend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
-	@grep -E '^migrate|^migrate\.dev|^migrate\.reset|^migrate\.resolve|^db\.push|^seed|^prisma\.studio|^prisma\.studio\.stop:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^(migrate:|migrate\.dev:|migrate\.reset:|migrate\.resolve:|db\.push:|prisma\.generate:|seed:|prisma\.studio:|prisma\.studio\.stop:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🧪 Testing:$(NC)"
 	@grep -E '^test\.(frontend|backend).*:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
@@ -70,6 +70,11 @@ hosts.remove: ## Remove aliases from /etc/hosts file
 
 build: hosts.add ## Build Docker images (no cache) and add aliases to hosts
 	@echo "$(GREEN)🔨 Building Docker images...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) build --no-cache
 
 build.fast: hosts.add ## Build Docker images (with cache) and add aliases to hosts
@@ -78,6 +83,11 @@ build.fast: hosts.add ## Build Docker images (with cache) and add aliases to hos
 
 up: ## Start all services
 	@echo "$(GREEN)🚀 Starting services...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) up -d
 	@sleep 3
 	@$(MAKE) urls
@@ -240,6 +250,18 @@ db.push: ## Push Prisma schema to database without migrations (development)
 		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma db push; \
 	fi
 
+prisma.generate: ## Generate Prisma Client from schema (use after schema changes)
+	@echo "$(GREEN)🔧 Generating Prisma Client...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma generate; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && npx prisma generate; \
+	fi
+	@echo "$(GREEN)✅ Prisma Client generated successfully$(NC)"
+	@echo "$(CYAN)💡 Tip: Run this after modifying prisma/schema.prisma$(NC)"
+
 seed: migrate ## Run Prisma seed to add example data (runs migrations first)
 	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
 	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
@@ -321,6 +343,11 @@ format.frontend: ## Format frontend code
 
 dev: hosts.add ## Start development environment in Docker with hot-reload
 	@echo "$(GREEN)🚀 Starting development environment in Docker (with hot-reload)...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 	@sleep 5
 	@$(MAKE) urls.dev
@@ -399,6 +426,11 @@ frontend: ## Run frontend in development mode (local, standalone)
 
 dev.build: hosts.add ## Build Docker images for development (with hot-reload)
 	@echo "$(GREEN)🔨 Building Docker images for development...$(NC)"
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "$(RED)❌ Docker daemon is not running!$(NC)"; \
+		echo "$(YELLOW)💡 Please start Docker Desktop or Docker daemon and try again.$(NC)"; \
+		exit 1; \
+	fi
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml build
 
 dev.restart: ## Restart development environment in Docker
@@ -432,6 +464,7 @@ migrate-dev: migrate.dev
 migrate-reset: migrate.reset
 migrate-resolve: migrate.resolve
 db-push: db.push
+prisma-generate: prisma.generate
 prisma-studio: prisma.studio
 prisma-studio-stop: prisma.studio.stop
 install-backend: install.backend
