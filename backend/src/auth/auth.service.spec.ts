@@ -113,37 +113,36 @@ describe('AuthService', () => {
       );
     });
 
-    it('should login a super admin successfully', async () => {
-      const mockSuperAdmin = {
+    it('should login a super user successfully', async () => {
+      const mockSuperUser = {
         id: faker.string.uuid(),
         email: loginDto.email,
         name: faker.person.fullName(),
         passwordHash: 'hashed-password',
+        role: 'SUPER_USER' as const,
+        tenantId: null,
+        tenant: null,
         createdAt: new Date(),
       };
 
       const userFindFirstMock = prismaService.user.findFirst;
-      const superAdminFindUniqueMock = prismaService.superAdmin.findUnique;
 
-      userFindFirstMock.mockResolvedValue(null);
-
-      superAdminFindUniqueMock.mockResolvedValue(mockSuperAdmin);
+      userFindFirstMock.mockResolvedValue(mockSuperUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(loginDto);
 
       expect(result).toHaveProperty('accessToken');
-      expect(result.user.role).toBe('SUPER_ADMIN');
-      expect(superAdminFindUniqueMock).toHaveBeenCalledWith({
+      expect(result.user.role).toBe('SUPER_USER');
+      expect(userFindFirstMock).toHaveBeenCalledWith({
         where: { email: loginDto.email },
+        include: { tenant: true },
       });
     });
 
     it('should throw UnauthorizedException for invalid credentials', async () => {
       const userFindFirstMock = prismaService.user.findFirst;
-      const superAdminFindUniqueMock = prismaService.superAdmin.findUnique;
       userFindFirstMock.mockResolvedValue(null);
-      superAdminFindUniqueMock.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
@@ -340,22 +339,25 @@ describe('AuthService', () => {
   });
 
   describe('getProfile', () => {
-    it('should return super admin profile', async () => {
+    it('should return super user profile', async () => {
       const userId = faker.string.uuid();
-      const mockSuperAdmin = {
+      const mockSuperUser = {
         id: userId,
         email: 'admin@example.com',
-        name: 'Super Admin',
+        name: 'Super User',
+        role: 'SUPER_USER' as const,
+        tenantId: null,
+        tenant: null,
         createdAt: new Date(),
       };
 
-      const superAdminFindUniqueMock = prismaService.superAdmin.findUnique;
-      superAdminFindUniqueMock.mockResolvedValue(mockSuperAdmin);
+      const userFindUniqueMock = prismaService.user.findUnique;
+      userFindUniqueMock.mockResolvedValue(mockSuperUser);
 
-      const result = await service.getProfile(userId, 'SUPER_ADMIN');
+      const result = await service.getProfile(userId);
 
-      expect(result.role).toBe('SUPER_ADMIN');
-      expect(result.email).toBe(mockSuperAdmin.email);
+      expect(result.role).toBe('SUPER_USER');
+      expect(result.email).toBe(mockSuperUser.email);
     });
 
     it('should return regular user profile', async () => {
@@ -378,7 +380,7 @@ describe('AuthService', () => {
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockUser);
 
-      const result = await service.getProfile(userId, 'ADMIN');
+      const result = await service.getProfile(userId);
 
       expect(result.role).toBe('ADMIN');
       expect(result.email).toBe(mockUser.email);
@@ -391,7 +393,7 @@ describe('AuthService', () => {
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(null);
 
-      await expect(service.getProfile(userId, 'USER')).rejects.toThrow(
+      await expect(service.getProfile(userId)).rejects.toThrow(
         UnauthorizedException,
       );
     });

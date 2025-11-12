@@ -123,10 +123,7 @@ describe('AuthController', () => {
 
       const result = await controller.getProfile(mockUser);
 
-      expect(getProfileSpy).toHaveBeenCalledWith(
-        mockUser.userId,
-        mockUser.role,
-      );
+      expect(getProfileSpy).toHaveBeenCalledWith(mockUser.userId);
       expect(result).toEqual(mockProfile);
     });
   });

@@ -7,7 +7,7 @@ const mockUser = {
   id: '1',
   email: 'admin@test.com',
   name: 'Admin User',
-  role: 'SUPER_ADMIN' as const,
+  role: 'SUPER_USER' as const,
   tenantId: undefined,
 };
 

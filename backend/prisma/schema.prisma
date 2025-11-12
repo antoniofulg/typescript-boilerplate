@@ -13,16 +13,6 @@ datasource db {
 // Seed configuration
 // Run with: npm run prisma:seed
 
-model SuperAdmin {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  @@map("superadmins")
-}
-
 model Tenant {
   id        String            @id @default(uuid())
   name      String
@@ -120,6 +110,7 @@ enum TenantStatus {
 }
 
 enum UserRole {
+  SUPER_USER
   ADMIN
   OPERATOR
   USER

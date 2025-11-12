@@ -18,9 +18,9 @@ export class SuperAdminGuard implements CanActivate {
       throw new ForbiddenException('Usuário não autenticado');
     }
 
-    if (user.role !== 'SUPER_ADMIN') {
+    if (user.role !== 'SUPER_USER') {
       throw new ForbiddenException(
-        'Acesso negado. Apenas Super Admin pode acessar esta rota.',
+        'Acesso negado. Apenas Super User pode acessar esta rota.',
       );
     }
 

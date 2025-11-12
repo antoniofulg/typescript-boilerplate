@@ -62,7 +62,7 @@ export function UserMenu() {
   };
 
   const getRoleBadgeVariant = (role: string) => {
-    if (role === 'SUPER_ADMIN' || role === 'ADMIN') return 'default';
+    if (role === 'SUPER_USER' || role === 'ADMIN') return 'default';
     if (role === 'OPERATOR') return 'secondary';
     return 'outline';
   };

@@ -68,7 +68,7 @@ export default function AuthPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'SUPER_ADMIN') {
+      if (user.role === 'SUPER_USER') {
         router.replace('/dashboard');
       } else {
         router.replace('/');
@@ -81,7 +81,7 @@ export default function AuthPage() {
       const result = await login(data.email, data.password);
       toast.success('Login realizado com sucesso!');
       setTimeout(() => {
-        if (result?.user?.role === 'SUPER_ADMIN') {
+        if (result?.user?.role === 'SUPER_USER') {
           router.replace('/dashboard');
         } else {
           router.replace('/');

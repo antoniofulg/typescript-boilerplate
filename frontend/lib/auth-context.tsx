@@ -6,7 +6,7 @@ type User = {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR' | 'USER';
+  role: 'SUPER_USER' | 'ADMIN' | 'OPERATOR' | 'USER';
   tenantId?: string;
   tenant?: {
     id: string;

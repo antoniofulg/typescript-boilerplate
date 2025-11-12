@@ -6,28 +6,52 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create super admin
-  const superAdminPassword = 'admin';
+  // Create super user
+  const superUserEmail =
+    process.env.SUPER_USER_EMAIL || 'admin@voto-inteligente.com';
+  const superUserPassword = process.env.SUPER_USER_PASSWORD || 'admin';
   const saltRounds = 10;
-  const superAdminPasswordHash = await bcrypt.hash(
-    superAdminPassword,
+  const superUserPasswordHash = await bcrypt.hash(
+    superUserPassword,
     saltRounds,
   );
 
-  const superAdmin = await prisma.superAdmin.upsert({
-    where: { email: 'admin@voto-inteligente.com' },
-    update: {},
-    create: {
-      name: 'Super Administrador',
-      email: 'admin@voto-inteligente.com',
-      passwordHash: superAdminPasswordHash,
+  // Check if super user already exists
+  let superUser = await prisma.user.findFirst({
+    where: {
+      email: superUserEmail,
+      role: 'SUPER_USER',
+      tenantId: null,
     },
   });
 
-  console.log('✅ Created super admin:', {
-    email: superAdmin.email,
-    name: superAdmin.name,
-    password: superAdminPassword, // Log apenas para desenvolvimento
+  if (superUser) {
+    // Update existing super user
+    superUser = await prisma.user.update({
+      where: { id: superUser.id },
+      data: {
+        name: 'Super Usuário',
+        email: superUserEmail,
+        passwordHash: superUserPasswordHash,
+      },
+    });
+  } else {
+    // Create new super user
+    superUser = await prisma.user.create({
+      data: {
+        name: 'Super Usuário',
+        email: superUserEmail,
+        passwordHash: superUserPasswordHash,
+        role: 'SUPER_USER',
+        tenantId: null,
+      },
+    });
+  }
+
+  console.log('✅ Created super user:', {
+    email: superUser.email,
+    name: superUser.name,
+    password: superUserPassword, // Log apenas para desenvolvimento
   });
 
   // Create example tenants
