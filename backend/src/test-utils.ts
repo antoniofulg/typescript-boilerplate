@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Type } from '@nestjs/common';
+import { Type, Provider } from '@nestjs/common';
+import { DynamicModule } from '@nestjs/common/interfaces';
 import { PrismaService } from './prisma/prisma.service';
 import { Mock, vi } from 'vitest';
 
@@ -136,9 +137,9 @@ export type TestingModuleResult = {
  * Creates a testing module with mocked PrismaService
  */
 export async function createTestingModule(
-  providers: unknown[],
-  controllers: unknown[] = [],
-  imports: unknown[] = [],
+  providers: (Provider | Type)[],
+  controllers: Type[] = [],
+  imports: (Type | DynamicModule | Promise<DynamicModule>)[] = [],
 ): Promise<TestingModuleResult> {
   const mockPrismaService = createMockPrismaService();
 

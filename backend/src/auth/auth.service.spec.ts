@@ -13,7 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { createMockPrismaService, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
-import { vi } from 'vitest';
+import { vi, type MockInstance } from 'vitest';
 
 vi.mock('bcrypt');
 
@@ -21,12 +21,12 @@ describe('AuthService', () => {
   let service: AuthService;
   let prismaService: MockPrismaService;
   let jwtService: {
-    sign: ReturnType<typeof vi.fn>;
+    sign: MockInstance<(payload: unknown, options?: unknown) => string>;
   };
   let configService: {
-    get: ReturnType<typeof vi.fn>;
+    get: MockInstance<<T = unknown>(key: string) => T | undefined>;
   };
-  let jwtSignSpy: ReturnType<typeof vi.spyOn>;
+  let jwtSignSpy: MockInstance<(payload: unknown, options?: unknown) => string>;
 
   beforeEach(async () => {
     prismaService = createMockPrismaService();
@@ -58,11 +58,11 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
+    jwtService = module.get<typeof jwtService>(JwtService);
+    configService = module.get<typeof configService>(ConfigService);
 
-    // Create spy for jwtService.sign
-    jwtSignSpy = vi.spyOn(jwtService, 'sign');
+    // No need to spy when already using a vi.fn() mock
+    jwtSignSpy = jwtService.sign;
 
     // Default config values
     configService.get.mockImplementation((key: string) => {
