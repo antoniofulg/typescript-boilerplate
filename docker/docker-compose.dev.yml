@@ -1,0 +1,121 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-voto_inteligente_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile.dev
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-backend
+    env_file:
+      - .env.backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-voto_inteligente_db}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=${BACKEND_PORT:-4000}
+      - NODE_ENV=development
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
+    ports:
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
+      - "${PRISMA_STUDIO_PORT:-5555}:5555"
+    volumes:
+      # Mount source code for hot-reload
+      - ../backend:/app
+      - /app/node_modules
+      # Don't mount dist - let it be created inside container to avoid EBUSY errors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:${BACKEND_PORT:-4000}/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    command: sh -c "npx prisma generate && npm run start:dev"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile.dev
+    container_name: ${COMPOSE_PROJECT_NAME:-voto-inteligente}-frontend
+    env_file:
+      - .env.frontend
+    environment:
+      - NODE_ENV=development
+      - PORT=${FRONTEND_PORT:-3000}
+      - NEXT_PUBLIC_BACKEND_URL=http://${BACKEND_ALIAS:-voto-inteligente.backend.local}:${BACKEND_PORT:-4000}
+      - BACKEND_URL=http://backend:${BACKEND_PORT:-4000}
+      - BACKEND_PORT=${BACKEND_PORT:-4000}
+      - FRONTEND_ALIAS=${FRONTEND_ALIAS:-voto-inteligente.frontend.local}
+      - BACKEND_ALIAS=${BACKEND_ALIAS:-voto-inteligente.backend.local}
+      - WATCHPACK_POLLING=true
+    ports:
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
+    volumes:
+      # Mount source code for hot-reload
+      - ../frontend:/app
+      - /app/node_modules
+      # Don't mount .next - let it be created inside container to avoid EBUSY errors
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:${FRONTEND_PORT:-3000}', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    command: npm run dev
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+

@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -28,7 +28,7 @@ help: ## Show this help message
 	@grep -E '^build|^build-fast|^up|^down|^restart|^logs|^logs-backend|^logs-frontend|^urls|^ps|^clean|^clean-old-containers:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)💻 Development:$(NC)"
-	@grep -E '^dev|^dev-stop|^dev-status|^dev-logs|^dev-logs-backend|^dev-logs-frontend|^dev-backend|^dev-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^dev|^dev-docker|^dev-stop|^dev-status|^dev-logs|^dev-logs-backend|^dev-logs-frontend|^dev-backend|^dev-frontend:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
 	@grep -E '^migrate|^migrate-dev|^migrate-reset|^migrate-resolve|^db-push|^seed|^prisma-studio|^prisma-studio-stop:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
@@ -363,6 +363,82 @@ dev-backend: ## Run backend in development mode (local, standalone)
 dev-frontend: ## Run frontend in development mode (local, standalone)
 	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
 	@cd frontend && npm run dev
+
+dev-docker-build: hosts-add ## Build Docker images for development (with hot-reload)
+	@echo "$(GREEN)🔨 Building Docker images for development...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml build
+
+dev-docker: hosts-add ## Start development environment in Docker with hot-reload
+	@echo "$(GREEN)🚀 Starting development environment in Docker (with hot-reload)...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
+	@sleep 5
+	@$(MAKE) urls-dev
+
+dev-docker-stop: ## Stop development environment in Docker
+	@echo "$(YELLOW)🛑 Stopping development environment in Docker...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml down
+
+dev-docker-restart: ## Restart development environment in Docker
+	@echo "$(YELLOW)🔄 Restarting development environment in Docker...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml restart
+	@sleep 3
+	@$(MAKE) urls-dev
+
+dev-docker-logs: ## View logs from development environment in Docker
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f
+
+dev-docker-logs-backend: ## View backend logs (development Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f backend
+
+dev-docker-logs-frontend: ## View frontend logs (development Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml logs -f frontend
+
+urls-dev: ## Show service URLs (development Docker)
+	@echo ""
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║  $(BOLD)🚀 Development Environment (Docker) - Running Services$(NC)$(GREEN)  ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@echo "$(CYAN)📋 Service Status:$(NC)"
+	@echo ""
+	@cd $(DOCKER_DIR) && \
+	if $(DOCKER_COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null | grep -q "frontend.*Up"; then \
+		echo "   $(GREEN)✅ Frontend (Development with hot-reload)$(NC)"; \
+		echo "      $(BLUE)🌐 URL (localhost):$(NC) $(BOLD)http://localhost:3000$(NC)"; \
+		echo "      $(BLUE)🌐 URL (alias):$(NC) $(BOLD)http://$(FRONTEND_ALIAS):3000$(NC)"; \
+	else \
+		echo "   $(YELLOW)⏳ Frontend is still starting...$(NC)"; \
+	fi
+	@echo ""
+	@cd $(DOCKER_DIR) && \
+	if $(DOCKER_COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null | grep -q "backend.*Up"; then \
+		echo "   $(GREEN)✅ Backend (Development with hot-reload)$(NC)"; \
+		echo "      $(BLUE)🌐 API (localhost):$(NC) $(BOLD)http://localhost:4000$(NC)"; \
+		echo "      $(BLUE)🌐 API (alias):$(NC) $(BOLD)http://$(BACKEND_ALIAS):4000$(NC)"; \
+		echo "      $(BLUE)🏥 Healthcheck:$(NC) $(BOLD)http://localhost:4000/health$(NC)"; \
+	else \
+		echo "   $(YELLOW)⏳ Backend is still starting...$(NC)"; \
+	fi
+	@echo ""
+	@cd $(DOCKER_DIR) && \
+	if $(DOCKER_COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null | grep -q "postgres.*Up"; then \
+		echo "   $(GREEN)✅ PostgreSQL$(NC)"; \
+		echo "      $(BLUE)🗄️  Host:$(NC) $(BOLD)localhost:5432$(NC)"; \
+		echo "      $(BLUE)📊 Database:$(NC) $(BOLD)app_db$(NC)"; \
+	else \
+		echo "   $(YELLOW)⏳ PostgreSQL is still starting...$(NC)"; \
+	fi
+	@echo ""
+	@cd $(DOCKER_DIR) && \
+	if $(DOCKER_COMPOSE) -f docker-compose.dev.yml ps 2>/dev/null | grep -q "redis.*Up"; then \
+		echo "   $(GREEN)✅ Redis$(NC)"; \
+		echo "      $(BLUE)💾 Host:$(NC) $(BOLD)localhost:6379$(NC)"; \
+	else \
+		echo "   $(YELLOW)⏳ Redis is still starting...$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(CYAN)💡 Hot-reload is enabled - changes to code will automatically reload$(NC)"
+	@echo ""
 
 test-frontend: ## Run frontend tests (single run, CI mode)
 	@echo "$(GREEN)🧪 Running frontend tests...$(NC)"
