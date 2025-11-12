@@ -127,17 +127,22 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
       filters.action = action as LogAction;
     }
 
+    // Parse entities (array) - takes precedence over single entity
     const entities = searchParams.get('entities');
     if (entities) {
-      filters.entities = entities
+      const entitiesArray = entities
         .split(',')
         .map((e) => e.trim())
         .filter((e) => e);
-    }
-
-    const entity = searchParams.get('entity');
-    if (entity) {
-      filters.entity = entity;
+      if (entitiesArray.length > 0) {
+        filters.entities = entitiesArray;
+      }
+    } else {
+      // Only parse single entity if entities is not present (mutual exclusion)
+      const entity = searchParams.get('entity');
+      if (entity) {
+        filters.entity = entity;
+      }
     }
 
     const entityId = searchParams.get('entityId');
@@ -348,6 +353,10 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
+      // Check if date is valid (Invalid Date objects have NaN for getTime())
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();

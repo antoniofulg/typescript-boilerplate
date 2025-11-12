@@ -50,16 +50,17 @@ export default async function LogsPage({ searchParams }: LogsPageProps) {
       filters.action = params.action as LogAction;
     }
 
-    // Parse entities (array)
+    // Parse entities (array) - takes precedence over single entity
     if (params.entities && typeof params.entities === 'string') {
-      filters.entities = params.entities
+      const entitiesArray = params.entities
         .split(',')
         .map((e) => e.trim())
         .filter((e) => e);
-    }
-
-    // Parse single entity
-    if (params.entity && typeof params.entity === 'string') {
+      if (entitiesArray.length > 0) {
+        filters.entities = entitiesArray;
+      }
+    } else if (params.entity && typeof params.entity === 'string') {
+      // Only parse single entity if entities is not present (mutual exclusion)
       filters.entity = params.entity;
     }
 
