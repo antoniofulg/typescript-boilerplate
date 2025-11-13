@@ -23,7 +23,6 @@ export class FindLogsDto {
   @IsString()
   entity?: string;
 
-  @IsOptional()
   @Transform(({ value }) => {
     if (!value) return undefined;
     if (typeof value === 'string') {
@@ -39,6 +38,7 @@ export class FindLogsDto {
     }
     return undefined;
   })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   entities?: string[];
