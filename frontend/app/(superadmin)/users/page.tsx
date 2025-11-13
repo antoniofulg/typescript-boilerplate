@@ -3,7 +3,6 @@ import { getUsers, getTenants } from '@/lib/api-server';
 import type { User } from '@/types/user';
 import type { Tenant } from '@/types/tenant';
 import { UsersManagement } from '@/components/(superadmin)/users-management';
-import { DashboardHeader } from '@/components/(superadmin)/dashboard-header';
 import { DashboardErrorBoundary } from '@/components/(superadmin)/dashboard-error-boundary';
 
 export default async function UsersPage() {
@@ -24,11 +23,8 @@ export default async function UsersPage() {
 
   return (
     <DashboardErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <DashboardHeader />
-        <main className="container mx-auto px-4 py-8">
-          <UsersManagement initialUsers={users} tenants={tenants} />
-        </main>
+      <div className="container mx-auto px-4 py-8">
+        <UsersManagement initialUsers={users} tenants={tenants} />
       </div>
     </DashboardErrorBoundary>
   );

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { getLogs } from '@/lib/api-server';
 import type { LogsResponse, LogsFilters, LogAction } from '@/types/log';
 import { LogsManagement } from '@/components/(superadmin)/logs-management';
-import { DashboardHeader } from '@/components/(superadmin)/dashboard-header';
 import { DashboardErrorBoundary } from '@/components/(superadmin)/dashboard-error-boundary';
 
 type LogsPageProps = {
@@ -105,11 +104,8 @@ export default async function LogsPage({ searchParams }: LogsPageProps) {
 
   return (
     <DashboardErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <DashboardHeader />
-        <main className="container mx-auto px-4 py-8">
-          <LogsManagement initialLogs={initialLogs} />
-        </main>
+      <div className="container mx-auto px-4 py-8">
+        <LogsManagement initialLogs={initialLogs} />
       </div>
     </DashboardErrorBoundary>
   );
