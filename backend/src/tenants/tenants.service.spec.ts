@@ -102,7 +102,6 @@ describe('TenantsService', () => {
         status: 'ACTIVE' as const,
         createdAt: new Date(),
         users: [],
-        sessions: [],
       };
 
       prismaService.tenant.findUnique.mockResolvedValue(mockTenant);
@@ -137,7 +136,6 @@ describe('TenantsService', () => {
         status: 'ACTIVE' as const,
         createdAt: new Date(),
         users: [],
-        sessions: [],
       };
 
       const updatedTenant = {
@@ -167,7 +165,6 @@ describe('TenantsService', () => {
         status: 'ACTIVE' as const,
         createdAt: new Date(),
         users: [],
-        sessions: [],
       };
 
       prismaService.tenant.findUnique.mockResolvedValue(mockTenant);

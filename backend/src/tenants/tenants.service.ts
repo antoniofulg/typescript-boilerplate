@@ -44,7 +44,6 @@ export class TenantsService {
       where: { id },
       include: {
         users: true,
-        sessions: true,
       },
     });
 
