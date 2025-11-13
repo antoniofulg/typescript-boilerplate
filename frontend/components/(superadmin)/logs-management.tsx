@@ -173,7 +173,9 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
     return filters;
   }, [searchParams]);
 
-  const [filters, setFilters] = useState<LogsFilters>(parseFiltersFromParams);
+  const [filters, setFilters] = useState<LogsFilters>(() =>
+    parseFiltersFromParams(),
+  );
   const isInitialMount = useRef(true);
   const isUpdatingFromURL = useRef(false);
 
