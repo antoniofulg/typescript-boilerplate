@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -40,10 +38,10 @@ import {
   type LoginFormData,
   type RegisterFormData,
 } from '@/lib/validations/auth';
+import { loginAction, registerAction } from '@/lib/auth-actions';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, register, isAuthenticated, user } = useAuth();
   const toast = useToast();
 
   const loginForm = useForm<LoginFormData>({
@@ -65,78 +63,57 @@ export default function AuthPage() {
     },
   });
 
-  // Note: Server-side redirect is handled in layout.tsx
-  // This useEffect is kept as a fallback for client-side navigation
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.role === 'SUPER_USER') {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/');
-      }
-    }
-  }, [isAuthenticated, user, router]);
-
   const onLoginSubmit = async (data: LoginFormData) => {
-    try {
-      const result = await login(data.email, data.password);
-      toast.success('Login realizado com sucesso!');
-      setTimeout(() => {
-        if (result?.user?.role === 'SUPER_USER') {
-          router.replace('/dashboard');
-        } else {
-          router.replace('/');
-        }
-      }, 500);
-    } catch (err) {
-      // Check if error has redirectTo (user already authenticated)
-      if (err instanceof Error && 'redirectTo' in err && err.redirectTo) {
-        toast.info('Você já está autenticado', {
-          description: 'Redirecionando...',
-        });
-        setTimeout(() => {
-          router.replace(err.redirectTo as string);
-        }, 500);
-        return;
-      }
+    const result = await loginAction(data.email, data.password);
 
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao fazer login';
+    if (result.success && result.redirectTo) {
+      toast.success('Login realizado com sucesso!');
+      // Update localStorage for AuthContext
+      if (typeof window !== 'undefined') {
+        // Trigger a page reload or update AuthContext
+        // For now, just redirect
+        router.push(result.redirectTo);
+      }
+    } else if (result.redirectTo) {
+      // User already authenticated
+      toast.info('Você já está autenticado', {
+        description: 'Redirecionando...',
+      });
+      router.push(result.redirectTo);
+    } else {
       toast.error('Erro ao fazer login', {
-        description: errorMessage,
+        description: result.error || 'Erro desconhecido',
+      });
+      loginForm.setError('root', {
+        message: result.error || 'Erro ao fazer login',
       });
     }
   };
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
-    try {
-      await register({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role,
-        tenantId: data.tenantId || undefined,
-      });
-      toast.success('Registro realizado com sucesso!');
-      setTimeout(() => {
-        router.replace('/');
-      }, 500);
-    } catch (err) {
-      // Check if error has redirectTo (user already authenticated)
-      if (err instanceof Error && 'redirectTo' in err && err.redirectTo) {
-        toast.info('Você já está autenticado', {
-          description: 'Redirecionando...',
-        });
-        setTimeout(() => {
-          router.replace(err.redirectTo as string);
-        }, 500);
-        return;
-      }
+    const result = await registerAction({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: data.role,
+      tenantId: data.tenantId || undefined,
+    });
 
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao registrar';
+    if (result.success && result.redirectTo) {
+      toast.success('Registro realizado com sucesso!');
+      router.push(result.redirectTo);
+    } else if (result.redirectTo) {
+      // User already authenticated
+      toast.info('Você já está autenticado', {
+        description: 'Redirecionando...',
+      });
+      router.push(result.redirectTo);
+    } else {
       toast.error('Erro ao registrar', {
-        description: errorMessage,
+        description: result.error || 'Erro desconhecido',
+      });
+      registerForm.setError('root', {
+        message: result.error || 'Erro ao registrar',
       });
     }
   };

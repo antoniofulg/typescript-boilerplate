@@ -1,0 +1,152 @@
+'use server';
+
+import { cookies } from 'next/headers';
+
+// Use the same logic as api-server to determine the backend URL
+const getBackendUrl = (): string => {
+  if (process.env.BACKEND_URL) {
+    return process.env.BACKEND_URL;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const backendPort = process.env.BACKEND_PORT || '4000';
+    return `http://backend:${backendPort}`;
+  }
+
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+};
+
+const BACKEND_URL = getBackendUrl();
+
+type LoginResult = {
+  success: boolean;
+  error?: string;
+  redirectTo?: string;
+};
+
+type RegisterResult = {
+  success: boolean;
+  error?: string;
+  redirectTo?: string;
+};
+
+export async function loginAction(
+  email: string,
+  password: string,
+): Promise<LoginResult> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+
+      // If user is already authenticated, handle redirect
+      if (response.status === 403 && error.redirectTo) {
+        return {
+          success: false,
+          error: error.message || 'Usuário já autenticado',
+          redirectTo: error.redirectTo,
+        };
+      }
+
+      return {
+        success: false,
+        error: error.message || 'Erro ao fazer login',
+      };
+    }
+
+    const data = await response.json();
+
+    // Set cookie with token
+    const cookieStore = await cookies();
+    cookieStore.set('auth_token', data.accessToken, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      httpOnly: false, // Needs to be accessible from client for API calls
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    // Return success with redirect path
+    return {
+      success: true,
+      redirectTo: data.user?.role === 'SUPER_USER' ? '/dashboard' : '/',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Erro desconhecido ao fazer login',
+    };
+  }
+}
+
+export async function registerAction(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'OPERATOR' | 'USER';
+  tenantId?: string;
+}): Promise<RegisterResult> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+
+      // If user is already authenticated, handle redirect
+      if (response.status === 403 && error.redirectTo) {
+        return {
+          success: false,
+          error: error.message || 'Usuário já autenticado',
+          redirectTo: error.redirectTo,
+        };
+      }
+
+      return {
+        success: false,
+        error: error.message || 'Erro ao registrar',
+      };
+    }
+
+    const result = await response.json();
+
+    // Set cookie with token
+    const cookieStore = await cookies();
+    cookieStore.set('auth_token', result.accessToken, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      httpOnly: false, // Needs to be accessible from client for API calls
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    // Return success with redirect path
+    return {
+      success: true,
+      redirectTo: result.user?.role === 'SUPER_USER' ? '/dashboard' : '/',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Erro desconhecido ao registrar',
+    };
+  }
+}

@@ -5,7 +5,11 @@ import type { Tenant } from '@/types/tenant';
 import { UsersManagement } from '@/components/(superadmin)/users-management';
 import { DashboardErrorBoundary } from '@/components/(superadmin)/dashboard-error-boundary';
 
-export default async function UsersPage() {
+type UsersPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function UsersPage({ searchParams }: UsersPageProps) {
   let users: User[] = [];
   let tenants: Tenant[] = [];
 
@@ -21,10 +25,34 @@ export default async function UsersPage() {
     tenants = [];
   }
 
+  // Parse filters from searchParams
+  const params = await searchParams;
+  const searchQuery = typeof params.search === 'string' ? params.search : '';
+  const page =
+    typeof params.page === 'string' ? parseInt(params.page, 10) || 1 : 1;
+
+  // Filter users on server
+  let filteredUsers = users;
+  if (searchQuery) {
+    filteredUsers = filteredUsers.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.tenant?.name || '')
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+    );
+  }
+
   return (
     <DashboardErrorBoundary>
       <div className="container mx-auto px-4 py-8">
-        <UsersManagement initialUsers={users} tenants={tenants} />
+        <UsersManagement
+          initialUsers={filteredUsers}
+          tenants={tenants}
+          searchQuery={searchQuery}
+          currentPage={page}
+        />
       </div>
     </DashboardErrorBoundary>
   );

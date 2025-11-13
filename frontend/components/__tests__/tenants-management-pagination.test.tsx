@@ -17,16 +17,22 @@ const createMockTenants = (count: number): Tenant[] => {
 
 const mockTenants = createMockTenants(25);
 
-// Mock the hooks
-vi.mock('@/hooks/use-api', () => ({
-  useApi: () => ({
-    loading: false,
-    error: null,
-    get: vi.fn(),
-    post: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
+// Mock next/navigation
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    refresh: mockRefresh,
   }),
+  usePathname: () => '/dashboard',
+}));
+
+// Mock Server Actions
+vi.mock('@/lib/data-actions', () => ({
+  createTenantAction: vi.fn(),
+  updateTenantAction: vi.fn(),
+  deleteTenantAction: vi.fn(),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -41,10 +47,19 @@ vi.mock('@/hooks/use-toast', () => ({
 describe('TenantsManagement - Pagination', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPush.mockClear();
+    mockRefresh.mockClear();
   });
 
   it('displays pagination when there are more than 10 tenants', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();
@@ -56,7 +71,14 @@ describe('TenantsManagement - Pagination', () => {
   });
 
   it('shows first 10 tenants on page 1', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();
@@ -71,7 +93,14 @@ describe('TenantsManagement - Pagination', () => {
 
   it('navigates to next page when clicking next button', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();
@@ -80,27 +109,22 @@ describe('TenantsManagement - Pagination', () => {
     const nextButton = screen.getByLabelText('Próxima página');
     await user.click(nextButton);
 
+    // Wait for URL update
     await waitFor(() => {
-      // Should show tenants 11-20
-      expect(screen.getByText('Tenant 11')).toBeInTheDocument();
-      expect(screen.getByText('Tenant 20')).toBeInTheDocument();
-      // Should not show tenant 1 or 21
-      expect(screen.queryByText('Tenant 1')).not.toBeInTheDocument();
-      expect(screen.queryByText('Tenant 21')).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('navigates to previous page when clicking previous button', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Tenant 1')).toBeInTheDocument();
-    });
-
-    // Go to page 2
-    const nextButton = screen.getByLabelText('Próxima página');
-    await user.click(nextButton);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={2}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 11')).toBeInTheDocument();
@@ -110,15 +134,22 @@ describe('TenantsManagement - Pagination', () => {
     const prevButton = screen.getByLabelText('Página anterior');
     await user.click(prevButton);
 
+    // Wait for URL update
     await waitFor(() => {
-      expect(screen.getByText('Tenant 1')).toBeInTheDocument();
-      expect(screen.queryByText('Tenant 11')).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('navigates to specific page when clicking page number', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();
@@ -128,26 +159,22 @@ describe('TenantsManagement - Pagination', () => {
     const page3Button = screen.getByLabelText('Ir para página 3');
     await user.click(page3Button);
 
+    // Wait for URL update
     await waitFor(() => {
-      // Should show tenants 21-25 (last page)
-      expect(screen.getByText('Tenant 21')).toBeInTheDocument();
-      expect(screen.getByText('Tenant 25')).toBeInTheDocument();
-      // Should not show tenant 20
-      expect(screen.queryByText('Tenant 20')).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('resets to page 1 when search filter changes', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Tenant 1')).toBeInTheDocument();
-    });
-
-    // Go to page 2
-    const nextButton = screen.getByLabelText('Próxima página');
-    await user.click(nextButton);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={2}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 11')).toBeInTheDocument();
@@ -158,24 +185,21 @@ describe('TenantsManagement - Pagination', () => {
     await user.clear(searchInput);
     await user.type(searchInput, 'Tenant 1');
 
+    // Wait for URL update (should reset to page 1)
     await waitFor(() => {
-      // Should be back on page 1 showing filtered results
-      expect(screen.getByText('Tenant 1')).toBeInTheDocument();
-      expect(screen.getByText('Tenant 10')).toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('resets to page 1 when status filter changes', async () => {
-    const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Tenant 1')).toBeInTheDocument();
-    });
-
-    // Go to page 2
-    const nextButton = screen.getByLabelText('Próxima página');
-    await user.click(nextButton);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={2}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 11')).toBeInTheDocument();
@@ -184,10 +208,18 @@ describe('TenantsManagement - Pagination', () => {
     // Change status filter (this is tested in TenantsFilters component)
     // For now, we just verify the pagination resets
     // The actual filter interaction is complex with Radix UI Select
+    // When status filter changes, router.push should be called to reset to page 1
   });
 
   it('updates item count display correctly', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    const { rerender } = render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(
@@ -195,10 +227,15 @@ describe('TenantsManagement - Pagination', () => {
       ).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
-    // Go to last page
-    const page3Button = screen.getByLabelText('Ir para página 3');
-    await user.click(page3Button);
+    // Test with page 3
+    rerender(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={3}
+      />,
+    );
 
     await waitFor(() => {
       // Last page should show 5 items (tenants 21-25)
@@ -209,7 +246,14 @@ describe('TenantsManagement - Pagination', () => {
   it('does not show pagination when filtered results are 10 or less', async () => {
     // Create a smaller set of tenants (5 tenants) to test pagination hiding
     const smallTenants = createMockTenants(5);
-    render(<TenantsManagement initialTenants={smallTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={smallTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();
@@ -221,7 +265,14 @@ describe('TenantsManagement - Pagination', () => {
   });
 
   it('shows correct page numbers in pagination', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument();

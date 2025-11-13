@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   Card,
@@ -35,9 +35,6 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { Pagination } from '@/components/ui/pagination';
-import { useApi } from '@/hooks/use-api';
-import { useAuth } from '@/lib/auth-context';
-import { useToast } from '@/hooks/use-toast';
 import { Filter, X, ChevronDown } from 'lucide-react';
 
 type LogsManagementProps = {
@@ -75,20 +72,17 @@ const availableEntities = [
 ];
 
 export function LogsManagement({ initialLogs }: LogsManagementProps) {
-  const { token } = useAuth();
-  const toast = useToast();
-  const { loading, get } = useApi(token);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [logs, setLogs] = useState<Log[]>(initialLogs.logs);
-  const [total, setTotal] = useState(initialLogs.total);
-  const [currentPage, setCurrentPage] = useState(initialLogs.page);
   const [limit] = useState(initialLogs.limit);
+  const [logs] = useState<Log[]>(initialLogs.logs);
+  const [total] = useState(initialLogs.total);
+  const [currentPage] = useState(initialLogs.page);
 
   // Parse query params to filters
-  const parseFiltersFromParams = useCallback((): LogsFilters => {
+  const parseFiltersFromParams = (): LogsFilters => {
     const filters: LogsFilters = {
       page: 1,
       limit: 20,
@@ -159,148 +153,48 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
     }
 
     return filters;
-  }, [searchParams]);
+  };
 
+  // Initialize state from URL params and initial logs
   const [filters, setFilters] = useState<LogsFilters>(() =>
     parseFiltersFromParams(),
   );
-  const isInitialMount = useRef(true);
-  const isUpdatingFromURL = useRef(false);
 
   // Update URL with current filters
-  const updateURL = useCallback(
-    (newFilters: LogsFilters) => {
-      // Don't update URL if we're currently syncing from URL to avoid loops
-      if (isUpdatingFromURL.current) {
-        return;
+  const updateURL = (newFilters: LogsFilters) => {
+    const params = new URLSearchParams();
+
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        // Handle arrays (for entities)
+        if (Array.isArray(value) && value.length > 0) {
+          params.append(key, value.join(','));
+        } else if (!Array.isArray(value)) {
+          params.append(key, String(value));
+        }
       }
+    });
 
-      const params = new URLSearchParams();
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
-      Object.entries(newFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          // Handle arrays (for entities)
-          if (Array.isArray(value) && value.length > 0) {
-            params.append(key, value.join(','));
-          } else if (!Array.isArray(value)) {
-            params.append(key, String(value));
-          }
-        }
-      });
-
-      const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-
-      // Use replace to avoid adding to history on every filter change
-      router.replace(newUrl, { scroll: false });
-    },
-    [pathname, router],
-  );
-
-  const fetchLogs = useCallback(
-    async (newFilters?: LogsFilters) => {
-      // When newFilters is provided, use it as the base (not merge over stale filters)
-      // This ensures that cleared filters are actually removed
-      // When newFilters is not provided, use current filters
-      const activeFilters: LogsFilters = newFilters
-        ? {
-            ...newFilters,
-            // Apply defaults only if properties are missing (not explicitly set to undefined)
-            page: newFilters.page !== undefined ? newFilters.page : 1,
-            limit: newFilters.limit !== undefined ? newFilters.limit : 20,
-          }
-        : filters;
-
-      // Build query string from filters
-      const params = new URLSearchParams();
-      Object.entries(activeFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          // Handle arrays (for entities)
-          if (Array.isArray(value) && value.length > 0) {
-            params.append(key, value.join(','));
-          } else if (!Array.isArray(value)) {
-            params.append(key, String(value));
-          }
-        }
-      });
-
-      const queryString = params.toString();
-      const endpoint = `/logs${queryString ? `?${queryString}` : ''}`;
-
-      await get<LogsResponse>(endpoint, {
-        onSuccess: (data) => {
-          if (data) {
-            setLogs(data.logs);
-            setTotal(data.total);
-            setCurrentPage(data.page);
-            setFilters(activeFilters);
-            // Update URL with the active filters
-            updateURL(activeFilters);
-          }
-        },
-        onError: (err) => {
-          const errorMessage = err.message || 'Erro desconhecido';
-          if (errorMessage.includes('UNAUTHENTICATED') || err.status === 401) {
-            window.location.href = '/auth';
-            return;
-          }
-          toast.error('Erro ao carregar logs', {
-            description: errorMessage,
-          });
-        },
-      });
-    },
-    [filters, get, updateURL, toast],
-  );
+    // Use replace to avoid adding to history on every filter change
+    router.replace(newUrl, { scroll: false });
+  };
 
   // Sync filters when URL params change (e.g., browser back/forward or initial load)
+  // This effect synchronizes external state (URL params) with React state
   useEffect(() => {
-    const urlFilters = parseFiltersFromParams();
+    const currentUrlFilters = parseFiltersFromParams();
+    const currentFiltersStr = JSON.stringify(filters);
+    const urlFiltersStr = JSON.stringify(currentUrlFilters);
 
-    // Use a functional update to compare with current state
-    setFilters((currentFilters) => {
-      const currentFiltersStr = JSON.stringify(currentFilters);
-      const urlFiltersStr = JSON.stringify(urlFilters);
-
-      // Only update if filters actually changed to avoid infinite loops
-      if (currentFiltersStr !== urlFiltersStr) {
-        isUpdatingFromURL.current = true;
-
-        // Only fetch if URL has filters (not just default page/limit) or page is not 1
-        const hasNonDefaultFilters = Object.keys(urlFilters).some(
-          (key) =>
-            key !== 'page' &&
-            key !== 'limit' &&
-            urlFilters[key as keyof LogsFilters],
-        );
-
-        // On initial mount, use initialLogs if no filters in URL
-        if (
-          isInitialMount.current &&
-          !hasNonDefaultFilters &&
-          urlFilters.page === 1
-        ) {
-          isInitialMount.current = false;
-          isUpdatingFromURL.current = false;
-          return currentFilters; // Don't change filters
-        }
-
-        // Fetch logs if needed
-        if (hasNonDefaultFilters || urlFilters.page !== 1) {
-          void fetchLogs(urlFilters).finally(() => {
-            isUpdatingFromURL.current = false;
-          });
-        } else {
-          isUpdatingFromURL.current = false;
-        }
-
-        isInitialMount.current = false;
-        return urlFilters;
-      }
-
-      return currentFilters;
-    });
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Only update if filters actually changed to avoid unnecessary renders
+    if (currentFiltersStr !== urlFiltersStr) {
+      setFilters(currentUrlFilters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleFilterChange = (key: keyof LogsFilters, value: unknown) => {
     const newFilters: LogsFilters = { ...filters, page: 1 };
@@ -316,7 +210,8 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
       newFilters[key] = value as never;
     }
 
-    void fetchLogs(newFilters);
+    updateURL(newFilters);
+    router.refresh();
   };
 
   const handleEntityToggle = (entityValue: string) => {
@@ -332,11 +227,14 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
 
   const handleClearFilters = () => {
     const clearedFilters: LogsFilters = { page: 1, limit: 20 };
-    void fetchLogs(clearedFilters);
+    updateURL(clearedFilters);
+    router.refresh();
   };
 
   const handlePageChange = (page: number) => {
-    void fetchLogs({ ...filters, page });
+    const newFilters = { ...filters, page };
+    updateURL(newFilters);
+    router.refresh();
   };
 
   const formatChanges = (changes: Record<string, unknown>): string => {
@@ -494,11 +392,7 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
         </div>
 
         {/* Table */}
-        {loading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Carregando logs...
-          </div>
-        ) : logs.length === 0 ? (
+        {logs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             Nenhum log encontrado
           </div>
