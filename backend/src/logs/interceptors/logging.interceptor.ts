@@ -151,7 +151,7 @@ export class LoggingInterceptor implements NestInterceptor {
     // Get the first part (entity name)
     const entityName = parts[0];
 
-    // Convert to PascalCase (e.g., users -> User, tenant-sessions -> TenantSession)
+    // Convert to PascalCase (e.g., users -> User, tenants -> Tenant)
     return (
       entityName
         .split('-')

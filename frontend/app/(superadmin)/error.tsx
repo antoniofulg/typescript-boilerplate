@@ -19,13 +19,13 @@ type ErrorProps = {
   reset: () => void;
 };
 
-export default function SuperAdminError({ error, reset }: ErrorProps) {
+export default function SuperUserError({ error, reset }: ErrorProps) {
   const router = useRouter();
 
   useEffect(() => {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Super Admin page error:', error);
+      console.error('Super User page error:', error);
     }
   }, [error]);
 

@@ -70,7 +70,7 @@ export async function getAuthenticatedUser(): Promise<User | null> {
   }
 }
 
-export async function requireSuperAdmin(): Promise<User> {
+export async function requireSuperUser(): Promise<User> {
   const user = await getAuthenticatedUser();
 
   if (!user) {

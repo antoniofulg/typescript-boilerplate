@@ -4,10 +4,10 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { CurrentUserPayload } from '../../auth/decorators/current-user.decorator';
+import { CurrentUserPayload } from '../decorators/current-user.decorator';
 
 @Injectable()
-export class SuperAdminGuard implements CanActivate {
+export class SuperUserGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<{
       user?: CurrentUserPayload;

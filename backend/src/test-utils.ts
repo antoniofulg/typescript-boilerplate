@@ -23,41 +23,6 @@ export type MockPrismaService = {
     update: Mock;
     delete: Mock;
   };
-  superAdmin: {
-    findMany: Mock;
-    findUnique: Mock;
-    create: Mock;
-    update: Mock;
-    delete: Mock;
-  };
-  session: {
-    findMany: Mock;
-    findUnique: Mock;
-    create: Mock;
-    update: Mock;
-    delete: Mock;
-  };
-  project: {
-    findMany: Mock;
-    findUnique: Mock;
-    create: Mock;
-    update: Mock;
-    delete: Mock;
-  };
-  attendance: {
-    findMany: Mock;
-    findUnique: Mock;
-    create: Mock;
-    update: Mock;
-    delete: Mock;
-  };
-  vote: {
-    findMany: Mock;
-    findUnique: Mock;
-    create: Mock;
-    update: Mock;
-    delete: Mock;
-  };
   log: {
     findMany: Mock;
     findUnique: Mock;
@@ -86,41 +51,6 @@ export function createMockPrismaService(): MockPrismaService {
     user: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    superAdmin: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    session: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    project: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    attendance: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    vote: {
-      findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),

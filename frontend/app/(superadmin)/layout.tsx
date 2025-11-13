@@ -1,13 +1,16 @@
 import { redirect } from 'next/navigation';
-import { requireSuperAdmin } from '@/lib/auth-server';
+import { requireSuperUser } from '@/lib/auth-server';
+import { Sidebar } from '@/components/sidebar';
+import { DashboardHeader } from '@/components/(superadmin)/dashboard-header';
 
-export default async function SuperAdminLayout({
+export default async function SuperUserLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  let user;
   try {
-    await requireSuperAdmin();
+    user = await requireSuperUser();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'UNKNOWN';
     if (errorMessage === 'UNAUTHENTICATED') {
@@ -20,5 +23,13 @@ export default async function SuperAdminLayout({
     redirect('/auth');
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar user={user} />
+      <div className="lg:pl-64">
+        <DashboardHeader />
+        <main className="min-h-[calc(100vh-73px)]">{children}</main>
+      </div>
+    </div>
+  );
 }
