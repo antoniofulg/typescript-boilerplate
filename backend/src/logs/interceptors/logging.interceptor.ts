@@ -39,8 +39,8 @@ export class LoggingInterceptor implements NestInterceptor {
     const headers = request.headers;
     const user = request.user;
 
-    // Only log write operations (POST, PATCH, DELETE)
-    if (!['POST', 'PATCH', 'DELETE'].includes(method)) {
+    // Only log write operations (POST, PATCH, PUT, DELETE)
+    if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
       return next.handle();
     }
 
