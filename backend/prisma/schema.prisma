@@ -14,95 +14,30 @@ datasource db {
 // Run with: npm run prisma:seed
 
 model Tenant {
-  id        String            @id @default(uuid())
+  id        String       @id @default(uuid())
   name      String
-  slug      String            @unique
-  status    TenantStatus      @default(ACTIVE)
-  createdAt DateTime          @default(now()) @map("created_at")
+  slug      String       @unique
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
   users     User[]
-  sessions  Session[]
-  projects  Project[]
-  attendances Attendance[]
-  votes     Vote[]
   logs      Log[]
 
   @@map("tenants")
 }
 
 model User {
-  id           String      @id @default(uuid())
-  tenantId     String?     @map("tenant_id")
+  id           String   @id @default(uuid())
+  tenantId     String?  @map("tenant_id")
   name         String
   email        String
-  passwordHash String      @map("password_hash")
+  passwordHash String   @map("password_hash")
   role         UserRole
-  createdAt    DateTime    @default(now()) @map("created_at")
-  tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  attendances  Attendance[]
-  votes        Vote[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   logs         Log[]
 
   @@unique([tenantId, email])
   @@map("users")
-}
-
-model Session {
-  id          String          @id @default(uuid())
-  tenantId    String          @map("tenant_id")
-  title       String
-  date        DateTime
-  status      SessionStatus   @default(CLOSED)
-  createdAt   DateTime        @default(now()) @map("created_at")
-  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  projects    Project[]
-  attendances Attendance[]
-
-  @@map("sessions")
-}
-
-model Project {
-  id          String        @id @default(uuid())
-  tenantId    String        @map("tenant_id")
-  sessionId   String        @map("session_id")
-  title       String
-  description String?
-  status      ProjectStatus @default(PENDING)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  session     Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  votes       Vote[]
-
-  @@map("projects")
-}
-
-model Attendance {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  sessionId String   @map("session_id")
-  userId    String   @map("user_id")
-  present   Boolean  @default(true)
-  timestamp DateTime @default(now())
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([sessionId, userId])
-  @@map("attendances")
-}
-
-model Vote {
-  id        String   @id @default(uuid())
-  tenantId  String   @map("tenant_id")
-  projectId String   @map("project_id")
-  userId    String   @map("user_id")
-  vote      VoteType
-  timestamp DateTime @default(now())
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, userId])
-  @@map("votes")
 }
 
 enum TenantStatus {
@@ -116,23 +51,6 @@ enum UserRole {
   ADMIN
   OPERATOR
   USER
-}
-
-enum SessionStatus {
-  OPEN
-  CLOSED
-}
-
-enum ProjectStatus {
-  PENDING
-  VOTING
-  CLOSED
-}
-
-enum VoteType {
-  YES
-  NO
-  ABSTAIN
 }
 
 enum LogAction {
@@ -161,4 +79,3 @@ model Log {
   @@index([tenantId])
   @@map("logs")
 }
-

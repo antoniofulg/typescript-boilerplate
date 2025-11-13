@@ -7,7 +7,6 @@ export type Tenant = {
   status: TenantStatus;
   createdAt: string;
   users?: number;
-  sessions?: number;
 };
 
 export type CreateTenantDto = {

@@ -230,7 +230,37 @@ migrate.dev: ## Create and apply Prisma migrations (development)
 migrate.reset: ## Reset database and apply all migrations (WARNING: deletes all data)
 	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
 	@echo "$(CYAN)Resetting database and applying migrations...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force; \
+	fi
+
+migrate.reset.clean: ## Remove old migrations, reset database (WARNING: deletes all data and migrations)
+	@echo "$(YELLOW)⚠️  WARNING: This will delete all data and all existing migrations!$(NC)"
+	@echo "$(CYAN)This will reset the database to a clean state$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C to cancel, or Enter to continue...$(NC)"
+	@read dummy; \
+	echo "$(GREEN)🗑️  Removing old migrations...$(NC)"; \
+	rm -rf backend/prisma/migrations/*/ 2>/dev/null || true; \
+	echo "$(GREEN)✅ Old migrations removed$(NC)"; \
+	echo ""; \
+	echo "$(YELLOW)🔄 Resetting database...$(NC)"; \
+	if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force --skip-seed; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force --skip-seed; \
+	fi; \
+	echo ""; \
+	echo "$(GREEN)✅ Database reset complete!$(NC)"; \
+	echo ""; \
+	echo "$(CYAN)📋 Next steps:$(NC)"; \
+	echo "$(CYAN)   1. Run: $(BOLD)make migrate-dev$(NC)$(CYAN) to create the initial migration$(NC)"; \
+	echo "$(CYAN)   2. Run: $(BOLD)make seed$(NC)$(CYAN) to populate the database with example data$(NC)"
 
 migrate.resolve: ## Create baseline migration from current database state
 	@echo "$(GREEN)📊 Creating baseline migration from current database...$(NC)"
@@ -462,6 +492,7 @@ shell-backend: shell.backend
 shell-frontend: shell.frontend
 migrate-dev: migrate.dev
 migrate-reset: migrate.reset
+migrate-reset-clean: migrate.reset.clean
 migrate-resolve: migrate.resolve
 db-push: db.push
 prisma-generate: prisma.generate

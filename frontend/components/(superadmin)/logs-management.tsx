@@ -62,17 +62,9 @@ const actionVariants: Record<
 const entityLabels: Record<string, string> = {
   Users: 'Usuários',
   Tenants: 'Tenants',
-  Sessions: 'Sessões',
-  Projects: 'Projetos',
-  Attendances: 'Presenças',
-  Votes: 'Votos',
   // Keep singular forms for backward compatibility if needed
   User: 'Usuário',
   Tenant: 'Tenant',
-  Session: 'Sessão',
-  Project: 'Projeto',
-  Attendance: 'Presença',
-  Vote: 'Voto',
 };
 
 // Available entities for filtering
@@ -80,10 +72,6 @@ const entityLabels: Record<string, string> = {
 const availableEntities = [
   { value: 'Users', label: 'Usuários' },
   { value: 'Tenants', label: 'Tenants' },
-  { value: 'Sessions', label: 'Sessões' },
-  { value: 'Projects', label: 'Projetos' },
-  { value: 'Attendances', label: 'Presenças' },
-  { value: 'Votes', label: 'Votos' },
 ];
 
 export function LogsManagement({ initialLogs }: LogsManagementProps) {

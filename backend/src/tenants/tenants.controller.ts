@@ -12,10 +12,10 @@ import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
+import { SuperUserGuard } from '../auth/guards/super-user.guard';
 
 @Controller('tenants')
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
+@UseGuards(JwtAuthGuard, SuperUserGuard)
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 

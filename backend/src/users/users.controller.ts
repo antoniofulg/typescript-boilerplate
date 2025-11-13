@@ -14,13 +14,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
+import { SuperUserGuard } from '../auth/guards/super-user.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserPayload } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
+@UseGuards(JwtAuthGuard, SuperUserGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
