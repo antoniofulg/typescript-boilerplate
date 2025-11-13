@@ -1,6 +1,7 @@
 import { getAuthToken } from './auth-server';
 import type { Tenant } from '@/types/tenant';
 import type { User } from '@/types/user';
+import type { LogsResponse, LogsFilters } from '@/types/log';
 
 // Use the same logic as auth-server to determine the backend URL
 const getBackendUrl = (): string => {
@@ -111,5 +112,61 @@ export async function getUser(id: string): Promise<User> {
       throw error;
     }
     throw new Error('Failed to fetch user');
+  }
+}
+
+export async function getLogs(filters?: LogsFilters): Promise<LogsResponse> {
+  const token = await getAuthToken();
+
+  if (!token) {
+    throw new Error('UNAUTHENTICATED');
+  }
+
+  try {
+    // Build query string from filters
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          // Handle arrays (for entities)
+          if (Array.isArray(value) && value.length > 0) {
+            params.append(key, value.join(','));
+          } else if (!Array.isArray(value)) {
+            params.append(key, String(value));
+          }
+        }
+      });
+    }
+
+    const queryString = params.toString();
+    const url = `${BACKEND_URL}/logs${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store', // Always fetch fresh data
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('UNAUTHENTICATED');
+      }
+      if (response.status === 403) {
+        throw new Error('UNAUTHORIZED');
+      }
+      throw new Error(`Failed to fetch logs: ${response.status}`);
+    }
+
+    const logs = await response.json();
+    return logs;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHENTICATED') {
+      throw error;
+    }
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      throw error;
+    }
+    throw new Error('Failed to fetch logs');
   }
 }

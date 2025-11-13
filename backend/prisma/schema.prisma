@@ -24,6 +24,7 @@ model Tenant {
   projects  Project[]
   attendances Attendance[]
   votes     Vote[]
+  logs      Log[]
 
   @@map("tenants")
 }
@@ -39,6 +40,7 @@ model User {
   tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   attendances  Attendance[]
   votes        Vote[]
+  logs         Log[]
 
   @@unique([tenantId, email])
   @@map("users")
@@ -131,5 +133,32 @@ enum VoteType {
   YES
   NO
   ABSTAIN
+}
+
+enum LogAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model Log {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  action    LogAction
+  entity    String
+  entityId  String    @map("entity_id")
+  changes   Json
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+  tenantId  String?   @map("tenant_id")
+  timestamp DateTime  @default(now())
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant    Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([timestamp])
+  @@index([tenantId])
+  @@map("logs")
 }
 
