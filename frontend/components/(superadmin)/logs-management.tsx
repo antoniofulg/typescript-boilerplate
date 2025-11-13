@@ -211,7 +211,17 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
 
   const fetchLogs = useCallback(
     async (newFilters?: LogsFilters) => {
-      const activeFilters = { ...filters, ...newFilters };
+      // When newFilters is provided, use it as the base (not merge over stale filters)
+      // This ensures that cleared filters are actually removed
+      // When newFilters is not provided, use current filters
+      const activeFilters: LogsFilters = newFilters
+        ? {
+            ...newFilters,
+            // Apply defaults only if properties are missing (not explicitly set to undefined)
+            page: newFilters.page !== undefined ? newFilters.page : 1,
+            limit: newFilters.limit !== undefined ? newFilters.limit : 20,
+          }
+        : filters;
 
       // Build query string from filters
       const params = new URLSearchParams();

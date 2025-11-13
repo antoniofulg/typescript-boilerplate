@@ -183,11 +183,17 @@ export class LoggingInterceptor implements NestInterceptor {
     }
 
     // Fallback: try to find ID parameter with common naming patterns
-    // Check for exact 'id', or keys ending with 'Id' (camelCase) or '_id' (snake_case)
+    // Check for keys ending with 'Id' (camelCase) or '_id' (snake_case)
+    // Note: We already checked for exact 'id' above, so skip it here
     for (const key in params) {
       const lowerKey = key.toLowerCase();
-      // Match: 'id', 'userId', 'tenantId', 'entityId', 'user_id', 'tenant_id', etc.
-      if (key === 'id' || key.endsWith('Id') || lowerKey.endsWith('_id')) {
+      // Match only keys that end with 'Id' (camelCase) or '_id' (snake_case)
+      // Examples: 'userId', 'tenantId', 'entityId', 'user_id', 'tenant_id'
+      // This ensures we don't match unrelated parameters that happen to contain 'id'
+      if (
+        (key.length > 2 && key.endsWith('Id')) ||
+        (lowerKey.length > 3 && lowerKey.endsWith('_id'))
+      ) {
         return params[key];
       }
     }
