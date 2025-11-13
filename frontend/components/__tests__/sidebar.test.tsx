@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@/src/test-utils';
 import userEvent from '@testing-library/user-event';
 import { Sidebar } from '@/components/sidebar';
-import type { User } from '@/types/user';
+import type { UserRole } from '@/types/user';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -20,20 +20,12 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-const mockSuperUser: User = {
-  id: '1',
-  name: 'Super User',
-  email: 'super@example.com',
-  role: 'SUPER_USER',
-  tenantId: null,
+const mockSuperUser = {
+  role: 'SUPER_USER' as UserRole,
 };
 
-const mockAdminUser: User = {
-  id: '2',
-  name: 'Admin User',
-  email: 'admin@example.com',
-  role: 'ADMIN',
-  tenantId: 'tenant-1',
+const mockAdminUser = {
+  role: 'ADMIN' as UserRole,
 };
 
 describe('Sidebar', () => {

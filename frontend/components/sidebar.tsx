@@ -9,7 +9,7 @@ import {
   filterMenuItemsByRole,
   groupMenuItemsBySection,
 } from '@/lib/menu-config';
-import type { User } from '@/types/user';
+import type { UserRole } from '@/types/user';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -22,7 +22,7 @@ import {
 import { Menu, X } from 'lucide-react';
 
 type SidebarProps = {
-  user: User | null;
+  user: { role: UserRole } | null;
 };
 
 export function Sidebar({ user }: SidebarProps) {
