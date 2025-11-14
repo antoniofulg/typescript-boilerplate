@@ -31,6 +31,58 @@ export type MockPrismaService = {
     delete: Mock;
     count: Mock;
   };
+  role: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+  };
+  permission: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+  };
+  rolePermission: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+  };
+  userRoleAssignment: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+  };
+  userPermission: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    update: Mock;
+    delete: Mock;
+  };
+  auditLog: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    count: Mock;
+  };
+  sessionLog: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+  };
+  operationLog: {
+    findMany: Mock;
+    findUnique: Mock;
+    create: Mock;
+    count: Mock;
+  };
   $connect: Mock;
   $disconnect: Mock;
   $transaction: Mock;
@@ -62,6 +114,58 @@ export function createMockPrismaService(): MockPrismaService {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      count: vi.fn(),
+    },
+    role: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    permission: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    rolePermission: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    userRoleAssignment: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    userPermission: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    auditLog: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      count: vi.fn(),
+    },
+    sessionLog: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    operationLog: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
       count: vi.fn(),
     },
     $connect: vi.fn(),

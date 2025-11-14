@@ -22,8 +22,10 @@ import {
   it,
   expect,
 } from 'vitest';
+import * as roleHelper from './helpers/role-helper';
 
 vi.mock('bcrypt');
+vi.mock('./helpers/role-helper');
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -120,6 +122,9 @@ describe('AuthService', () => {
       userFindFirstMock.mockResolvedValue(mockUser);
       userUpdateMock.mockResolvedValue(updatedUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'ADMIN' as never,
+      );
 
       const result = await service.login(loginDto);
 
@@ -169,6 +174,9 @@ describe('AuthService', () => {
       userFindFirstMock.mockResolvedValue(mockSuperUser);
       userUpdateMock.mockResolvedValue(updatedSuperUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'SUPER_USER' as never,
+      );
 
       const result = await service.login(loginDto);
 
@@ -285,6 +293,9 @@ describe('AuthService', () => {
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
       userUpdateMock.mockResolvedValue(updatedUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'ADMIN' as never,
+      );
 
       const result = await service.register(registerDto);
 
@@ -366,6 +377,9 @@ describe('AuthService', () => {
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
       userUpdateMock.mockResolvedValue(updatedUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'ADMIN' as never,
+      );
 
       const result = await service.register(registerDtoWithTenant);
 
@@ -445,6 +459,9 @@ describe('AuthService', () => {
 
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockSuperUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'SUPER_USER' as never,
+      );
 
       const result = await service.getProfile(userId);
 
@@ -472,6 +489,9 @@ describe('AuthService', () => {
 
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'ADMIN' as never,
+      );
 
       const result = await service.getProfile(userId);
 

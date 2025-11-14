@@ -6,6 +6,11 @@ import { FindLogsDto } from './dto/find-logs.dto';
 import { faker } from '@faker-js/faker';
 import { UserRole, LogAction } from '@prisma/client';
 import { vi, MockedFunction } from 'vitest';
+import { PrismaService } from '../prisma/prisma.service';
+import { createMockPrismaService } from '../test-utils';
+import * as roleHelper from '../auth/helpers/role-helper';
+
+vi.mock('../auth/helpers/role-helper');
 
 describe('LogsController', () => {
   let controller: LogsController;
@@ -40,12 +45,18 @@ describe('LogsController', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
+    const mockPrismaService = createMockPrismaService();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LogsController],
       providers: [
         {
           provide: LogsService,
           useValue: mockLogsService,
+        },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
@@ -80,13 +91,16 @@ describe('LogsController', () => {
       };
 
       mockLogsService.findAll.mockResolvedValue(expectedResult);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       const result = await controller.findAll(query, mockSuperUser);
 
       expect(result).toEqual(expectedResult);
       expect(service.findAll).toHaveBeenCalledWith(
         query,
-        mockSuperUser.role,
+        UserRole.SUPER_USER,
         mockSuperUser.tenantId,
       );
     });
@@ -101,19 +115,25 @@ describe('LogsController', () => {
       };
 
       mockLogsService.findAll.mockResolvedValue(expectedResult);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.ADMIN,
+      );
 
       const result = await controller.findAll(query, mockAdmin);
 
       expect(result).toEqual(expectedResult);
       expect(service.findAll).toHaveBeenCalledWith(
         query,
-        mockAdmin.role,
+        UserRole.ADMIN,
         mockAdmin.tenantId,
       );
     });
 
     it('should throw ForbiddenException for OPERATOR', async () => {
       const query: FindLogsDto = { page: 1, limit: 20 };
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.OPERATOR,
+      );
 
       await expect(controller.findAll(query, mockOperator)).rejects.toThrow(
         ForbiddenException,
@@ -130,6 +150,9 @@ describe('LogsController', () => {
         role: 'USER' as UserRole,
         tenantId: faker.string.uuid(),
       };
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.USER,
+      );
 
       await expect(controller.findAll(query, mockUser)).rejects.toThrow(
         ForbiddenException,
@@ -154,12 +177,15 @@ describe('LogsController', () => {
       };
 
       mockLogsService.findAll.mockResolvedValue(expectedResult);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       await controller.findAll(query, mockSuperUser);
 
       expect(service.findAll).toHaveBeenCalledWith(
         query,
-        mockSuperUser.role,
+        UserRole.SUPER_USER,
         mockSuperUser.tenantId,
       );
     });
@@ -174,12 +200,15 @@ describe('LogsController', () => {
       };
 
       mockLogsService.findAll.mockResolvedValue(expectedResult);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.ADMIN,
+      );
 
       await controller.findAll(query, mockAdmin);
 
       expect(service.findAll).toHaveBeenCalledWith(
         query,
-        mockAdmin.role,
+        UserRole.ADMIN,
         mockAdmin.tenantId,
       );
     });
@@ -198,12 +227,15 @@ describe('LogsController', () => {
       };
 
       mockLogsService.findAll.mockResolvedValue(expectedResult);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       await controller.findAll(query, mockSuperUser);
 
       expect(service.findAll).toHaveBeenCalledWith(
         query,
-        mockSuperUser.role,
+        UserRole.SUPER_USER,
         mockSuperUser.tenantId,
       );
     });

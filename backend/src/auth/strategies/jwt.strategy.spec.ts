@@ -6,6 +6,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { createMockPrismaService, MockPrismaService } from '../../test-utils';
 import { faker } from '@faker-js/faker';
 import { vi, describe, beforeEach, afterEach, it, expect } from 'vitest';
+import * as roleHelper from '../helpers/role-helper';
+
+vi.mock('../helpers/role-helper');
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
@@ -70,6 +73,9 @@ describe('JwtStrategy', () => {
 
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'USER' as never,
+      );
 
       const result = await strategy.validate(payload);
 
@@ -169,6 +175,9 @@ describe('JwtStrategy', () => {
 
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'USER' as never,
+      );
 
       const result = await strategy.validate(payload);
 
@@ -237,6 +246,9 @@ describe('JwtStrategy', () => {
 
       const userFindUniqueMock = prismaService.user.findUnique;
       userFindUniqueMock.mockResolvedValue(mockSuperUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        'SUPER_USER' as never,
+      );
 
       const result = await strategy.validate(payload);
 

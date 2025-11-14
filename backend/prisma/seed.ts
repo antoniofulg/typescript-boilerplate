@@ -20,7 +20,6 @@ async function main() {
   let superUser = await prisma.user.findFirst({
     where: {
       email: superUserEmail,
-      role: 'SUPER_USER',
       tenantId: null,
     },
   });
@@ -36,14 +35,49 @@ async function main() {
       },
     });
   } else {
-    // Create new super user
+    // Create new super user (role field removed - will be assigned via RBAC)
     superUser = await prisma.user.create({
       data: {
         name: 'Super Usuário',
         email: superUserEmail,
         passwordHash: superUserPasswordHash,
-        role: 'SUPER_USER',
         tenantId: null,
+      },
+    });
+  }
+
+  // Create or get super-user role
+  let superUserRole = await prisma.role.findUnique({
+    where: { slug: 'super-user' },
+  });
+
+  if (!superUserRole) {
+    superUserRole = await prisma.role.create({
+      data: {
+        name: 'Super User',
+        slug: 'super-user',
+        description: 'Super user role with full system access',
+        tenantId: null, // Global role
+      },
+    });
+  }
+
+  // Assign super-user role to super user
+  const existingAssignment = await prisma.userRoleAssignment.findUnique({
+    where: {
+      userId_roleId: {
+        userId: superUser.id,
+        roleId: superUserRole.id,
+      },
+    },
+  });
+
+  if (!existingAssignment) {
+    await prisma.userRoleAssignment.create({
+      data: {
+        userId: superUser.id,
+        roleId: superUserRole.id,
+        grantedBy: superUser.id, // Self-granted for initial setup
       },
     });
   }

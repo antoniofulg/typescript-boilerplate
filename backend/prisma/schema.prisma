@@ -14,30 +14,36 @@ datasource db {
 // Run with: npm run prisma:seed
 
 model Tenant {
-  id        String       @id @default(uuid())
-  name      String
-  slug      String       @unique
-  status    TenantStatus @default(ACTIVE)
-  createdAt DateTime     @default(now()) @map("created_at")
-  users     User[]
-  logs      Log[]
+  id                String              @id @default(uuid())
+  name              String
+  slug              String              @unique
+  status            TenantStatus        @default(ACTIVE)
+  createdAt         DateTime            @default(now()) @map("created_at")
+  users             User[]
+  logs              Log[]
+  roles             Role[]
+  politicalPositions PoliticalPosition[]
+  councilMembers    CouncilMember[]
 
   @@map("tenants")
 }
 
 model User {
-  id           String   @id @default(uuid())
-  tenantId     String?  @map("tenant_id")
-  name         String
-  email        String
-  passwordHash String   @map("password_hash")
-  role         UserRole
-  tokenVersion Int      @default(0) @map("token_version")
-  createdAt    DateTime @default(now()) @map("created_at")
-  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  logs         Log[]
+  id             String           @id @default(uuid())
+  tenantId       String?          @map("tenant_id")
+  name           String
+  email          String
+  passwordHash   String            @map("password_hash")
+  tokenVersion   Int               @default(0) @map("token_version")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  tenant         Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  logs           Log[]
+  userRoles      UserRoleAssignment[]
+  userPermissions UserPermission[]
+  councilMembers CouncilMember[]
 
   @@unique([tenantId, email])
+  @@index([tenantId])
   @@map("users")
 }
 
@@ -52,6 +58,18 @@ enum UserRole {
   ADMIN
   OPERATOR
   USER
+}
+
+enum GrantType {
+  ALLOW
+  DENY
+}
+
+enum SessionEventType {
+  LOGIN
+  LOGOUT
+  REFRESH
+  FAILED_LOGIN
 }
 
 enum LogAction {
@@ -79,4 +97,190 @@ model Log {
   @@index([timestamp])
   @@index([tenantId])
   @@map("logs")
+}
+
+// RBAC Models
+model Role {
+  id          String          @id @default(uuid())
+  name        String
+  slug        String          @unique
+  description String?
+  tenantId    String?         @map("tenant_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  tenant      Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
+  userRoles   UserRoleAssignment[]
+
+  @@index([tenantId])
+  @@index([slug])
+  @@map("roles")
+}
+
+model Permission {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  name        String
+  description String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+  rolePermissions RolePermission[]
+
+  @@index([key])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  grantedBy String   @map("granted_by")
+  grantedAt DateTime @default(now()) @map("granted_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([grantedAt])
+  @@map("user_roles")
+}
+
+model UserPermission {
+  id            String     @id @default(uuid())
+  userId        String     @map("user_id")
+  permissionKey String     @map("permission_key")
+  grantType     GrantType  @map("grant_type")
+  grantedBy    String     @map("granted_by")
+  grantedAt     DateTime   @default(now()) @map("granted_at")
+  reason        String?
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionKey])
+  @@index([userId])
+  @@index([permissionKey])
+  @@index([grantedAt])
+  @@map("user_permissions")
+}
+
+// Political Structure Models
+model PoliticalPosition {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  level       String
+  tenantId    String?        @map("tenant_id")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  tenant      Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  councilMembers CouncilMember[]
+  positionAssignments PositionAssignment[]
+
+  @@index([tenantId])
+  @@map("political_positions")
+}
+
+model CouncilMember {
+  id         String            @id @default(uuid())
+  userId     String            @map("user_id")
+  positionId String            @map("position_id")
+  tenantId   String?           @map("tenant_id")
+  startDate  DateTime          @map("start_date")
+  endDate    DateTime?         @map("end_date")
+  status     String
+  createdAt  DateTime          @default(now()) @map("created_at")
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position   PoliticalPosition  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  tenant     Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([positionId])
+  @@index([tenantId])
+  @@index([startDate])
+  @@map("council_members")
+}
+
+model PositionAssignment {
+  id         String            @id @default(uuid())
+  positionId String            @map("position_id")
+  userId     String            @map("user_id")
+  tenantId   String?           @map("tenant_id")
+  startDate  DateTime          @map("start_date")
+  endDate    DateTime?         @map("end_date")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  position   PoliticalPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@index([positionId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("position_assignments")
+}
+
+// Separate Log Models
+model OperationLog {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  action    LogAction
+  entity    String
+  entityId  String    @map("entity_id")
+  changes   Json
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+  tenantId  String?   @map("tenant_id")
+  timestamp DateTime  @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([timestamp])
+  @@index([tenantId])
+  @@map("operation_logs")
+}
+
+model AuditLog {
+  id         String    @id @default(uuid())
+  userId     String?   @map("user_id")
+  action     String
+  entity     String
+  entityId   String    @map("entity_id")
+  changes    Json
+  ipAddress  String?   @map("ip_address")
+  userAgent  String?   @map("user_agent")
+  tenantId   String?   @map("tenant_id")
+  recordedAt DateTime  @default(now()) @map("recorded_at")
+  reason     String?
+
+  @@index([userId])
+  @@index([entity])
+  @@index([recordedAt])
+  @@index([tenantId])
+  @@map("audit_logs")
+}
+
+model SessionLog {
+  id           String          @id @default(uuid())
+  userId       String?         @map("user_id")
+  eventType    SessionEventType @map("event_type")
+  ipAddress    String?         @map("ip_address")
+  userAgent    String?         @map("user_agent")
+  tenantId     String?         @map("tenant_id")
+  recordedAt   DateTime        @default(now()) @map("recorded_at")
+  success      Boolean         @default(true)
+  failureReason String?        @map("failure_reason")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([recordedAt])
+  @@index([tenantId])
+  @@map("session_logs")
 }

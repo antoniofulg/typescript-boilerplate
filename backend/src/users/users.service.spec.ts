@@ -12,8 +12,10 @@ import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { UserRole, type User } from '@prisma/client';
 import { vi } from 'vitest';
+import * as roleHelper from '../auth/helpers/role-helper';
 
 vi.mock('bcrypt');
+vi.mock('../auth/helpers/role-helper');
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -65,6 +67,9 @@ describe('UsersService', () => {
       });
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.create.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        createUserDto.role,
+      );
 
       const result = await service.create(
         { ...createUserDto, tenantId },
@@ -101,6 +106,9 @@ describe('UsersService', () => {
       prismaService.user.findFirst.mockResolvedValue(null);
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.create.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        createUserDto.role,
+      );
 
       const result = await service.create(createUserDto, currentSuperUserId);
 
@@ -138,6 +146,9 @@ describe('UsersService', () => {
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       prismaService.user.findFirst.mockResolvedValue(null);
       prismaService.user.create.mockResolvedValue(mockNewSuperUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       const result = await service.create(
         {
@@ -277,6 +288,9 @@ describe('UsersService', () => {
       ];
 
       prismaService.user.findMany.mockResolvedValue(mockUsers);
+      vi.mocked(roleHelper.getUserRoleFromRbac)
+        .mockResolvedValueOnce(UserRole.USER)
+        .mockResolvedValueOnce(UserRole.ADMIN);
 
       const result = await service.findAll();
 
@@ -311,6 +325,9 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findUnique.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.USER,
+      );
 
       const result = await service.findOne(userId);
 
@@ -361,6 +378,9 @@ describe('UsersService', () => {
         .mockResolvedValueOnce(existingUser)
         .mockResolvedValueOnce(existingUser);
       prismaService.user.update.mockResolvedValue(updatedUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac)
+        .mockResolvedValueOnce(UserRole.USER) // For isTargetSuperUser check
+        .mockResolvedValueOnce(UserRole.USER); // For excludePasswordHash
 
       const result = await service.update(
         userId,
@@ -412,6 +432,9 @@ describe('UsersService', () => {
         .mockResolvedValueOnce(mockSuperUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
       prismaService.user.update.mockResolvedValue(updatedUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac)
+        .mockResolvedValueOnce(UserRole.ADMIN) // For isTargetSuperUser check
+        .mockResolvedValueOnce(UserRole.SUPER_USER); // For excludePasswordHash
 
       const result = await service.update(
         userId,
@@ -441,6 +464,9 @@ describe('UsersService', () => {
       };
 
       prismaService.user.findUnique.mockResolvedValue(existingUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       await expect(
         service.update(userId, { name: 'New Name' }, currentSuperUserId),
@@ -480,6 +506,9 @@ describe('UsersService', () => {
         .mockResolvedValueOnce(existingUser)
         .mockResolvedValueOnce(existingUser);
       prismaService.user.findFirst.mockResolvedValue(duplicateUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.USER,
+      );
 
       await expect(
         service.update(
@@ -514,6 +543,9 @@ describe('UsersService', () => {
 
       prismaService.user.findUnique.mockResolvedValue(mockUser);
       prismaService.user.delete.mockResolvedValue(mockUser);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.USER,
+      );
 
       const result = await service.remove(userId);
 
@@ -548,6 +580,9 @@ describe('UsersService', () => {
 
       prismaService.user.findUnique.mockResolvedValue(mockSuperUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       await expect(
         service.verifyPasswordForSuperUserOperation(superUserId, 'password'),
@@ -568,6 +603,9 @@ describe('UsersService', () => {
 
       prismaService.user.findUnique.mockResolvedValue(mockSuperUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+      vi.mocked(roleHelper.getUserRoleFromRbac).mockResolvedValue(
+        UserRole.SUPER_USER,
+      );
 
       await expect(
         service.verifyPasswordForSuperUserOperation(superUserId, 'wrong'),

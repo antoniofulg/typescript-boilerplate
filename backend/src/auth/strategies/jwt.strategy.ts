@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CurrentUserPayload } from '../decorators/current-user.decorator';
 import { TenantStatus, UserRole, Prisma } from '@prisma/client';
+import { getUserRoleFromRbac } from '../helpers/role-helper';
 
 type UserWithTenant = Prisma.UserGetPayload<{
   include: { tenant: true };
@@ -66,13 +67,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Tenant inativo');
     }
 
+    // Determine role from RBAC system
+    const role = await getUserRoleFromRbac(this.prisma, user.id);
+
     return {
       userId: user.id,
       email: user.email,
-
-      role: user.role,
+      role,
       tenantId: user.tenantId || undefined,
-
       tokenVersion: user.tokenVersion,
     };
   }
