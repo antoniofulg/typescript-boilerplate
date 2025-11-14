@@ -108,7 +108,7 @@ export class ApiClient {
           // Update in localStorage and cookie
           if (typeof window !== 'undefined') {
             localStorage.setItem('auth_token', newToken);
-            document.cookie = `auth_token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+            document.cookie = `auth_token=${newToken}; path=/; max-age=57600; SameSite=Lax`;
           }
 
           // Dispatch event for AuthContext to update

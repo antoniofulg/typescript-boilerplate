@@ -73,7 +73,7 @@ export class AuthService {
       tokenVersion: updatedUser.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
@@ -173,7 +173,7 @@ export class AuthService {
       tokenVersion: updatedUser.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
@@ -219,7 +219,7 @@ export class AuthService {
       tokenVersion: user.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,

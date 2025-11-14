@@ -136,7 +136,7 @@ export function AuthProvider({
     if (initialUser && initialToken) {
       // Sync token to localStorage and cookie
       localStorage.setItem('auth_token', initialToken);
-      document.cookie = `auth_token=${initialToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${initialToken}; path=/; max-age=57600; SameSite=Lax`;
       // Use setTimeout to avoid synchronous setState in effect
       setTimeout(() => {
         setLoading(false);
@@ -170,7 +170,7 @@ export function AuthProvider({
       // If we have token in localStorage, sync to cookie if not present
       const cookieToken = getCookie('auth_token');
       if (!cookieToken) {
-        document.cookie = `auth_token=${storedToken}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `auth_token=${storedToken}; path=/; max-age=57600; SameSite=Lax`;
       }
     }
 
@@ -206,16 +206,26 @@ export function AuthProvider({
       });
     };
 
+    // Listen for token expiration events (when refresh fails)
+    const handleTokenExpired = () => {
+      // Clear token and user state when token expires
+      setToken(null);
+      setUser(null);
+      clearAuthToken();
+    };
+
     window.addEventListener(
       'token-refreshed',
       handleTokenRefresh as EventListener,
     );
+    window.addEventListener('token-expired', handleTokenExpired);
 
     return () => {
       window.removeEventListener(
         'token-refreshed',
         handleTokenRefresh as EventListener,
       );
+      window.removeEventListener('token-expired', handleTokenExpired);
     };
   }, [loadUserProfile, initialUser, initialToken, user]);
 
@@ -279,7 +289,7 @@ export function AuthProvider({
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
       // Also save in cookie for server-side
-      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=57600; SameSite=Lax`;
     }
     return data;
   };
@@ -327,7 +337,7 @@ export function AuthProvider({
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
       // Also save in cookie for server-side
-      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=57600; SameSite=Lax`;
     }
   };
 
@@ -378,7 +388,7 @@ export function AuthProvider({
     setUser(authUser);
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', authToken);
-      document.cookie = `auth_token=${authToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${authToken}; path=/; max-age=57600; SameSite=Lax`;
     }
   };
 

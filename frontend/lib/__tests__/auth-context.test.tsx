@@ -284,7 +284,7 @@ describe('logout', () => {
 
     // Set token in cookie (simulate cookie existence)
     document.cookie =
-      'auth_token=mock-access-token; path=/; max-age=604800; SameSite=Lax';
+      'auth_token=mock-access-token; path=/; max-age=57600; SameSite=Lax';
 
     // Mock logout endpoint
     server.use(

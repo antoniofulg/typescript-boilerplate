@@ -75,7 +75,7 @@ describe('AuthService', () => {
     // Default config values
     configService.get.mockImplementation((key: string) => {
       if (key === 'JWT_SECRET') return 'test-secret';
-      if (key === 'JWT_EXPIRES_IN') return '7d';
+      if (key === 'JWT_EXPIRES_IN') return '16h';
       return undefined;
     });
 

@@ -86,7 +86,7 @@ export async function loginAction(
     const cookieStore = await cookies();
     cookieStore.set('auth_token', data.accessToken, {
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 16, // 16 hours
       httpOnly: false, // Needs to be accessible from client for API calls
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
@@ -151,7 +151,7 @@ export async function registerAction(data: {
     const cookieStore = await cookies();
     cookieStore.set('auth_token', result.accessToken, {
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 16, // 16 hours
       httpOnly: false, // Needs to be accessible from client for API calls
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
