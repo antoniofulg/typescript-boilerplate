@@ -277,4 +277,100 @@ describe('logout', () => {
       expect(localStorage.getItem('auth_token')).toBeNull();
     });
   });
+
+  it('should completely clear token from all storage locations on logout', async () => {
+    // Set token in localStorage
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Set token in cookie (simulate cookie existence)
+    document.cookie =
+      'auth_token=mock-access-token; path=/; max-age=604800; SameSite=Lax';
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(localStorage.getItem('auth_token')).toBe('mock-access-token');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete and verify all storage is cleared
+    await waitFor(() => {
+      // Verify localStorage is cleared
+      expect(localStorage.getItem('auth_token')).toBeNull();
+
+      // Verify cookie is cleared (helper function to get cookie)
+      const getCookie = (name: string): string | null => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+          return parts.pop()?.split(';').shift() || null;
+        }
+        return null;
+      };
+      expect(getCookie('auth_token')).toBeNull();
+    });
+  });
+
+  it('should not load user profile after logout and reload', async () => {
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    const { rerender } = render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
+      expect(localStorage.getItem('auth_token')).toBeNull();
+    });
+
+    // Simulate page reload by creating a new AuthProvider instance
+    // This tests that after logout, a reload won't load the user
+    rerender(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // After "reload", should remain unauthenticated
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
+      expect(screen.getByTestId('token')).toHaveTextContent('no-token');
+    });
+  });
 });

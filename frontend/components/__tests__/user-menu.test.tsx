@@ -132,12 +132,24 @@ describe('UserMenu', () => {
     const user = userEvent.setup();
     await user.click(avatarButton);
 
-    // Wait for dropdown and check user info
-    await waitFor(() => {
-      expect(screen.getByText('Admin User')).toBeInTheDocument();
-      expect(screen.getByText('admin@test.com')).toBeInTheDocument();
-      expect(screen.getByText('SUPER_USER')).toBeInTheDocument();
-    });
+    // Wait for dropdown to open and check user info
+    // The dropdown might take a moment to render, so we check for menu items
+    await waitFor(
+      () => {
+        // Check if dropdown is open by looking for menu items or user info
+        const userInfo =
+          screen.queryByText('Admin User') ||
+          screen.queryByText('admin@test.com') ||
+          screen.queryByText('SUPER_USER');
+        expect(userInfo).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
+
+    // Verify all user info is present
+    expect(screen.getByText('Admin User')).toBeInTheDocument();
+    expect(screen.getByText('admin@test.com')).toBeInTheDocument();
+    expect(screen.getByText('SUPER_USER')).toBeInTheDocument();
   });
 
   it('should handle logout even if backend call fails', async () => {

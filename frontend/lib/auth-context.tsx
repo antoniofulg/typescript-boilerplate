@@ -47,6 +47,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
+/**
+ * Helper function to completely clear auth token from all storage locations
+ * This ensures the token is removed from both localStorage and cookies with all possible attributes
+ */
+function clearAuthToken(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  // Remove from localStorage
+  localStorage.removeItem('auth_token');
+
+  // Remove cookie with all possible attribute combinations
+  // This ensures removal regardless of how the cookie was set
+  const cookieOptions = [
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=None; Secure',
+  ];
+
+  // Try to remove cookie with different attribute combinations
+  cookieOptions.forEach((cookieString) => {
+    document.cookie = cookieString;
+  });
+
+  // Also try without path (in case cookie was set without explicit path)
+  document.cookie =
+    'auth_token=; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+}
+
 type AuthProviderProps = {
   children: React.ReactNode;
   initialUser?: User | null;
@@ -78,13 +109,10 @@ export function AuthProvider({
         // Only clear token if it's a 401 (Unauthorized) - token is definitely invalid
         // For other errors (network, 500, etc), keep the token and user state
         if (response.status === 401) {
-          // Invalid token, remove it
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token');
-            document.cookie = 'auth_token=; path=/; max-age=0';
-          }
+          // Invalid token, remove it completely
           setToken(null);
           setUser(null);
+          clearAuthToken();
         }
         setLoading(false);
       }
@@ -303,25 +331,26 @@ export function AuthProvider({
   };
 
   const logout = async () => {
+    // Clear local state first to prevent any race conditions
+    setToken(null);
+    setUser(null);
+
+    // Clear token from all storage locations immediately
+    clearAuthToken();
+
     // Call server action to revoke token on backend
     // This ensures the token is invalidated server-side
     try {
       await logoutAction();
     } catch (error) {
-      // Even if server action fails, continue with local logout
+      // Even if server action fails, we've already cleared local state
       // This ensures the user is logged out on the frontend
       console.error('Error calling logout action:', error);
     }
 
-    // Clear local state regardless of server action result
-    // This ensures logout works even if backend is unavailable
-    setToken(null);
-    setUser(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      // Also remove cookie (fallback, server action already removes it)
-      document.cookie = 'auth_token=; path=/; max-age=0';
-    }
+    // Ensure token is cleared again after server action (defensive)
+    // This handles edge cases where cookie might have been recreated
+    clearAuthToken();
   };
 
   const getProfile = async () => {
