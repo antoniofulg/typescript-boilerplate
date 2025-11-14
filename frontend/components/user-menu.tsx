@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,19 +16,11 @@ import { User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
-  const { user, logout, loading } = useAuth();
+  const { user, token, logout, loading, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
 
-  // Set mounted after component mounts to avoid hydration mismatch
-  // This is a common pattern for client-only rendering
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  // Show loading state during hydration
-  if (!mounted || loading) {
+  // Show loading state during actual loading
+  if (loading) {
     return (
       <Button
         variant="ghost"
@@ -43,7 +34,23 @@ export function UserMenu() {
     );
   }
 
-  if (!user) {
+  // If we have a token but no user yet, show loading (user is being fetched)
+  if (token && !user) {
+    return (
+      <Button
+        variant="ghost"
+        className="relative h-10 w-10 rounded-full"
+        disabled
+      >
+        <Avatar className="h-10 w-10">
+          <AvatarFallback>...</AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
+
+  // Only show "Entrar" if user is not authenticated
+  if (!isAuthenticated || !user) {
     return (
       <Button variant="outline" onClick={() => router.push('/auth')}>
         <User className="mr-2 h-4 w-4" />
@@ -75,7 +82,10 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full cursor-pointer"
+        >
           <Avatar className="h-10 w-10">
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>

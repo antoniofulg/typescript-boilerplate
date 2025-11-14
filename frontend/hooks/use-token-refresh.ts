@@ -21,13 +21,13 @@ export function useTokenRefresh(
   refreshThresholdMs: number = 5 * 60 * 1000, // 5 minutes
   checkIntervalMs: number = 60 * 1000, // 1 minute
 ) {
-  const { token, isAuthenticated } = useAuth();
+  const { token } = useAuth();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
 
   const refreshToken = useCallback(async () => {
-    if (!token || !isAuthenticated || isRefreshingRef.current) {
+    if (!token || isRefreshingRef.current) {
       return;
     }
 
@@ -70,10 +70,10 @@ export function useTokenRefresh(
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [token, isAuthenticated]);
+  }, [token]);
 
   useEffect(() => {
-    if (!token || !isAuthenticated) {
+    if (!token) {
       // Clear any existing timeouts/intervals
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
@@ -158,11 +158,5 @@ export function useTokenRefresh(
         checkIntervalRef.current = null;
       }
     };
-  }, [
-    token,
-    isAuthenticated,
-    refreshThresholdMs,
-    checkIntervalMs,
-    refreshToken,
-  ]);
+  }, [token, refreshThresholdMs, checkIntervalMs, refreshToken]);
 }

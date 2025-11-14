@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProviderWrapper } from '@/components/auth-provider-wrapper';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { TokenRefreshProvider } from '@/components/token-refresh-provider';
 
@@ -40,12 +40,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ErrorBoundary>
-            <AuthProvider>
+            <AuthProviderWrapper>
               <TokenRefreshProvider>
                 {children}
                 <Toaster position="top-right" richColors />
               </TokenRefreshProvider>
-            </AuthProvider>
+            </AuthProviderWrapper>
           </ErrorBoundary>
         </ThemeProvider>
       </body>
