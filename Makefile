@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push prisma-generate seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev.build dev.stop dev.restart dev.status dev.logs dev.logs.backend dev.logs.frontend local local.stop local.status local.logs local.logs.backend local.logs.frontend backend frontend dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-backend dev-frontend dev-local dev-local.stop dev-local.status dev-local.logs dev-local.logs.backend dev-local.logs.frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project
+.PHONY: help build up down restart logs urls ps clean shell-backend shell-frontend migrate migrate-dev migrate-reset migrate-resolve db-push prisma-generate seed prisma-studio prisma-studio-stop install-backend install-frontend lint-backend lint-frontend format-backend format-frontend hosts-add hosts-remove dev dev.build dev.stop dev.restart dev.status dev.logs dev.logs.backend dev.logs.frontend local local.stop local.status local.logs local.logs.backend local.logs.frontend backend frontend dev-stop dev-status dev-logs dev-logs-backend dev-logs-frontend dev-backend dev-frontend dev-local dev-local.stop dev-local.status dev-local.logs dev-local.logs.backend dev-local.logs.frontend dev-docker dev-docker-build dev-docker-stop dev-docker-restart dev-docker-logs dev-docker-logs-backend dev-docker-logs-frontend urls-dev test-frontend test-frontend-watch test-frontend-ui test-frontend-coverage test-backend test-backend-watch test-backend-coverage test-backend-e2e release setup-env clean-old-containers init-project frontend.dev frontend.test frontend.test.watch frontend.test.ui frontend.test.coverage frontend.lint frontend.format frontend.install frontend.logs frontend.shell backend.dev backend.test backend.test.watch backend.test.coverage backend.test.e2e backend.lint backend.format backend.install backend.logs backend.shell backend.migrate backend.migrate.dev backend.migrate.reset backend.migrate.reset.clean backend.migrate.resolve backend.db.push backend.prisma.generate backend.seed backend.prisma.studio backend.prisma.studio.stop
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -24,35 +24,50 @@ help: ## Show this help message
 	@echo "$(GREEN)║     🚀 Full-Stack Boilerplate - Available Commands     ║$(NC)"
 	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
+	@echo "$(BOLD)$(YELLOW)🎨 Frontend Commands:$(NC)"
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)💻 Development:$(NC)"
+	@grep -E '^frontend\.dev:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🧪 Testing:$(NC)"
+	@grep -E '^frontend\.test(\.|:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🔍 Code Quality:$(NC)"
+	@grep -E '^frontend\.(lint|format):.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)📦 Installation & Utils:$(NC)"
+	@grep -E '^frontend\.(install|logs|shell):.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)⚙️  Backend Commands:$(NC)"
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)💻 Development:$(NC)"
+	@grep -E '^backend\.dev:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🧪 Testing:$(NC)"
+	@grep -E '^backend\.test(\.|:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🔍 Code Quality:$(NC)"
+	@grep -E '^backend\.(lint|format):.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)📦 Installation & Utils:$(NC)"
+	@grep -E '^backend\.(install|logs|shell):.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "$(BOLD)$(YELLOW)🗄️  Database & Prisma:$(NC)"
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)📊 Migrations:$(NC)"
+	@grep -E '^migrate(\.|:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort -t. -k2,2 -k3,3
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🔧 Prisma Tools:$(NC)"
+	@grep -E '^(db\.push|prisma\.generate|prisma\.studio|prisma\.studio\.stop):.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
+	@echo ""
+	@echo "  $(BOLD)$(CYAN)🌱 Data:$(NC)"
+	@grep -E '^seed:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}'
+	@echo ""
 	@echo "$(BOLD)$(YELLOW)🐳 Docker & Services:$(NC)"
-	@grep -E '^build|^build\.fast|^up|^down|^restart|^logs|^logs\.backend|^logs\.frontend|^urls|^ps|^clean|^clean\.old\.containers|^shell\.backend|^shell\.frontend:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {if ($$2 != "" && $$2 !~ /^[a-z]/) printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
-	@echo ""
-	@echo "$(BOLD)$(YELLOW)💻 Development:$(NC)"
-	@echo ""
-	@echo "  $(BOLD)$(CYAN)🐳 Docker (with hot-reload):$(NC)"
-	@printf "    $(GREEN)%-23s$(NC) %s\n" "dev" "Start development environment in Docker with hot-reload"
-	@grep -E '^dev\.(build|stop|restart|status|logs).*:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/ hosts-add//' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
-	@echo ""
-	@echo "  $(BOLD)$(CYAN)💻 Local (PostgreSQL/Redis in Docker):$(NC)"
-	@grep -E '^local.*:.*?## .*$$' $(MAKEFILE_LIST) | sed 's/ hosts\.add//' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
-	@echo ""
-	@echo "  $(BOLD)$(CYAN)🔧 Standalone:$(NC)"
-	@grep -E '^(backend|frontend).*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(GREEN)%-23s$(NC) %s\n", $$1, $$2}' | sort
-	@echo ""
-	@echo "$(BOLD)$(YELLOW)🗄️  Database:$(NC)"
-	@grep -E '^(migrate:|migrate\.dev:|migrate\.reset:|migrate\.resolve:|db\.push:|prisma\.generate:|seed:|prisma\.studio:|prisma\.studio\.stop:).*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
-	@echo ""
-	@echo "$(BOLD)$(YELLOW)🧪 Testing:$(NC)"
-	@grep -E '^test\.(frontend|backend).*:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
-	@echo ""
-	@echo "$(BOLD)$(YELLOW)🔍 Code Quality:$(NC)"
-	@grep -E '^lint\.backend|^lint\.frontend|^format\.backend|^format\.frontend:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
-	@echo ""
-	@echo "$(BOLD)$(YELLOW)📦 Installation & Setup:$(NC)"
-	@grep -E '^install\.backend|^install\.frontend|^setup\.env|^init\.project:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^build|^build\.fast|^up|^down|^restart|^logs|^urls:|^ps|^clean|^clean\.old\.containers|^dev|^dev\.(build|stop|restart|status|logs)|^local|^local\.(stop|status|logs)|^urls\.dev:.*?## .+$$' $(MAKEFILE_LIST) | grep -v '^frontend\.' | grep -v '^backend\.' | awk 'BEGIN {FS = ":.*?## "}; {if ($$2 != "" && $$2 !~ /^[a-z]/) printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}' | sort
 	@echo ""
 	@echo "$(BOLD)$(YELLOW)🛠️  Utilities:$(NC)"
-	@grep -E '^hosts\.add|^hosts\.remove|^shell\.backend|^shell\.frontend|^release:.*?## .+$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^hosts\.(add|remove)|^shell\.(backend|frontend)|^setup\.env|^init\.project|^release:.*?## .+$$' $(MAKEFILE_LIST) | grep '##' | awk 'BEGIN {FS = ":.*?## "}; {if ($$2 != "" && $$2 !~ /^[a-z]/) printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}' | sort
 	@echo ""
 
 hosts.add: ## Add aliases to /etc/hosts file
@@ -207,145 +222,8 @@ shell.backend: ## Enter backend container
 shell.frontend: ## Enter frontend container
 	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec frontend sh
 
-migrate: ## Run Prisma migrations
-	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate deploy; \
-	fi
-
-migrate.dev: ## Create and apply Prisma migrations (development)
-	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate dev; \
-	fi
-
-migrate.reset: ## Reset database and apply all migrations (WARNING: deletes all data)
-	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
-	@echo "$(CYAN)Resetting database and applying migrations...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force; \
-	fi
-
-migrate.reset.clean: ## Remove old migrations, reset database (WARNING: deletes all data and migrations)
-	@echo "$(YELLOW)⚠️  WARNING: This will delete all data and all existing migrations!$(NC)"
-	@echo "$(CYAN)This will reset the database to a clean state$(NC)"
-	@echo "$(YELLOW)Press Ctrl+C to cancel, or Enter to continue...$(NC)"
-	@read dummy; \
-	echo "$(GREEN)🗑️  Removing old migrations...$(NC)"; \
-	rm -rf backend/prisma/migrations/*/ 2>/dev/null || true; \
-	echo "$(GREEN)✅ Old migrations removed$(NC)"; \
-	echo ""; \
-	echo "$(YELLOW)🔄 Resetting database...$(NC)"; \
-	if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force --skip-seed; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force --skip-seed; \
-	fi; \
-	echo ""; \
-	echo "$(GREEN)✅ Database reset complete!$(NC)"; \
-	echo ""; \
-	echo "$(CYAN)📋 Next steps:$(NC)"; \
-	echo "$(CYAN)   1. Run: $(BOLD)make migrate-dev$(NC)$(CYAN) to create the initial migration$(NC)"; \
-	echo "$(CYAN)   2. Run: $(BOLD)make seed$(NC)$(CYAN) to populate the database with example data$(NC)"
-
-migrate.resolve: ## Create baseline migration from current database state
-	@echo "$(GREEN)📊 Creating baseline migration from current database...$(NC)"
-	@echo "$(CYAN)This creates an initial migration matching your current database state$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev --name init --create-only
-	@echo "$(GREEN)✅ Baseline migration created. Now marking it as applied...$(NC)"
-	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate resolve --applied init || \
-		(cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend bash -c "MIGRATION_NAME=\$$(ls -1 prisma/migrations | head -1) && npx prisma migrate resolve --applied \$$MIGRATION_NAME")
-
-db.push: ## Push Prisma schema to database without migrations (development)
-	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma db push; \
-	fi
-
-prisma.generate: ## Generate Prisma Client from schema (use after schema changes)
-	@echo "$(GREEN)🔧 Generating Prisma Client...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma generate; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && npx prisma generate; \
-	fi
-	@echo "$(GREEN)✅ Prisma Client generated successfully$(NC)"
-	@echo "$(CYAN)💡 Tip: Run this after modifying prisma/schema.prisma$(NC)"
-
-seed: migrate ## Run Prisma seed to add example data (runs migrations first)
-	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed; \
-	else \
-		echo "$(CYAN)Using local environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
-	fi
-
-prisma.studio: ## Open Prisma Studio (works with both dev and docker modes)
-	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
-	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Using Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555; \
-	elif [ -f .dev.pids ]; then \
-		echo "$(CYAN)Using local development environment...$(NC)"; \
-		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
-		npx prisma studio --hostname 0.0.0.0 --port 5555 > /tmp/prisma-studio.log 2>&1 & \
-		echo $$! > /tmp/prisma-studio.pid && \
-		echo "$(GREEN)✅ Prisma Studio started in background (PID: $$!)$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️  No running environment detected.$(NC)"; \
-		echo "$(CYAN)💡 Start development environment with: make dev$(NC)"; \
-		echo "$(CYAN)💡 Or start Docker services with: make build && make up$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
-	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma.studio.stop$(NC)"
-
-prisma.studio.stop: ## Stop Prisma Studio (works with both dev and docker modes)
-	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
-	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
-		echo "$(CYAN)Stopping Prisma Studio in Docker container...$(NC)"; \
-		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running in Docker$(NC)"; \
-	elif [ -f /tmp/prisma-studio.pid ]; then \
-		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
-		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
-			echo "$(CYAN)Stopping Prisma Studio (PID: $$PRISMA_PID)...$(NC)"; \
-			kill "$$PRISMA_PID" 2>/dev/null || true; \
-			sleep 1; \
-			if kill -0 "$$PRISMA_PID" 2>/dev/null; then \
-				kill -9 "$$PRISMA_PID" 2>/dev/null || true; \
-			fi; \
-			rm -f /tmp/prisma-studio.pid; \
-			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
-		else \
-			echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
-			rm -f /tmp/prisma-studio.pid; \
-		fi; \
-	else \
-		echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
-	fi
+# Database & Prisma commands moved below (after backend commands section)
+# Old duplicate commands removed - see lines 564+ for current implementations
 
 install.backend: ## Install backend dependencies
 	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"
@@ -446,13 +324,7 @@ local.logs.frontend: ## View frontend logs only (local)
 		echo "$(CYAN)💡 If frontend is running, logs should be at: /tmp/frontend-dev.log$(NC)"; \
 	fi
 
-backend: ## Run backend in development mode (local, standalone)
-	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
-	@cd backend && npm run start:dev
-
-frontend: ## Run frontend in development mode (local, standalone)
-	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
-	@cd frontend && npm run dev
+# Legacy commands backend: and frontend: are now aliases (see line 712-713)
 
 dev.build: hosts.add ## Build Docker images for development (with hot-reload)
 	@echo "$(GREEN)🔨 Building Docker images for development...$(NC)"
@@ -469,14 +341,272 @@ dev.restart: ## Restart development environment in Docker
 	@sleep 3
 	@$(MAKE) urls.dev
 
+# Frontend commands with prefix
+frontend.dev: ## Run frontend in development mode (local, standalone)
+	@echo "$(GREEN)💻 Starting frontend in development mode...$(NC)"
+	@cd frontend && npm run dev
+
+frontend.test: ## Run frontend tests (single run, CI mode)
+	@echo "$(GREEN)🧪 Running frontend tests...$(NC)"
+	@cd frontend && npm run test:run
+
+frontend.test.watch: ## Run frontend tests in watch mode (development)
+	@echo "$(GREEN)🧪 Running frontend tests in watch mode...$(NC)"
+	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
+	@cd frontend && npm test
+
+frontend.test.ui: ## Run frontend tests with visual UI
+	@echo "$(GREEN)🧪 Opening frontend test UI...$(NC)"
+	@echo "$(CYAN)💡 Test UI will open in your browser$(NC)"
+	@cd frontend && npm run test:ui
+
+frontend.test.coverage: ## Run frontend tests with coverage report
+	@echo "$(GREEN)🧪 Running frontend tests with coverage...$(NC)"
+	@cd frontend && npm run test:coverage
+	@echo "$(CYAN)💡 Coverage report generated in frontend/coverage/$(NC)"
+
+frontend.lint: ## Run lint on frontend
+	@echo "$(GREEN)🔍 Running lint on frontend...$(NC)"
+	@cd frontend && npm run lint
+
+frontend.format: ## Format frontend code
+	@echo "$(GREEN)✨ Formatting frontend code...$(NC)"
+	@cd frontend && npm run format
+
+frontend.install: ## Install frontend dependencies
+	@echo "$(GREEN)📦 Installing frontend dependencies...$(NC)"
+	@cd frontend && npm install
+
+frontend.logs: ## View frontend logs (Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f frontend
+
+frontend.shell: ## Enter frontend container
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec frontend sh
+
+# Backend commands with prefix
+backend.dev: ## Run backend in development mode (local, standalone)
+	@echo "$(GREEN)💻 Starting backend in development mode...$(NC)"
+	@cd backend && npm run start:dev
+
+backend.test: ## Run backend tests (single run, CI mode)
+	@echo "$(GREEN)🧪 Running backend tests...$(NC)"
+	@cd backend && npm test
+
+backend.test.watch: ## Run backend tests in watch mode (development)
+	@echo "$(GREEN)🧪 Running backend tests in watch mode...$(NC)"
+	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
+	@cd backend && npm run test:watch
+
+backend.test.coverage: ## Run backend tests with coverage report
+	@echo "$(GREEN)🧪 Running backend tests with coverage...$(NC)"
+	@cd backend && npm run test:cov
+	@echo "$(CYAN)💡 Coverage report generated in backend/coverage/$(NC)"
+
+backend.test.e2e: ## Run backend e2e tests
+	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
+	@cd backend && npm run test:e2e
+
+backend.lint: ## Run lint on backend
+	@echo "$(GREEN)🔍 Running lint on backend...$(NC)"
+	@cd backend && npm run lint
+
+backend.format: ## Format backend code
+	@echo "$(GREEN)✨ Formatting backend code...$(NC)"
+	@cd backend && npm run format
+
+backend.install: ## Install backend dependencies
+	@echo "$(GREEN)📦 Installing backend dependencies...$(NC)"
+	@cd backend && npm install
+
+backend.logs: ## View backend logs (Docker)
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) logs -f backend
+
+backend.shell: ## Enter backend container
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend sh
+
+migrate: ## Run Prisma migrations
+	@echo "$(GREEN)📊 Running Prisma migrations...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:migrate:deploy; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate deploy; \
+	fi
+
+migrate.dev: ## Create and apply Prisma migrations (development)
+	@echo "$(GREEN)📊 Creating Prisma migrations...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate dev; \
+	fi
+
+migrate.reset: ## Reset database and apply all migrations (WARNING: deletes all data)
+	@echo "$(YELLOW)⚠️  WARNING: This will delete all data in the database!$(NC)"
+	@echo "$(CYAN)Resetting database and applying migrations...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force; \
+	fi
+
+migrate.reset.clean: ## Remove old migrations, reset database (WARNING: deletes all data and migrations)
+	@echo "$(YELLOW)⚠️  WARNING: This will delete all data and all existing migrations!$(NC)"
+	@echo "$(CYAN)This will reset the database to a clean state$(NC)"
+	@echo "$(YELLOW)Press Ctrl+C to cancel, or Enter to continue...$(NC)"
+	@read dummy; \
+	echo "$(GREEN)🗑️  Removing old migrations...$(NC)"; \
+	rm -rf backend/prisma/migrations/*/ 2>/dev/null || true; \
+	echo "$(GREEN)✅ Old migrations removed$(NC)"; \
+	echo ""; \
+	echo "$(YELLOW)🔄 Resetting database...$(NC)"; \
+	if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate reset --force --skip-seed; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma migrate reset --force --skip-seed; \
+	fi; \
+	echo ""; \
+	echo "$(GREEN)✅ Database reset complete!$(NC)"; \
+	echo ""; \
+	echo "$(CYAN)📋 Next steps:$(NC)"; \
+	echo "$(CYAN)   1. Run: $(BOLD)make migrate.dev$(NC)$(CYAN) to create the initial migration$(NC)"; \
+	echo "$(CYAN)   2. Run: $(BOLD)make seed$(NC)$(CYAN) to populate the database with example data$(NC)"
+
+migrate.resolve: ## Create baseline migration from current database state
+	@echo "$(GREEN)📊 Creating baseline migration from current database...$(NC)"
+	@echo "$(CYAN)This creates an initial migration matching your current database state$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate dev --name init --create-only
+	@echo "$(GREEN)✅ Baseline migration created. Now marking it as applied...$(NC)"
+	@cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma migrate resolve --applied init || \
+		(cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend bash -c "MIGRATION_NAME=\$$(ls -1 prisma/migrations | head -1) && npx prisma migrate resolve --applied \$$MIGRATION_NAME")
+
+db.push: ## Push Prisma schema to database without migrations (development)
+	@echo "$(GREEN)📊 Pushing Prisma schema to database...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma db push; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npx prisma db push; \
+	fi
+
+prisma.generate: ## Generate Prisma Client from schema (use after schema changes)
+	@echo "$(GREEN)🔧 Generating Prisma Client...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npx prisma generate; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && npx prisma generate; \
+	fi
+	@echo "$(GREEN)✅ Prisma Client generated successfully$(NC)"
+	@echo "$(CYAN)💡 Tip: Run this after modifying prisma/schema.prisma$(NC)"
+
+seed: migrate ## Run Prisma seed to add example data (runs migrations first)
+	@echo "$(GREEN)🌱 Running Prisma seed...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend npm run prisma:seed; \
+	else \
+		echo "$(CYAN)Using local environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" npm run prisma:seed; \
+	fi
+
+prisma.studio: ## Open Prisma Studio (works with both dev and docker modes)
+	@echo "$(GREEN)🎨 Opening Prisma Studio...$(NC)"
+	@echo "$(CYAN)📊 Prisma Studio will be available at: http://localhost:5555$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Using Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec -d backend npx prisma studio --hostname 0.0.0.0 --port 5555; \
+	elif [ -f .dev.pids ]; then \
+		echo "$(CYAN)Using local development environment...$(NC)"; \
+		cd backend && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voto_inteligente_db?schema=public" \
+		npx prisma studio --hostname 0.0.0.0 --port 5555 > /tmp/prisma-studio.log 2>&1 & \
+		echo $$! > /tmp/prisma-studio.pid && \
+		echo "$(GREEN)✅ Prisma Studio started in background (PID: $$!)$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No running environment detected.$(NC)"; \
+		echo "$(CYAN)💡 Start development environment with: make dev$(NC)"; \
+		echo "$(CYAN)💡 Or start Docker services with: make build && make up$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✅ Prisma Studio started in background$(NC)"
+	@echo "$(CYAN)💡 To stop Prisma Studio, run: make prisma.studio.stop$(NC)"
+
+prisma.studio.stop: ## Stop Prisma Studio (works with both dev and docker modes)
+	@echo "$(YELLOW)🛑 Stopping Prisma Studio...$(NC)"
+	@if docker ps | grep -q "voto-inteligente-backend.*Up"; then \
+		echo "$(CYAN)Stopping Prisma Studio in Docker container...$(NC)"; \
+		cd $(DOCKER_DIR) && $(DOCKER_COMPOSE) exec backend pkill -f "prisma studio" || echo "$(YELLOW)Prisma Studio was not running in Docker$(NC)"; \
+	elif [ -f /tmp/prisma-studio.pid ]; then \
+		PRISMA_PID=$$(cat /tmp/prisma-studio.pid 2>/dev/null); \
+		if [ -n "$$PRISMA_PID" ] && kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+			echo "$(CYAN)Stopping Prisma Studio (PID: $$PRISMA_PID)...$(NC)"; \
+			kill "$$PRISMA_PID" 2>/dev/null || true; \
+			sleep 1; \
+			if kill -0 "$$PRISMA_PID" 2>/dev/null; then \
+				kill -9 "$$PRISMA_PID" 2>/dev/null || true; \
+			fi; \
+			rm -f /tmp/prisma-studio.pid; \
+			echo "$(GREEN)✅ Prisma Studio stopped$(NC)"; \
+		else \
+			echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+			rm -f /tmp/prisma-studio.pid; \
+		fi; \
+	else \
+		echo "$(YELLOW)Prisma Studio was not running$(NC)"; \
+	fi
+
 # Legacy aliases for backward compatibility
+# New commands -> old commands
+frontend: frontend.dev
+backend: backend.dev
+test.frontend: frontend.test
+test.frontend.watch: frontend.test.watch
+test.frontend.ui: frontend.test.ui
+test.frontend.coverage: frontend.test.coverage
+test.backend: backend.test
+test.backend.watch: backend.test.watch
+test.backend.coverage: backend.test.coverage
+test.backend.e2e: backend.test.e2e
+lint.frontend: frontend.lint
+lint.backend: backend.lint
+format.frontend: frontend.format
+format.backend: backend.format
+install.frontend: frontend.install
+install.backend: backend.install
+logs.frontend: frontend.logs
+logs.backend: backend.logs
+shell.frontend: frontend.shell
+shell.backend: backend.shell
+# Database & Prisma commands are now without backend. prefix
+# Legacy aliases for backward compatibility
+backend.migrate: migrate
+backend.migrate.dev: migrate.dev
+backend.migrate.reset: migrate.reset
+backend.migrate.reset.clean: migrate.reset.clean
+backend.migrate.resolve: migrate.resolve
+backend.db.push: db.push
+backend.prisma.generate: prisma.generate
+backend.seed: seed
+backend.prisma.studio: prisma.studio
+backend.prisma.studio.stop: prisma.studio.stop
+
+# Old aliases
 dev-stop: dev.stop
 dev-status: dev.status
 dev-logs: dev.logs
 dev-logs-backend: dev.logs.backend
 dev-logs-frontend: dev.logs.frontend
-dev-backend: backend
-dev-frontend: frontend
+dev-backend: backend.dev
+dev-frontend: frontend.dev
 dev-docker-build: dev.build
 dev-docker: dev
 dev-docker-stop: dev.stop
@@ -565,42 +695,7 @@ urls.dev: ## Show service URLs (development Docker)
 	@echo "$(CYAN)💡 Hot-reload is enabled - changes to code will automatically reload$(NC)"
 	@echo ""
 
-test.frontend: ## Run frontend tests (single run, CI mode)
-	@echo "$(GREEN)🧪 Running frontend tests...$(NC)"
-	@cd frontend && npm run test:run
-
-test.frontend.watch: ## Run frontend tests in watch mode (development)
-	@echo "$(GREEN)🧪 Running frontend tests in watch mode...$(NC)"
-	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
-	@cd frontend && npm test
-
-test.frontend.ui: ## Run frontend tests with visual UI
-	@echo "$(GREEN)🧪 Opening frontend test UI...$(NC)"
-	@echo "$(CYAN)💡 Test UI will open in your browser$(NC)"
-	@cd frontend && npm run test:ui
-
-test.frontend.coverage: ## Run frontend tests with coverage report
-	@echo "$(GREEN)🧪 Running frontend tests with coverage...$(NC)"
-	@cd frontend && npm run test:coverage
-	@echo "$(CYAN)💡 Coverage report generated in frontend/coverage/$(NC)"
-
-test.backend: ## Run backend tests (single run, CI mode)
-	@echo "$(GREEN)🧪 Running backend tests...$(NC)"
-	@cd backend && npm test
-
-test.backend.watch: ## Run backend tests in watch mode (development)
-	@echo "$(GREEN)🧪 Running backend tests in watch mode...$(NC)"
-	@echo "$(CYAN)💡 Tests will re-run automatically on file changes$(NC)"
-	@cd backend && npm run test:watch
-
-test.backend.coverage: ## Run backend tests with coverage report
-	@echo "$(GREEN)🧪 Running backend tests with coverage...$(NC)"
-	@cd backend && npm run test:cov
-	@echo "$(CYAN)💡 Coverage report generated in backend/coverage/$(NC)"
-
-test.backend.e2e: ## Run backend e2e tests
-	@echo "$(GREEN)🧪 Running backend e2e tests...$(NC)"
-	@cd backend && npm run test:e2e
+# Legacy test commands - now aliases (removed duplicate implementations)
 
 setup.env: ## Generate .env files from examples (if they don't exist)
 	@echo "$(GREEN)🔧 Setting up environment files...$(NC)"

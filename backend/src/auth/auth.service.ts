@@ -11,7 +11,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { TenantStatus } from '@prisma/client';
+import { TenantStatus, UserRole, Prisma } from '@prisma/client';
+import { safeJwtSign } from '../common/type-helpers';
+
+type UserWithTenant = Prisma.UserGetPayload<{
+  include: { tenant: true };
+}>;
+
+type JwtPayload = {
+  userId: string;
+  email: string;
+  role: UserRole;
+  tenantId?: string;
+  tokenVersion: number;
+};
 
 @Injectable()
 export class AuthService {
@@ -25,7 +38,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Buscar usuário (pode ser SUPER_USER ou usuário normal)
-    const user = await this.prisma.user.findFirst({
+    const user: UserWithTenant | null = await this.prisma.user.findFirst({
       where: { email },
       include: { tenant: true },
     });
@@ -52,7 +65,7 @@ export class AuthService {
 
     // Incrementar tokenVersion para invalidar tokens de outros dispositivos
     // Isso garante que apenas o último login seja válido
-    const updatedUser = await this.prisma.user.update({
+    const updatedUser: UserWithTenant = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         tokenVersion: {
@@ -65,19 +78,18 @@ export class AuthService {
     });
 
     // Gerar token JWT
-    const payload = {
+    const payload: JwtPayload = {
       userId: updatedUser.id,
       email: updatedUser.email,
-      role: updatedUser.role as string,
+
+      role: updatedUser.role,
       tenantId: updatedUser.tenantId || undefined,
+
       tokenVersion: updatedUser.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -85,6 +97,7 @@ export class AuthService {
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
+
         role: updatedUser.role,
         tenantId: updatedUser.tenantId || undefined,
       },
@@ -137,7 +150,8 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Create user
-    const user = await this.prisma.user.create({
+
+    const user: UserWithTenant = await this.prisma.user.create({
       data: {
         name,
         email,
@@ -152,7 +166,7 @@ export class AuthService {
 
     // Incrementar tokenVersion para invalidar tokens de outros dispositivos
     // Isso garante que apenas o último login seja válido
-    const updatedUser = await this.prisma.user.update({
+    const updatedUser: UserWithTenant = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         tokenVersion: {
@@ -165,19 +179,18 @@ export class AuthService {
     });
 
     // Gerar token JWT
-    const payload = {
+    const payload: JwtPayload = {
       userId: updatedUser.id,
       email: updatedUser.email,
-      role: updatedUser.role as string,
+
+      role: updatedUser.role,
       tenantId: updatedUser.tenantId || undefined,
+
       tokenVersion: updatedUser.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -185,6 +198,7 @@ export class AuthService {
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
+
         role: updatedUser.role,
         tenantId: updatedUser.tenantId || undefined,
       },
@@ -193,7 +207,7 @@ export class AuthService {
 
   async refreshToken(userId: string): Promise<AuthResponseDto> {
     // Validate if user still exists and is active
-    const user = await this.prisma.user.findUnique({
+    const user: UserWithTenant | null = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
@@ -211,19 +225,18 @@ export class AuthService {
       throw new UnauthorizedException('Tenant inativo');
     }
 
-    const payload = {
+    const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role as string,
+
+      role: user.role,
       tenantId: user.tenantId || undefined,
+
       tokenVersion: user.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -261,7 +274,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user: UserWithTenant | null = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
