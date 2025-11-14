@@ -30,8 +30,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     email?: string;
     role: string;
     tenantId?: string;
+    tokenVersion?: number;
   }): Promise<CurrentUserPayload> {
-    const { userId } = payload;
+    const { userId, tokenVersion } = payload;
 
     // Validate if user exists
     const user = await this.prisma.user.findUnique({
@@ -41,6 +42,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    // Validar tokenVersion: se o token foi revogado (logout), o tokenVersion do token
+    // será menor que o tokenVersion atual do usuário no banco
+    if (tokenVersion !== undefined && tokenVersion !== user.tokenVersion) {
+      throw new UnauthorizedException('Token inválido ou revogado');
     }
 
     // For SUPER_USER, no need to validate tenant (tenantId is null)
