@@ -39,7 +39,7 @@ export function DashboardWrapper({
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
+                    <Users className="size-5" />
                     Gerenciamento de Usuários
                   </CardTitle>
                   <CardDescription>
@@ -48,7 +48,7 @@ export function DashboardWrapper({
                 </div>
                 <Button asChild>
                   <Link href="/users">
-                    <Users className="mr-2 h-4 w-4" />
+                    <Users className="mr-2 size-4" />
                     Gerenciar Usuários
                   </Link>
                 </Button>

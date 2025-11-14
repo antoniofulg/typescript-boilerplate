@@ -190,7 +190,7 @@ export default function AuthPage() {
                     disabled={loginForm.formState.isSubmitting}
                   >
                     {loginForm.formState.isSubmitting && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
                     Entrar
                   </Button>
@@ -308,7 +308,7 @@ export default function AuthPage() {
                     disabled={registerForm.formState.isSubmitting}
                   >
                     {registerForm.formState.isSubmitting && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
                     Registrar
                   </Button>

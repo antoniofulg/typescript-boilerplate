@@ -291,7 +291,7 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
         {/* Filters */}
         <div className="mb-6 space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Filter className="size-4 text-muted-foreground" />
             <span className="text-sm font-medium">Filtros:</span>
             {hasActiveFilters && (
               <Button
@@ -300,7 +300,7 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
                 onClick={handleClearFilters}
                 className="h-8"
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="size-4 mr-1" />
                 Limpar
               </Button>
             )}
@@ -346,7 +346,7 @@ export function LogsManagement({ initialLogs }: LogsManagementProps) {
                         ? `${selectedEntities.length} entidade(s) selecionada(s)`
                         : 'Selecione as entidades'}
                     </span>
-                    <ChevronDown className="h-4 w-4 opacity-50" />
+                    <ChevronDown className="size-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">

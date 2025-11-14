@@ -24,10 +24,10 @@ export function UserMenu() {
     return (
       <Button
         variant="ghost"
-        className="relative h-10 w-10 rounded-full"
+        className="relative size-10 rounded-full"
         disabled
       >
-        <Avatar className="h-10 w-10">
+        <Avatar className="size-10">
           <AvatarFallback>...</AvatarFallback>
         </Avatar>
       </Button>
@@ -39,10 +39,10 @@ export function UserMenu() {
     return (
       <Button
         variant="ghost"
-        className="relative h-10 w-10 rounded-full"
+        className="relative size-10 rounded-full"
         disabled
       >
-        <Avatar className="h-10 w-10">
+        <Avatar className="size-10">
           <AvatarFallback>...</AvatarFallback>
         </Avatar>
       </Button>
@@ -53,7 +53,7 @@ export function UserMenu() {
   if (!isAuthenticated || !user) {
     return (
       <Button variant="outline" onClick={() => router.push('/auth')}>
-        <User className="mr-2 h-4 w-4" />
+        <User className="mr-2 size-4" />
         Entrar
       </Button>
     );
@@ -84,9 +84,9 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-10 w-10 rounded-full cursor-pointer"
+          className="relative size-10 rounded-full cursor-pointer"
         >
-          <Avatar className="h-10 w-10">
+          <Avatar className="size-10">
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
         </Button>
@@ -115,16 +115,16 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push('/')}>
-          <User className="mr-2 h-4 w-4" />
+          <User className="mr-2 size-4" />
           <span>Perfil</span>
         </DropdownMenuItem>
         <DropdownMenuItem disabled>
-          <Settings className="mr-2 h-4 w-4" />
+          <Settings className="mr-2 size-4" />
           <span>Configurações</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="mr-2 size-4" />
           <span>Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

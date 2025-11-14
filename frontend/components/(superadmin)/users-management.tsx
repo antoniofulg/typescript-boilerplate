@@ -228,7 +228,7 @@ export function UsersManagement({
           {users.length > 0 && (
             <div className="mb-4 space-y-4">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar por nome, email ou tenant..."
@@ -240,10 +240,10 @@ export function UsersManagement({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+                    className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0"
                     onClick={() => handleSearchChange('')}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-4" />
                   </Button>
                 )}
               </div>

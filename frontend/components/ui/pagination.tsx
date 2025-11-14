@@ -75,7 +75,7 @@ export function Pagination({
         disabled={currentPage === 1}
         aria-label="Página anterior"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="size-4" />
         <span className="sr-only">Anterior</span>
       </Button>
 
@@ -85,9 +85,9 @@ export function Pagination({
             return (
               <div
                 key={`ellipsis-${index}`}
-                className="flex h-9 w-9 items-center justify-center"
+                className="flex size-9 items-center justify-center"
               >
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                <MoreHorizontal className="size-4 text-muted-foreground" />
               </div>
             );
           }
@@ -99,7 +99,7 @@ export function Pagination({
               size="sm"
               onClick={() => onPageChange(page)}
               className={cn(
-                'h-9 w-9',
+                'size-9',
                 currentPage === page && 'pointer-events-none',
               )}
               aria-label={`Ir para página ${page}`}
@@ -119,7 +119,7 @@ export function Pagination({
         aria-label="Próxima página"
       >
         <span className="sr-only">Próxima</span>
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="size-4" />
       </Button>
     </div>
   );

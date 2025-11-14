@@ -68,7 +68,7 @@ export function Sidebar({ user }: SidebarProps) {
           asChild
         >
           <Link href={item.path} onClick={handleLinkClick}>
-            <Icon className="h-5 w-5" />
+            <Icon className="size-5" />
             <span>{item.label}</span>
           </Link>
         </Button>
@@ -119,7 +119,7 @@ export function Sidebar({ user }: SidebarProps) {
                         asChild
                       >
                         <Link href={item.path}>
-                          <Icon className="h-5 w-5" />
+                          <Icon className="size-5" />
                           <span>{item.label}</span>
                         </Link>
                       </Button>
@@ -140,7 +140,7 @@ export function Sidebar({ user }: SidebarProps) {
               className="lg:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
               suppressHydrationWarning
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="size-6" />
               <span className="sr-only">Abrir menu</span>
             </Button>
           </SheetTrigger>
@@ -160,7 +160,7 @@ export function Sidebar({ user }: SidebarProps) {
                 size="icon"
                 onClick={() => setIsMobileOpen(false)}
               >
-                <X className="h-5 w-5" />
+                <X className="size-5" />
                 <span className="sr-only">Fechar menu</span>
               </Button>
             </div>
@@ -179,7 +179,7 @@ export function Sidebar({ user }: SidebarProps) {
                           asChild
                         >
                           <Link href={item.path} onClick={handleLinkClick}>
-                            <Icon className="h-5 w-5" />
+                            <Icon className="size-5" />
                             <span>{item.label}</span>
                           </Link>
                         </Button>
@@ -214,7 +214,7 @@ export function Sidebar({ user }: SidebarProps) {
             className="lg:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
             suppressHydrationWarning
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="size-6" />
             <span className="sr-only">Abrir menu</span>
           </Button>
         </SheetTrigger>
@@ -230,7 +230,7 @@ export function Sidebar({ user }: SidebarProps) {
               size="icon"
               onClick={() => setIsMobileOpen(false)}
             >
-              <X className="h-5 w-5" />
+              <X className="size-5" />
               <span className="sr-only">Fechar menu</span>
             </Button>
           </div>

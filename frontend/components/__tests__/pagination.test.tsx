@@ -142,7 +142,7 @@ describe('Pagination', () => {
     // Check for the MoreHorizontal icon by its parent structure
     const allIcons = document.querySelectorAll('svg');
     const hasEllipsis = Array.from(allIcons).some((svg) =>
-      svg.closest('div')?.className.includes('h-9 w-9'),
+      svg.closest('div')?.className.includes('size-9'),
     );
     expect(hasEllipsis).toBe(true);
   });
