@@ -196,8 +196,7 @@ export async function logoutAction(): Promise<LogoutResult> {
 
     // Remove cookie regardless of response status
     // This ensures the user is logged out on the frontend even if backend call fails
-    // Delete with explicit path to ensure removal
-    cookieStore.delete('auth_token', { path: '/' });
+    cookieStore.delete('auth_token');
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({
@@ -219,7 +218,7 @@ export async function logoutAction(): Promise<LogoutResult> {
     // Even if there's an error, remove the cookie to ensure logout
     try {
       const cookieStore = await cookies();
-      cookieStore.delete('auth_token', { path: '/' });
+      cookieStore.delete('auth_token');
     } catch {
       // Ignore errors when deleting cookie
     }

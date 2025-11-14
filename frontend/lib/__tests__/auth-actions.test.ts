@@ -58,9 +58,7 @@ describe('logoutAction', () => {
         }),
       }),
     );
-    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token', {
-      path: '/',
-    });
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token');
   });
 
   it('should remove cookie even if backend call fails', async () => {
@@ -83,9 +81,7 @@ describe('logoutAction', () => {
     // Should still return success since cookie is removed
     expect(result.success).toBe(true);
     expect(result.error).toBe('Internal server error');
-    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token', {
-      path: '/',
-    });
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token');
   });
 
   it('should handle network errors gracefully', async () => {
@@ -106,9 +102,7 @@ describe('logoutAction', () => {
     // Should still return success and remove cookie
     expect(result.success).toBe(true);
     expect(result.error).toBe('Network error');
-    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token', {
-      path: '/',
-    });
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token');
   });
 
   it('should handle JSON parse errors in error response', async () => {
@@ -133,9 +127,7 @@ describe('logoutAction', () => {
     expect(result.success).toBe(true);
     // When JSON parse fails, it falls back to default error message
     expect(result.error).toBe('Erro ao fazer logout');
-    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token', {
-      path: '/',
-    });
+    expect(mockCookieStore.delete).toHaveBeenCalledWith('auth_token');
   });
 
   it('should remove cookie even if cookie deletion fails', async () => {
