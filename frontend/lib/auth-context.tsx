@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
+import { logoutAction } from './auth-actions';
 
 type User = {
   id: string;
@@ -27,7 +28,7 @@ type AuthContextType = {
   token: string | null;
   login: (email: string, password: string) => Promise<any>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   getProfile: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
@@ -301,12 +302,24 @@ export function AuthProvider({
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Call server action to revoke token on backend
+    // This ensures the token is invalidated server-side
+    try {
+      await logoutAction();
+    } catch (error) {
+      // Even if server action fails, continue with local logout
+      // This ensures the user is logged out on the frontend
+      console.error('Error calling logout action:', error);
+    }
+
+    // Clear local state regardless of server action result
+    // This ensures logout works even if backend is unavailable
     setToken(null);
     setUser(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
-      // Also remove cookie
+      // Also remove cookie (fallback, server action already removes it)
       document.cookie = 'auth_token=; path=/; max-age=0';
     }
   };

@@ -30,6 +30,11 @@ type RegisterResult = {
   redirectTo?: string;
 };
 
+type LogoutResult = {
+  success: boolean;
+  error?: string;
+};
+
 export async function loginAction(
   email: string,
   password: string,
@@ -147,6 +152,66 @@ export async function registerAction(data: {
         error instanceof Error
           ? error.message
           : 'Erro desconhecido ao registrar',
+    };
+  }
+}
+
+export async function logoutAction(): Promise<LogoutResult> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    // If no token, consider logout successful (already logged out)
+    if (!token) {
+      return {
+        success: true,
+      };
+    }
+
+    // Call logout endpoint to revoke token on backend
+    const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Remove cookie regardless of response status
+    // This ensures the user is logged out on the frontend even if backend call fails
+    cookieStore.delete('auth_token');
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: 'Erro ao fazer logout',
+      }));
+
+      // Still return success since we've removed the cookie
+      // The token is already invalidated on the frontend
+      return {
+        success: true,
+        error: error.message || 'Erro ao fazer logout no servidor',
+      };
+    }
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    // Even if there's an error, remove the cookie to ensure logout
+    try {
+      const cookieStore = await cookies();
+      cookieStore.delete('auth_token');
+    } catch {
+      // Ignore errors when deleting cookie
+    }
+
+    return {
+      success: true,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Erro desconhecido ao fazer logout',
     };
   }
 }

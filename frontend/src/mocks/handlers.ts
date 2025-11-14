@@ -82,6 +82,15 @@ export const handlers = [
     return HttpResponse.json({ message: 'Não autorizado' }, { status: 401 });
   }),
 
+  // Mock POST /auth/logout
+  http.post(`${API_URL}/auth/logout`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+    }
+    return HttpResponse.json({ message: 'Não autorizado' }, { status: 401 });
+  }),
+
   // Mock GET /health
   http.get(`${API_URL}/health`, () => {
     return HttpResponse.json({ status: 'ok' });

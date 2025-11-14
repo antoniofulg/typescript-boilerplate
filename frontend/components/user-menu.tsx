@@ -74,8 +74,8 @@ export function UserMenu() {
     return 'outline';
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/');
   };
 
