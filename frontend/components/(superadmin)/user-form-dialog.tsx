@@ -161,7 +161,7 @@ export function UserFormDialog({
             <div className="grid gap-4 py-4">
               {error && (
                 <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTriangle className="size-4" />
                   <AlertTitle>Erro</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -321,9 +321,7 @@ export function UserFormDialog({
             </div>
             <DialogFooter>
               <Button type="submit" disabled={submitting}>
-                {submitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Salvar
               </Button>
             </DialogFooter>

@@ -1,10 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@/src/test-utils';
 import { render as rtlRender } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/src/mocks/server';
 import { ThemeProvider } from '@/components/theme-provider';
+import { logoutAction } from '@/lib/auth-actions';
+
+// Mock auth-actions
+vi.mock('@/lib/auth-actions', () => ({
+  logoutAction: vi.fn(),
+}));
 
 // Test component that uses auth context
 function TestComponent() {
@@ -20,6 +27,22 @@ function TestComponent() {
       <div data-testid="token">{token || 'no-token'}</div>
       <div data-testid="user-email">{user?.email || 'no-user'}</div>
       <div data-testid="user-role">{user?.role || 'no-role'}</div>
+    </div>
+  );
+}
+
+// Test component with logout button
+function LogoutTestComponent() {
+  const { user, isAuthenticated, logout, token } = useAuth();
+
+  return (
+    <div>
+      <div data-testid="is-authenticated">{String(isAuthenticated)}</div>
+      <div data-testid="token">{token || 'no-token'}</div>
+      <div data-testid="user-email">{user?.email || 'no-user'}</div>
+      <button data-testid="logout-button" onClick={() => void logout()}>
+        Logout
+      </button>
     </div>
   );
 }
@@ -131,5 +154,270 @@ describe('useAuth hook', () => {
     }).toThrow('useAuth must be used within an AuthProvider');
 
     console.error = originalError;
+  });
+});
+
+describe('logout', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('should call logoutAction and clear local state', async () => {
+    // Mock logoutAction to return success
+    vi.mocked(logoutAction).mockResolvedValue({ success: true });
+
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('is-authenticated')).toHaveTextContent(
+          'false',
+        );
+        expect(screen.getByTestId('token')).toHaveTextContent('no-token');
+        expect(localStorage.getItem('auth_token')).toBeNull();
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('should clear state even if logoutAction fails', async () => {
+    // Mock logout endpoint to fail
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json(
+          { message: 'Internal server error' },
+          { status: 500 },
+        );
+      }),
+    );
+
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete (should still clear state)
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('is-authenticated')).toHaveTextContent(
+          'false',
+        );
+        expect(screen.getByTestId('token')).toHaveTextContent('no-token');
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('should remove token from localStorage on logout', async () => {
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(localStorage.getItem('auth_token')).toBe('mock-access-token');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete
+    await waitFor(() => {
+      expect(localStorage.getItem('auth_token')).toBeNull();
+    });
+  });
+
+  it('should completely clear token from all storage locations on logout', async () => {
+    // Set token in localStorage
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Set token in cookie (simulate cookie existence)
+    document.cookie =
+      'auth_token=mock-access-token; path=/; max-age=57600; SameSite=Lax';
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(localStorage.getItem('auth_token')).toBe('mock-access-token');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete and verify all storage is cleared
+    await waitFor(() => {
+      // Verify localStorage is cleared
+      expect(localStorage.getItem('auth_token')).toBeNull();
+
+      // Verify cookie is cleared (helper function to get cookie)
+      const getCookie = (name: string): string | null => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+          return parts.pop()?.split(';').shift() || null;
+        }
+        return null;
+      };
+      expect(getCookie('auth_token')).toBeNull();
+    });
+  });
+
+  it('should not load user profile after logout and reload', async () => {
+    localStorage.setItem('auth_token', 'mock-access-token');
+
+    // Mock logout endpoint
+    server.use(
+      http.post('http://localhost:4000/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logout realizado com sucesso' });
+      }),
+    );
+
+    const { rerender } = render(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // Wait for user to be loaded
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('true');
+    });
+
+    // Click logout button
+    const logoutButton = screen.getByTestId('logout-button');
+    const user = userEvent.setup();
+    await user.click(logoutButton);
+
+    // Wait for logout to complete
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
+      expect(localStorage.getItem('auth_token')).toBeNull();
+    });
+
+    // Simulate page reload by creating a new AuthProvider instance
+    // This tests that after logout, a reload won't load the user
+    rerender(
+      <AuthProvider>
+        <LogoutTestComponent />
+      </AuthProvider>,
+    );
+
+    // After "reload", should remain unauthenticated
+    await waitFor(() => {
+      expect(screen.getByTestId('is-authenticated')).toHaveTextContent('false');
+      expect(screen.getByTestId('token')).toHaveTextContent('no-token');
+    });
+  });
+
+  describe('setAuthState', () => {
+    it('should update token and user state immediately', async () => {
+      const mockToken = 'new-token-123';
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'USER' as const,
+      };
+
+      function SetAuthStateTestComponent() {
+        const { setAuthState, token, user } = useAuth();
+
+        return (
+          <div>
+            <button
+              data-testid="set-auth-button"
+              onClick={() => setAuthState(mockToken, mockUser)}
+            >
+              Set Auth
+            </button>
+            <div data-testid="token">{token || 'no-token'}</div>
+            <div data-testid="user-email">{user?.email || 'no-user'}</div>
+          </div>
+        );
+      }
+
+      render(
+        <AuthProvider>
+          <SetAuthStateTestComponent />
+        </AuthProvider>,
+      );
+
+      const setAuthButton = screen.getByTestId('set-auth-button');
+      const user = userEvent.setup();
+      await user.click(setAuthButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('token')).toHaveTextContent(mockToken);
+        expect(screen.getByTestId('user-email')).toHaveTextContent(
+          mockUser.email,
+        );
+        expect(localStorage.getItem('auth_token')).toBe(mockToken);
+      });
+    });
   });
 });

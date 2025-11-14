@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,36 +16,44 @@ import { User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
-  const { user, logout, loading } = useAuth();
+  const { user, token, logout, loading, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
 
-  // Set mounted after component mounts to avoid hydration mismatch
-  // This is a common pattern for client-only rendering
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  // Show loading state during hydration
-  if (!mounted || loading) {
+  // Show loading state during actual loading
+  if (loading) {
     return (
       <Button
         variant="ghost"
-        className="relative h-10 w-10 rounded-full"
+        className="relative size-10 rounded-full"
         disabled
       >
-        <Avatar className="h-10 w-10">
+        <Avatar className="size-10">
           <AvatarFallback>...</AvatarFallback>
         </Avatar>
       </Button>
     );
   }
 
-  if (!user) {
+  // If we have a token but no user yet, show loading (user is being fetched)
+  if (token && !user) {
+    return (
+      <Button
+        variant="ghost"
+        className="relative size-10 rounded-full"
+        disabled
+      >
+        <Avatar className="size-10">
+          <AvatarFallback>...</AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
+
+  // Only show "Entrar" if user is not authenticated
+  if (!isAuthenticated || !user) {
     return (
       <Button variant="outline" onClick={() => router.push('/auth')}>
-        <User className="mr-2 h-4 w-4" />
+        <User className="mr-2 size-4" />
         Entrar
       </Button>
     );
@@ -67,16 +74,19 @@ export function UserMenu() {
     return 'outline';
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/');
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
+        <Button
+          variant="ghost"
+          className="relative size-10 rounded-full cursor-pointer"
+        >
+          <Avatar className="size-10">
             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
         </Button>
@@ -105,16 +115,16 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push('/')}>
-          <User className="mr-2 h-4 w-4" />
+          <User className="mr-2 size-4" />
           <span>Perfil</span>
         </DropdownMenuItem>
         <DropdownMenuItem disabled>
-          <Settings className="mr-2 h-4 w-4" />
+          <Settings className="mr-2 size-4" />
           <span>Configurações</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="mr-2 size-4" />
           <span>Sair</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

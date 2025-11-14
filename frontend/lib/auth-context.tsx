@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
+import { logoutAction } from './auth-actions';
 
 type User = {
   id: string;
@@ -21,8 +28,9 @@ type AuthContextType = {
   token: string | null;
   login: (email: string, password: string) => Promise<any>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   getProfile: () => Promise<void>;
+  setAuthState: (token: string, user: User) => void;
   isAuthenticated: boolean;
   loading: boolean;
 };
@@ -40,59 +48,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+/**
+ * Helper function to completely clear auth token from all storage locations
+ * This ensures the token is removed from both localStorage and cookies with all possible attributes
+ */
+function clearAuthToken(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
 
-  useEffect(() => {
-    // Mark as mounted first to avoid hydration issues
-    // This is a common pattern to prevent hydration mismatches
+  // Remove from localStorage
+  localStorage.removeItem('auth_token');
 
-    setMounted(true);
+  // Remove cookie with all possible attribute combinations
+  // This ensures removal regardless of how the cookie was set
+  const cookieOptions = [
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict',
+    'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=None; Secure',
+  ];
 
-    // Carregar token do localStorage ao inicializar
-    // Only access localStorage after component has mounted (client-side only)
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('auth_token');
-      if (storedToken) {
-        setToken(storedToken);
-        // Try to load user profile
-        void loadUserProfile(storedToken).catch(() => {
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
+  // Try to remove cookie with different attribute combinations
+  cookieOptions.forEach((cookieString) => {
+    document.cookie = cookieString;
+  });
 
-      // Listen for token refresh events
-      const handleTokenRefresh = (event: CustomEvent<{ token: string }>) => {
-        const newToken = event.detail.token;
-        setToken(newToken);
-        // Reload user profile with new token
-        void loadUserProfile(newToken).catch(() => {
-          // Silently fail
-        });
-      };
+  // Also try without path (in case cookie was set without explicit path)
+  document.cookie =
+    'auth_token=; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+}
 
-      window.addEventListener(
-        'token-refreshed',
-        handleTokenRefresh as EventListener,
-      );
+type AuthProviderProps = {
+  children: React.ReactNode;
+  initialUser?: User | null;
+  initialToken?: string | null;
+};
 
-      return () => {
-        window.removeEventListener(
-          'token-refreshed',
-          handleTokenRefresh as EventListener,
-        );
-      };
-    } else {
-      setLoading(false);
-    }
-  }, []);
+export function AuthProvider({
+  children,
+  initialUser = null,
+  initialToken = null,
+}: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [token, setToken] = useState<string | null>(initialToken);
+  const [loading, setLoading] = useState(!initialUser && !initialToken);
 
-  const loadUserProfile = async (authToken: string) => {
+  const loadUserProfile = useCallback(async (authToken: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/auth/me`, {
         headers: {
@@ -103,24 +105,146 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        setLoading(false);
       } else {
-        // Invalid token, remove it
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth_token');
-          document.cookie = 'auth_token=; path=/; max-age=0';
+        // Only clear token if it's a 401 (Unauthorized) - token is definitely invalid
+        // For other errors (network, 500, etc), keep the token and user state
+        if (response.status === 401) {
+          // Invalid token, remove it completely
+          setToken(null);
+          setUser(null);
+          clearAuthToken();
         }
-        setToken(null);
+        setLoading(false);
       }
     } catch {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        document.cookie = 'auth_token=; path=/; max-age=0';
-      }
-      setToken(null);
-    } finally {
+      // On network errors, don't clear the token - it might be a temporary issue
+      // Only clear if we're sure the token is invalid
+      // Keep existing user state if available
       setLoading(false);
+      // Don't clear token/user on network errors - might be temporary
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // If we already have initial data from server, sync it and skip loading
+    if (initialUser && initialToken) {
+      // Sync token to localStorage and cookie
+      localStorage.setItem('auth_token', initialToken);
+      document.cookie = `auth_token=${initialToken}; path=/; max-age=57600; SameSite=Lax`;
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => {
+        setLoading(false);
+      }, 0);
+      return;
+    }
+
+    // Carregar token do localStorage ou cookie ao inicializar
+    // Helper function to get cookie value
+    const getCookie = (name: string): string | null => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return parts.pop()?.split(';').shift() || null;
+      }
+      return null;
+    };
+
+    // Try to get token from localStorage first
+    let storedToken = localStorage.getItem('auth_token');
+
+    // If not in localStorage, try to get from cookie
+    if (!storedToken) {
+      const cookieToken = getCookie('auth_token');
+      if (cookieToken) {
+        storedToken = cookieToken;
+        // Sync cookie to localStorage
+        localStorage.setItem('auth_token', cookieToken);
+      }
+    } else {
+      // If we have token in localStorage, sync to cookie if not present
+      const cookieToken = getCookie('auth_token');
+      if (!cookieToken) {
+        document.cookie = `auth_token=${storedToken}; path=/; max-age=57600; SameSite=Lax`;
+      }
+    }
+
+    // Use setTimeout to avoid synchronous setState in effect
+    if (storedToken) {
+      setTimeout(() => {
+        setToken(storedToken);
+        // Only load user profile if we don't already have it
+        if (!user) {
+          void loadUserProfile(storedToken).catch(() => {
+            setLoading(false);
+          });
+        } else {
+          setLoading(false);
+        }
+      }, 0);
+    } else {
+      // No token found, stop loading immediately
+      setTimeout(() => {
+        setLoading(false);
+      }, 0);
+    }
+
+    // Listen for token refresh events
+    const handleTokenRefresh = (event: CustomEvent<{ token: string }>) => {
+      const newToken = event.detail.token;
+      setToken(newToken);
+      // Reload user profile with new token
+      // Always try to reload profile when token is refreshed
+      void loadUserProfile(newToken).catch(() => {
+        // Silently fail - don't clear token on refresh failure
+        // The user might still be valid, just couldn't fetch profile right now
+      });
+    };
+
+    // Listen for token expiration events (when refresh fails)
+    const handleTokenExpired = () => {
+      // Clear token and user state when token expires
+      setToken(null);
+      setUser(null);
+      clearAuthToken();
+    };
+
+    window.addEventListener(
+      'token-refreshed',
+      handleTokenRefresh as EventListener,
+    );
+    window.addEventListener('token-expired', handleTokenExpired);
+
+    return () => {
+      window.removeEventListener(
+        'token-refreshed',
+        handleTokenRefresh as EventListener,
+      );
+      window.removeEventListener('token-expired', handleTokenExpired);
+    };
+  }, [loadUserProfile, initialUser, initialToken, user]);
+
+  // If we have a token but no user, try to load the profile
+  // This handles cases where the initial load failed but the token is still valid
+  useEffect(() => {
+    if (token && !user && !loading) {
+      // Retry loading profile if we have token but no user
+      // Use setTimeout to avoid synchronous setState in effect
+      const timeoutId = setTimeout(() => {
+        setLoading(true);
+        void loadUserProfile(token).catch(() => {
+          // Silently fail - loading will be set to false in loadUserProfile
+        });
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [token, user, loading, loadUserProfile]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch(`${BACKEND_URL}/auth/login`, {
@@ -165,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
       // Also save in cookie for server-side
-      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=57600; SameSite=Lax`;
     }
     return data;
   };
@@ -213,18 +337,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', data.accessToken);
       // Also save in cookie for server-side
-      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `auth_token=${data.accessToken}; path=/; max-age=57600; SameSite=Lax`;
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Clear local state first to prevent any race conditions
     setToken(null);
     setUser(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      // Also remove cookie
-      document.cookie = 'auth_token=; path=/; max-age=0';
+
+    // Clear token from all storage locations immediately
+    clearAuthToken();
+
+    // Call server action to revoke token on backend
+    // This ensures the token is invalidated server-side
+    try {
+      await logoutAction();
+    } catch (error) {
+      // Even if server action fails, we've already cleared local state
+      // This ensures the user is logged out on the frontend
+      console.error('Error calling logout action:', error);
     }
+
+    // Ensure token is cleared again after server action (defensive)
+    // This handles edge cases where cookie might have been recreated
+    clearAuthToken();
   };
 
   const getProfile = async () => {
@@ -246,6 +383,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setAuthState = (authToken: string, authUser: User) => {
+    setToken(authToken);
+    setUser(authUser);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', authToken);
+      document.cookie = `auth_token=${authToken}; path=/; max-age=57600; SameSite=Lax`;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -255,8 +401,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         getProfile,
+        setAuthState,
         isAuthenticated: !!token && !!user,
-        loading: !mounted || loading, // Show loading during hydration
+        loading,
       }}
     >
       {children}

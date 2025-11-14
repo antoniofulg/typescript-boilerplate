@@ -18,7 +18,7 @@ export function StatsCards({ tenants }: StatsCardsProps) {
           <CardTitle className="text-sm font-medium">
             Total de Tenants
           </CardTitle>
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Building2 className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{total}</div>
@@ -27,7 +27,7 @@ export function StatsCards({ tenants }: StatsCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tenants Ativos</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          <CheckCircle2 className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{active}</div>
@@ -38,7 +38,7 @@ export function StatsCards({ tenants }: StatsCardsProps) {
           <CardTitle className="text-sm font-medium">
             Tenants Inativos
           </CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          <AlertTriangle className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{inactive}</div>

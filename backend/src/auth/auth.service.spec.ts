@@ -13,7 +13,15 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { createMockPrismaService, MockPrismaService } from '../test-utils';
 import { faker } from '@faker-js/faker';
-import { vi, type MockInstance } from 'vitest';
+import {
+  vi,
+  type MockInstance,
+  describe,
+  beforeEach,
+  afterEach,
+  it,
+  expect,
+} from 'vitest';
 
 vi.mock('bcrypt');
 
@@ -67,7 +75,7 @@ describe('AuthService', () => {
     // Default config values
     configService.get.mockImplementation((key: string) => {
       if (key === 'JWT_SECRET') return 'test-secret';
-      if (key === 'JWT_EXPIRES_IN') return '7d';
+      if (key === 'JWT_EXPIRES_IN') return '16h';
       return undefined;
     });
 
@@ -92,6 +100,7 @@ describe('AuthService', () => {
         passwordHash: 'hashed-password',
         role: 'ADMIN' as const,
         tenantId: faker.string.uuid(),
+        tokenVersion: 0,
         tenant: {
           id: faker.string.uuid(),
           name: 'Test Tenant',
@@ -101,8 +110,15 @@ describe('AuthService', () => {
         createdAt: new Date(),
       };
 
+      const updatedUser = {
+        ...mockUser,
+        tokenVersion: 1, // Incrementado após login
+      };
+
       const userFindFirstMock = prismaService.user.findFirst;
+      const userUpdateMock = prismaService.user.update;
       userFindFirstMock.mockResolvedValue(mockUser);
+      userUpdateMock.mockResolvedValue(updatedUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       const result = await service.login(loginDto);
@@ -116,6 +132,17 @@ describe('AuthService', () => {
         loginDto.password,
         mockUser.passwordHash,
       );
+      expect(userUpdateMock).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: {
+          tokenVersion: {
+            increment: 1,
+          },
+        },
+        include: {
+          tenant: true,
+        },
+      });
     });
 
     it('should login a super user successfully', async () => {
@@ -126,13 +153,21 @@ describe('AuthService', () => {
         passwordHash: 'hashed-password',
         role: 'SUPER_USER' as const,
         tenantId: null,
+        tokenVersion: 0,
         tenant: null,
         createdAt: new Date(),
       };
 
+      const updatedSuperUser = {
+        ...mockSuperUser,
+        tokenVersion: 1, // Incrementado após login
+      };
+
       const userFindFirstMock = prismaService.user.findFirst;
+      const userUpdateMock = prismaService.user.update;
 
       userFindFirstMock.mockResolvedValue(mockSuperUser);
+      userUpdateMock.mockResolvedValue(updatedSuperUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       const result = await service.login(loginDto);
@@ -142,6 +177,17 @@ describe('AuthService', () => {
       expect(userFindFirstMock).toHaveBeenCalledWith({
         where: { email: loginDto.email },
         include: { tenant: true },
+      });
+      expect(userUpdateMock).toHaveBeenCalledWith({
+        where: { id: mockSuperUser.id },
+        data: {
+          tokenVersion: {
+            increment: 1,
+          },
+        },
+        include: {
+          tenant: true,
+        },
       });
     });
 
@@ -162,6 +208,7 @@ describe('AuthService', () => {
         passwordHash: 'hashed-password',
         role: 'USER' as const,
         tenantId: faker.string.uuid(),
+        tokenVersion: 0,
         tenant: {
           id: faker.string.uuid(),
           name: 'Test Tenant',
@@ -188,6 +235,7 @@ describe('AuthService', () => {
         passwordHash: 'hashed-password',
         role: 'USER' as const,
         tenantId: faker.string.uuid(),
+        tokenVersion: 0,
         tenant: {
           id: faker.string.uuid(),
           name: 'Test Tenant',
@@ -220,15 +268,23 @@ describe('AuthService', () => {
         ...registerDto,
         passwordHash: 'hashed-password',
         tenantId: null,
+        tokenVersion: 0,
         tenant: null,
         createdAt: new Date(),
       };
 
+      const updatedUser = {
+        ...mockUser,
+        tokenVersion: 1, // Incrementado após registro
+      };
+
       const userFindFirstMock = prismaService.user.findFirst;
       const userCreateMock = prismaService.user.create;
+      const userUpdateMock = prismaService.user.update;
       userFindFirstMock.mockResolvedValue(null);
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
+      userUpdateMock.mockResolvedValue(updatedUser);
 
       const result = await service.register(registerDto);
 
@@ -237,6 +293,17 @@ describe('AuthService', () => {
       expect(result.user.email).toBe(registerDto.email);
       expect(bcrypt.hash).toHaveBeenCalled();
       expect(userCreateMock).toHaveBeenCalled();
+      expect(userUpdateMock).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: {
+          tokenVersion: {
+            increment: 1,
+          },
+        },
+        include: {
+          tenant: true,
+        },
+      });
     });
 
     it('should throw ConflictException for existing email', async () => {
@@ -278,25 +345,44 @@ describe('AuthService', () => {
         ...registerDtoWithTenant,
         passwordHash: 'hashed-password',
         tenantId,
+        tokenVersion: 0,
         tenant: mockTenant,
         createdAt: new Date(),
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        tokenVersion: 1, // Incrementado após registro
       };
 
       const userFindFirstMock = prismaService.user.findFirst;
       const tenantFindUniqueMock = prismaService.tenant.findUnique;
       const userFindUniqueMock = prismaService.user.findUnique;
       const userCreateMock = prismaService.user.create;
+      const userUpdateMock = prismaService.user.update;
       userFindFirstMock.mockResolvedValue(null);
       tenantFindUniqueMock.mockResolvedValue(mockTenant);
       userFindUniqueMock.mockResolvedValue(null);
       vi.mocked(bcrypt.hash).mockResolvedValue('hashed-password' as never);
       userCreateMock.mockResolvedValue(mockUser);
+      userUpdateMock.mockResolvedValue(updatedUser);
 
       const result = await service.register(registerDtoWithTenant);
 
       expect(result.user.tenantId).toBe(tenantId);
       expect(tenantFindUniqueMock).toHaveBeenCalledWith({
         where: { id: tenantId },
+      });
+      expect(userUpdateMock).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: {
+          tokenVersion: {
+            increment: 1,
+          },
+        },
+        include: {
+          tenant: true,
+        },
       });
     });
 
@@ -352,6 +438,7 @@ describe('AuthService', () => {
         name: 'Super User',
         role: 'SUPER_USER' as const,
         tenantId: null,
+        tokenVersion: 0,
         tenant: null,
         createdAt: new Date(),
       };
@@ -373,6 +460,7 @@ describe('AuthService', () => {
         name: 'Test User',
         role: 'ADMIN' as const,
         tenantId: faker.string.uuid(),
+        tokenVersion: 0,
         tenant: {
           id: faker.string.uuid(),
           name: 'Test Tenant',
@@ -401,6 +489,60 @@ describe('AuthService', () => {
       await expect(service.getProfile(userId)).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('logout', () => {
+    it('should increment tokenVersion and return success message', async () => {
+      const userId = faker.string.uuid();
+      const mockUser = {
+        id: userId,
+        email: 'user@example.com',
+        name: 'Test User',
+        passwordHash: 'hashed-password',
+        role: 'USER' as const,
+        tenantId: faker.string.uuid(),
+        tokenVersion: 0,
+        createdAt: new Date(),
+      };
+
+      const userFindUniqueMock = prismaService.user.findUnique;
+      const userUpdateMock = prismaService.user.update;
+
+      userFindUniqueMock.mockResolvedValue(mockUser);
+      userUpdateMock.mockResolvedValue({
+        ...mockUser,
+        tokenVersion: 1,
+      });
+
+      const result = await service.logout(userId);
+
+      expect(result).toEqual({ message: 'Logout realizado com sucesso' });
+      expect(userFindUniqueMock).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+      expect(userUpdateMock).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: {
+          tokenVersion: {
+            increment: 1,
+          },
+        },
+      });
+    });
+
+    it('should throw UnauthorizedException if user does not exist', async () => {
+      const userId = faker.string.uuid();
+
+      const userFindUniqueMock = prismaService.user.findUnique;
+      userFindUniqueMock.mockResolvedValue(null);
+
+      await expect(service.logout(userId)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(userFindUniqueMock).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
     });
   });
 });

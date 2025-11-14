@@ -68,7 +68,7 @@ start() {
 
   # Load backend environment variables
   JWT_SECRET_VALUE="your-super-secret-jwt-key-change-in-production"
-  JWT_EXPIRES_IN_VALUE="7d"
+  JWT_EXPIRES_IN_VALUE="16h"
   if [ -f "$DOCKER_DIR/env.backend.example" ]; then
     JWT_SECRET_VALUE=$(grep "^JWT_SECRET=" "$DOCKER_DIR/env.backend.example" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_SECRET_VALUE")
     JWT_EXPIRES_IN_VALUE=$(grep "^JWT_EXPIRES_IN=" "$DOCKER_DIR/env.backend.example" 2>/dev/null | cut -d'=' -f2 || echo "$JWT_EXPIRES_IN_VALUE")

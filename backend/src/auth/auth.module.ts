@@ -23,7 +23,7 @@ import { SuperUserGuard } from './guards/super-user.guard';
             'JWT_SECRET environment variable is required. Please set it in your environment configuration.',
           );
         }
-        const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '7d';
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '16h';
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           secret: jwtSecret,

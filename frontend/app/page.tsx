@@ -1,9 +1,5 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { redirect } from 'next/navigation';
+import { getAuthenticatedUser } from '@/lib/auth-server';
 import {
   Card,
   CardContent,
@@ -15,44 +11,20 @@ import { UserMenu } from '@/components/user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Building2 } from 'lucide-react';
 
-export default function Home() {
-  const router = useRouter();
-  const { user, isAuthenticated, loading } = useAuth();
+export default async function Home() {
+  const user = await getAuthenticatedUser();
 
-  useEffect(() => {
-    if (loading) {
-      return; // Aguardar carregamento
-    }
-
-    if (!isAuthenticated) {
-      router.replace('/auth');
-      return;
-    }
-
-    // Redirecionar SUPER_USER para dashboard
-    if (user?.role === 'SUPER_USER') {
-      router.replace('/dashboard');
-      return;
-    }
-
-    // For other authenticated users, show welcome page
-  }, [isAuthenticated, loading, user, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <LoadingSkeleton className="min-h-screen" />
-      </div>
-    );
+  // Redirect unauthenticated users to auth page
+  if (!user) {
+    redirect('/auth');
   }
 
-  // If not authenticated or is SUPER_USER, useEffect already redirected
-  // This content will only be rendered for authenticated non-SUPER_USER users
-  if (!isAuthenticated || user?.role === 'SUPER_USER') {
-    return null;
+  // Redirect SUPER_USER to dashboard
+  if (user.role === 'SUPER_USER') {
+    redirect('/dashboard');
   }
 
-  const getRoleLabel = (role?: string) => {
+  const getRoleLabel = (role: string) => {
     switch (role) {
       case 'ADMIN':
         return 'Administrador';
@@ -70,7 +42,7 @@ export default function Home() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6" />
+            <Building2 className="size-6" />
             <h1 className="text-2xl font-bold">Voto Inteligente</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -83,9 +55,9 @@ export default function Home() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle>Bem-vindo, {user?.name || 'Usuário'}!</CardTitle>
+              <CardTitle>Bem-vindo, {user.name || 'Usuário'}!</CardTitle>
               <CardDescription>
-                Você está autenticado como {getRoleLabel(user?.role)}
+                Você está autenticado como {getRoleLabel(user.role)}
               </CardDescription>
             </CardHeader>
             <CardContent>

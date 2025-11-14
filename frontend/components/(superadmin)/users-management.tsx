@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -12,46 +13,46 @@ import type { User, CreateUserDto, UpdateUserDto } from '@/types/user';
 import type { Tenant } from '@/types/tenant';
 import { Button } from '@/components/ui/button';
 import { UsersTable } from './users-table';
-import { UsersTableSkeleton } from './users-table-skeleton';
 import { UserFormDialog } from './user-form-dialog';
 import { PasswordConfirmationDialog } from './password-confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { Pagination } from '@/components/ui/pagination';
-import { useApi } from '@/hooks/use-api';
-import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import {
+  createUserAction,
+  updateUserAction,
+  deleteUserAction,
+} from '@/lib/data-actions';
 
 type UsersManagementProps = {
   initialUsers: User[];
   tenants: Tenant[];
+  searchQuery: string;
+  currentPage: number;
 };
 
 export function UsersManagement({
   initialUsers,
   tenants,
+  searchQuery,
+  currentPage,
 }: UsersManagementProps) {
-  const { token } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
-  const { loading, error, get, post, patch, delete: del } = useApi(token);
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [isPending, startTransition] = useTransition();
+  const [users] = useState<User[]>(initialUsers);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordDialogError, setPasswordDialogError] = useState<string | null>(
     null,
   );
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const itemsPerPage = 10;
-
-  // Sync initialUsers when they change from parent
-  useEffect(() => {
-    setUsers(initialUsers);
-  }, [initialUsers]);
 
   // Clear form error when dialog closes
   useEffect(() => {
@@ -60,15 +61,29 @@ export function UsersManagement({
     }
   }, [dialogOpen]);
 
-  const fetchUsers = async () => {
-    const data = await get<User[]>('/users', {
-      onSuccess: (data) => {
-        if (data) {
-          setUsers(data);
-        }
-      },
+  const updateURL = (newSearchQuery: string, newPage: number) => {
+    const params = new URLSearchParams();
+    if (newSearchQuery) {
+      params.set('search', newSearchQuery);
+    }
+    if (newPage > 1) {
+      params.set('page', String(newPage));
+    }
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(newUrl);
+  };
+
+  const handleSearchChange = (query: string) => {
+    startTransition(() => {
+      updateURL(query, 1);
     });
-    return data;
+  };
+
+  const handlePageChange = (page: number) => {
+    startTransition(() => {
+      updateURL(searchQuery, page);
+    });
   };
 
   const handleEdit = (user: User) => {
@@ -87,21 +102,20 @@ export function UsersManagement({
       return;
     }
 
-    await del(`/users/${id}`, {
-      onSuccess: () => {
-        toast.success('Usuário excluído com sucesso!', {
-          description: user
-            ? `O usuário "${user.name}" foi removido.`
-            : undefined,
-        });
-        void fetchUsers();
-      },
-      onError: (err: Error) => {
-        toast.error('Erro ao excluir usuário', {
-          description: err.message,
-        });
-      },
-    });
+    const result = await deleteUserAction(id);
+
+    if (result.success) {
+      toast.success('Usuário excluído com sucesso!', {
+        description: user
+          ? `O usuário "${user.name}" foi removido.`
+          : undefined,
+      });
+      router.refresh();
+    } else {
+      toast.error('Erro ao excluir usuário', {
+        description: result.error || 'Erro desconhecido',
+      });
+    }
   };
 
   const handlePasswordConfirmForDelete = async (password: string) => {
@@ -109,30 +123,20 @@ export function UsersManagement({
 
     setPasswordDialogError(null);
 
-    try {
-      await del(
-        `/users/${pendingDeleteId}`,
-        { passwordConfirmation: password },
-        {
-          onSuccess: () => {
-            const user = users.find((u) => u.id === pendingDeleteId);
-            toast.success('Usuário excluído com sucesso!', {
-              description: user
-                ? `O usuário "${user.name}" foi removido.`
-                : undefined,
-            });
-            setPasswordDialogOpen(false);
-            setPendingDeleteId(null);
-            void fetchUsers();
-          },
-          onError: (err) => {
-            setPasswordDialogError(err.message);
-            throw err;
-          },
-        },
-      );
-    } catch {
-      // Error already handled
+    const result = await deleteUserAction(pendingDeleteId, password);
+
+    if (result.success) {
+      const user = users.find((u) => u.id === pendingDeleteId);
+      toast.success('Usuário excluído com sucesso!', {
+        description: user
+          ? `O usuário "${user.name}" foi removido.`
+          : undefined,
+      });
+      setPasswordDialogOpen(false);
+      setPendingDeleteId(null);
+      router.refresh();
+    } else {
+      setPasswordDialogError(result.error || 'Erro ao excluir usuário');
     }
   };
 
@@ -142,74 +146,56 @@ export function UsersManagement({
 
     try {
       if (editingUser) {
-        await patch(`/users/${editingUser.id}`, data, {
-          onSuccess: () => {
-            toast.success('Usuário atualizado com sucesso!', {
-              description: `O usuário "${data.name || editingUser.name}" foi atualizado.`,
-            });
-            setDialogOpen(false);
-            void fetchUsers();
-          },
-          onError: (err) => {
-            setFormError(err.message);
-            toast.error('Erro ao atualizar usuário', {
-              description: err.message,
-            });
-          },
-        });
+        const result = await updateUserAction(editingUser.id, data);
+        if (result.success) {
+          toast.success('Usuário atualizado com sucesso!', {
+            description: `O usuário "${data.name || editingUser.name}" foi atualizado.`,
+          });
+          setDialogOpen(false);
+          router.refresh();
+        } else {
+          setFormError(result.error || 'Erro ao atualizar usuário');
+          toast.error('Erro ao atualizar usuário', {
+            description: result.error || 'Erro desconhecido',
+          });
+        }
       } else {
-        await post('/users', data, {
-          onSuccess: () => {
-            toast.success('Usuário criado com sucesso!', {
-              description: `O usuário "${data.name}" foi criado.`,
-            });
-            setDialogOpen(false);
-            void fetchUsers();
-          },
-          onError: (err) => {
-            setFormError(err.message);
-            toast.error('Erro ao criar usuário', {
-              description: err.message,
-            });
-          },
-        });
+        // When creating, data must be CreateUserDto (name, email, password, role are required)
+        const createData: CreateUserDto = {
+          name: data.name!,
+          email: data.email!,
+          password: data.password!,
+          role: data.role!,
+          tenantId: data.tenantId,
+          passwordConfirmation: data.passwordConfirmation,
+        };
+        const result = await createUserAction(createData);
+        if (result.success) {
+          toast.success('Usuário criado com sucesso!', {
+            description: `O usuário "${createData.name}" foi criado.`,
+          });
+          setDialogOpen(false);
+          router.refresh();
+        } else {
+          setFormError(result.error || 'Erro ao criar usuário');
+          toast.error('Erro ao criar usuário', {
+            description: result.error || 'Erro desconhecido',
+          });
+        }
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Filter and search users
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesSearch =
-        searchQuery === '' ||
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.tenant?.name || '')
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
-    });
-  }, [users, searchQuery]);
-
-  // Paginate filtered users
+  // Paginate filtered users (already filtered on server)
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredUsers.slice(startIndex, endIndex);
-  }, [filteredUsers, currentPage, itemsPerPage]);
+    return users.slice(startIndex, endIndex);
+  }, [users, currentPage, itemsPerPage]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredUsers.length / itemsPerPage),
-  );
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
 
   return (
     <>
@@ -239,43 +225,46 @@ export function UsersManagement({
           </div>
         </CardHeader>
         <CardContent>
-          {!loading && users.length > 0 && (
+          {users.length > 0 && (
             <div className="mb-4 space-y-4">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar por nome, email ou tenant..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-9 pr-9"
                 />
                 {searchQuery && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
-                    onClick={() => setSearchQuery('')}
+                    className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0"
+                    onClick={() => handleSearchChange('')}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-4" />
                   </Button>
                 )}
               </div>
-              {filteredUsers.length > 0 && (
+              {users.length > 0 && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div>
-                    Mostrando {paginatedUsers.length} de {filteredUsers.length}{' '}
-                    usuário
-                    {filteredUsers.length !== 1 ? 's' : ''}
+                    Mostrando {paginatedUsers.length} de {users.length} usuário
+                    {users.length !== 1 ? 's' : ''}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {loading && <UsersTableSkeleton />}
+          {isPending && (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando...
+            </div>
+          )}
 
-          {!loading && users.length === 0 && !error && (
+          {!isPending && users.length === 0 && (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
                 Nenhum usuário encontrado. Crie o primeiro usuário!
@@ -283,15 +272,7 @@ export function UsersManagement({
             </div>
           )}
 
-          {!loading && users.length > 0 && filteredUsers.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                Nenhum usuário encontrado com os filtros aplicados.
-              </p>
-            </div>
-          )}
-
-          {!loading && filteredUsers.length > 0 && (
+          {!isPending && users.length > 0 && (
             <>
               <UsersTable
                 users={paginatedUsers}
@@ -302,7 +283,7 @@ export function UsersManagement({
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                 />
               )}
             </>

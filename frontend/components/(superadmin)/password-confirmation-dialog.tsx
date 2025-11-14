@@ -67,7 +67,7 @@ export function PasswordConfirmationDialog({
           <div className="grid gap-4 py-4">
             {error && (
               <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
+                <AlertTriangle className="size-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -94,7 +94,7 @@ export function PasswordConfirmationDialog({
               Cancelar
             </Button>
             <Button type="submit" disabled={submitting || !password}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
               Confirmar
             </Button>
           </DialogFooter>

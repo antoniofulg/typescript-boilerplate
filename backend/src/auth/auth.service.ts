@@ -50,15 +50,30 @@ export class AuthService {
       throw new UnauthorizedException('Tenant inativo');
     }
 
+    // Incrementar tokenVersion para invalidar tokens de outros dispositivos
+    // Isso garante que apenas o último login seja válido
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        tokenVersion: {
+          increment: 1,
+        },
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
     // Gerar token JWT
     const payload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role as string,
-      tenantId: user.tenantId || undefined,
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role as string,
+      tenantId: updatedUser.tenantId || undefined,
+      tokenVersion: updatedUser.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
@@ -67,11 +82,11 @@ export class AuthService {
     return {
       accessToken,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        tenantId: user.tenantId || undefined,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        tenantId: updatedUser.tenantId || undefined,
       },
     };
   }
@@ -135,15 +150,30 @@ export class AuthService {
       },
     });
 
+    // Incrementar tokenVersion para invalidar tokens de outros dispositivos
+    // Isso garante que apenas o último login seja válido
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        tokenVersion: {
+          increment: 1,
+        },
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
     // Gerar token JWT
     const payload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role as string,
-      tenantId: user.tenantId || undefined,
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role as string,
+      tenantId: updatedUser.tenantId || undefined,
+      tokenVersion: updatedUser.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
@@ -152,11 +182,11 @@ export class AuthService {
     return {
       accessToken,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        tenantId: user.tenantId || undefined,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        tenantId: updatedUser.tenantId || undefined,
       },
     };
   }
@@ -186,9 +216,10 @@ export class AuthService {
       email: user.email,
       role: user.role as string,
       tenantId: user.tenantId || undefined,
+      tokenVersion: user.tokenVersion,
     };
 
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const accessToken = this.jwtService.sign(payload, {
       expiresIn,
@@ -204,6 +235,29 @@ export class AuthService {
         tenantId: user.tenantId || undefined,
       },
     };
+  }
+
+  async logout(userId: string): Promise<{ message: string }> {
+    // Buscar usuário para verificar se existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    // Incrementar tokenVersion para invalidar todos os tokens anteriores
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        tokenVersion: {
+          increment: 1,
+        },
+      },
+    });
+
+    return { message: 'Logout realizado com sucesso' };
   }
 
   async getProfile(userId: string) {

@@ -44,6 +44,13 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@CurrentUser() user: CurrentUserPayload) {
+    return this.authService.logout(user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@CurrentUser() user: CurrentUserPayload) {
     return this.authService.getProfile(user.userId);

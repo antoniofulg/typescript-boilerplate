@@ -8,23 +8,34 @@ import { RedirectIfAuthenticatedGuard } from './guards/redirect-if-authenticated
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { faker } from '@faker-js/faker';
-import { vi, MockedFunction, type MockInstance } from 'vitest';
+import {
+  vi,
+  MockedFunction,
+  type MockInstance,
+  describe,
+  beforeEach,
+  it,
+  expect,
+} from 'vitest';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: {
     login: MockedFunction<AuthService['login']>;
     register: MockedFunction<AuthService['register']>;
+    logout: MockedFunction<AuthService['logout']>;
     getProfile: MockedFunction<AuthService['getProfile']>;
   };
   let loginSpy: MockInstance<AuthService['login']>;
   let registerSpy: MockInstance<AuthService['register']>;
+  let logoutSpy: MockInstance<AuthService['logout']>;
   let getProfileSpy: MockInstance<AuthService['getProfile']>;
 
   beforeEach(async () => {
     const mockAuthService = {
       login: vi.fn(),
       register: vi.fn(),
+      logout: vi.fn(),
       getProfile: vi.fn(),
     };
 
@@ -82,6 +93,9 @@ describe('AuthController', () => {
     registerSpy = vi.spyOn(authService, 'register') as MockInstance<
       AuthService['register']
     >;
+    logoutSpy = vi.spyOn(authService, 'logout') as MockInstance<
+      AuthService['logout']
+    >;
     getProfileSpy = vi.spyOn(authService, 'getProfile') as MockInstance<
       AuthService['getProfile']
     >;
@@ -137,6 +151,28 @@ describe('AuthController', () => {
       const result = await controller.register(registerDto);
 
       expect(registerSpy).toHaveBeenCalledWith(registerDto);
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('logout', () => {
+    it('should call authService.logout with user userId', async () => {
+      const mockUser = {
+        userId: faker.string.uuid(),
+        email: 'user@example.com',
+        role: 'USER',
+        tenantId: faker.string.uuid(),
+      };
+
+      const mockResponse = {
+        message: 'Logout realizado com sucesso',
+      };
+
+      logoutSpy.mockResolvedValue(mockResponse);
+
+      const result = await controller.logout(mockUser);
+
+      expect(logoutSpy).toHaveBeenCalledWith(mockUser.userId);
       expect(result).toEqual(mockResponse);
     });
   });

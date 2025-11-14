@@ -13,7 +13,7 @@ describe('AppController (e2e)', () => {
   beforeEach(async () => {
     // Configurar variáveis de ambiente necessárias
     process.env.JWT_SECRET = 'test-secret';
-    process.env.JWT_EXPIRES_IN = '7d';
+    process.env.JWT_EXPIRES_IN = '16h';
 
     const mockPrismaService = createMockPrismaService();
 

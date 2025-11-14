@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ type SidebarProps = {
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Filtrar itens do menu baseado no role do usuário
   const filteredItems = filterMenuItemsByRole(menuItems, user?.role);
@@ -35,11 +36,19 @@ export function Sidebar({ user }: SidebarProps) {
   // Agrupar por seção
   const groupedItems = groupMenuItemsBySection(filteredItems);
 
+  // Garantir que o componente está montado no cliente antes de usar pathname
+  // This is a common pattern to avoid hydration mismatch
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
   const handleLinkClick = () => {
     setIsMobileOpen(false);
   };
 
   const isActive = (path: string) => {
+    if (!mounted) return false;
     return pathname === path;
   };
 
@@ -51,15 +60,15 @@ export function Sidebar({ user }: SidebarProps) {
       return (
         <Button
           key={item.id}
-          variant={active ? 'secondary' : 'ghost'}
+          variant={mounted && active ? 'secondary' : 'ghost'}
           className={cn(
             'w-full justify-start gap-3',
-            active && 'bg-accent font-medium',
+            mounted && active && 'bg-accent font-medium',
           )}
           asChild
         >
           <Link href={item.path} onClick={handleLinkClick}>
-            <Icon className="h-5 w-5" />
+            <Icon className="size-5" />
             <span>{item.label}</span>
           </Link>
         </Button>
@@ -83,10 +92,116 @@ export function Sidebar({ user }: SidebarProps) {
     </div>
   );
 
+  // Renderizar placeholder no servidor para evitar problemas de hidratação
+  if (!mounted) {
+    return (
+      <>
+        {/* Desktop Sidebar - Placeholder */}
+        <aside
+          className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-background"
+          suppressHydrationWarning
+        >
+          <div className="flex h-full flex-col gap-4 p-4">
+            <div className="flex items-center gap-2 px-2 py-4">
+              <h2 className="text-lg font-semibold">Menu</h2>
+            </div>
+            <Separator />
+            <nav className="flex-1 space-y-1">
+              {Object.entries(groupedItems).map(([section, items]) => (
+                <div key={section} className="space-y-1">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Button
+                        key={item.id}
+                        variant="ghost"
+                        className="w-full justify-start gap-3"
+                        asChild
+                      >
+                        <Link href={item.path}>
+                          <Icon className="size-5" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </Button>
+                    );
+                  })}
+                </div>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        {/* Mobile Sidebar */}
+        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
+              suppressHydrationWarning
+            >
+              <Menu className="size-6" />
+              <span className="sr-only">Abrir menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="w-64 p-0"
+            suppressHydrationWarning
+          >
+            <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+            <SheetDescription className="sr-only">
+              Navegue entre as páginas da aplicação
+            </SheetDescription>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Menu</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <X className="size-5" />
+                <span className="sr-only">Fechar menu</span>
+              </Button>
+            </div>
+            <div className="flex h-[calc(100vh-73px)] flex-col gap-4 p-4 overflow-y-auto">
+              <Separator />
+              <nav className="flex-1 space-y-1">
+                {Object.entries(groupedItems).map(([section, items]) => (
+                  <div key={section} className="space-y-1">
+                    {items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.id}
+                          variant="ghost"
+                          className="w-full justify-start gap-3"
+                          asChild
+                        >
+                          <Link href={item.path} onClick={handleLinkClick}>
+                            <Icon className="size-5" />
+                            <span>{item.label}</span>
+                          </Link>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </nav>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-background">
+      <aside
+        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-background"
+        suppressHydrationWarning
+      >
         {sidebarContent}
       </aside>
 
@@ -97,12 +212,13 @@ export function Sidebar({ user }: SidebarProps) {
             variant="ghost"
             size="icon"
             className="lg:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
+            suppressHydrationWarning
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="size-6" />
             <span className="sr-only">Abrir menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-64 p-0" suppressHydrationWarning>
           <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
           <SheetDescription className="sr-only">
             Navegue entre as páginas da aplicação
@@ -114,7 +230,7 @@ export function Sidebar({ user }: SidebarProps) {
               size="icon"
               onClick={() => setIsMobileOpen(false)}
             >
-              <X className="h-5 w-5" />
+              <X className="size-5" />
               <span className="sr-only">Fechar menu</span>
             </Button>
           </div>

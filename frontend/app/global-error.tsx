@@ -30,7 +30,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           <Card className="w-full max-w-md">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
+                <AlertTriangle className="size-6 text-destructive" />
                 <CardTitle>Erro crítico</CardTitle>
               </div>
               <CardDescription>
@@ -52,7 +52,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </CardContent>
             <CardFooter>
               <Button onClick={reset} variant="default" className="w-full">
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="mr-2 size-4" />
                 Recarregar página
               </Button>
             </CardFooter>

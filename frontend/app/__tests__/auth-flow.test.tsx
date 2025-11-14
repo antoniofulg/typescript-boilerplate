@@ -2,15 +2,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@/src/test-utils';
 import userEvent from '@testing-library/user-event';
 import AuthPage from '@/app/auth/page';
-import { http, HttpResponse } from 'msw';
-import { server } from '@/src/mocks/server';
+import { loginAction, registerAction } from '@/lib/auth-actions';
 
 // Mock next/navigation
+const mockPush = vi.fn();
 const mockReplace = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
+    push: mockPush,
     replace: mockReplace,
+    refresh: vi.fn(),
   }),
+}));
+
+// Mock Server Actions
+vi.mock('@/lib/auth-actions', () => ({
+  loginAction: vi.fn(),
+  registerAction: vi.fn(),
 }));
 
 // Mock sonner toast
@@ -27,6 +35,9 @@ describe('Authentication Flow', () => {
   beforeEach(() => {
     localStorage.clear();
     mockReplace.mockClear();
+    mockPush.mockClear();
+    vi.mocked(loginAction).mockClear();
+    vi.mocked(registerAction).mockClear();
   });
 
   describe('Login', () => {
@@ -108,6 +119,18 @@ describe('Authentication Flow', () => {
     });
 
     it('handles successful login', async () => {
+      vi.mocked(loginAction).mockResolvedValue({
+        success: true,
+        redirectTo: '/dashboard',
+        accessToken: 'mock-access-token',
+        user: {
+          id: '1',
+          email: 'admin@test.com',
+          name: 'Admin User',
+          role: 'SUPER_USER',
+        },
+      });
+
       const user = userEvent.setup();
       render(<AuthPage />);
 
@@ -121,22 +144,23 @@ describe('Authentication Flow', () => {
 
       await waitFor(
         () => {
-          expect(mockReplace).toHaveBeenCalled();
+          expect(loginAction).toHaveBeenCalledWith(
+            'admin@test.com',
+            'password123',
+          );
+          expect(mockPush).toHaveBeenCalledWith('/dashboard');
+          // Verify that token was set in localStorage
+          expect(localStorage.getItem('auth_token')).toBe('mock-access-token');
         },
         { timeout: 3000 },
       );
     });
 
     it('handles login error', async () => {
-      // Mock API to return error
-      server.use(
-        http.post('http://localhost:4000/auth/login', () => {
-          return HttpResponse.json(
-            { message: 'Credenciais inválidas' },
-            { status: 401 },
-          );
-        }),
-      );
+      vi.mocked(loginAction).mockResolvedValue({
+        success: false,
+        error: 'Credenciais inválidas',
+      });
 
       const user = userEvent.setup();
       render(<AuthPage />);
@@ -151,6 +175,10 @@ describe('Authentication Flow', () => {
 
       // Wait for error handling
       await waitFor(() => {
+        expect(loginAction).toHaveBeenCalledWith(
+          'wrong@test.com',
+          'wrongpassword',
+        );
         // The error should be handled by the toast system
         expect(submitButton).toBeInTheDocument();
       });
@@ -215,6 +243,11 @@ describe('Authentication Flow', () => {
     });
 
     it('handles successful registration', async () => {
+      vi.mocked(registerAction).mockResolvedValue({
+        success: true,
+        redirectTo: '/',
+      });
+
       const user = userEvent.setup();
       render(<AuthPage />);
 
@@ -233,22 +266,24 @@ describe('Authentication Flow', () => {
 
       await waitFor(
         () => {
-          expect(mockReplace).toHaveBeenCalled();
+          expect(registerAction).toHaveBeenCalledWith({
+            name: 'New User',
+            email: 'newuser@test.com',
+            password: 'password123',
+            role: 'USER',
+            tenantId: undefined,
+          });
+          expect(mockPush).toHaveBeenCalledWith('/');
         },
         { timeout: 3000 },
       );
     });
 
     it('handles registration error for existing email', async () => {
-      // Mock API to return error for existing email
-      server.use(
-        http.post('http://localhost:4000/auth/register', () => {
-          return HttpResponse.json(
-            { message: 'Email já está em uso' },
-            { status: 400 },
-          );
-        }),
-      );
+      vi.mocked(registerAction).mockResolvedValue({
+        success: false,
+        error: 'Email já está em uso',
+      });
 
       const user = userEvent.setup();
       render(<AuthPage />);
@@ -268,6 +303,7 @@ describe('Authentication Flow', () => {
 
       // Wait for error handling
       await waitFor(() => {
+        expect(registerAction).toHaveBeenCalled();
         expect(submitButton).toBeInTheDocument();
       });
     });

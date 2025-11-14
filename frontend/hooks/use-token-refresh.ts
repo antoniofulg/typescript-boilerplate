@@ -14,20 +14,20 @@ const BACKEND_URL =
  * - Automatically refreshes the token when it's close to expiring
  * - Prevents unexpected logouts due to expired tokens
  *
- * @param refreshThresholdMs - Time in milliseconds before expiration to trigger refresh (default: 5 minutes)
- * @param checkIntervalMs - Interval in milliseconds to check token expiration (default: 1 minute)
+ * @param refreshThresholdMs - Time in milliseconds before expiration to trigger refresh (default: 40 minutes for 16h tokens)
+ * @param checkIntervalMs - Interval in milliseconds to check token expiration (default: 5 minutes)
  */
 export function useTokenRefresh(
-  refreshThresholdMs: number = 5 * 60 * 1000, // 5 minutes
-  checkIntervalMs: number = 60 * 1000, // 1 minute
+  refreshThresholdMs: number = 40 * 60 * 1000, // 40 minutes (proportional to 16h token)
+  checkIntervalMs: number = 5 * 60 * 1000, // 5 minutes
 ) {
-  const { token, isAuthenticated } = useAuth();
+  const { token } = useAuth();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
 
   const refreshToken = useCallback(async () => {
-    if (!token || !isAuthenticated || isRefreshingRef.current) {
+    if (!token || isRefreshingRef.current) {
       return;
     }
 
@@ -43,7 +43,17 @@ export function useTokenRefresh(
       });
 
       if (!response.ok) {
-        // If refresh fails, the token is likely invalid
+        // If refresh fails (401/403), the token is invalid or expired
+        // Clear token to trigger logout
+        if (response.status === 401 || response.status === 403) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+            document.cookie =
+              'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            // Dispatch logout event to notify AuthContext
+            window.dispatchEvent(new CustomEvent('token-expired'));
+          }
+        }
         // The AuthContext will handle cleanup on next request
         return;
       }
@@ -53,7 +63,7 @@ export function useTokenRefresh(
       // Update token in localStorage and cookie
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', data.accessToken);
-        document.cookie = `auth_token=${data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `auth_token=${data.accessToken}; path=/; max-age=57600; SameSite=Lax`;
       }
 
       // Trigger a page reload or update the context
@@ -70,10 +80,10 @@ export function useTokenRefresh(
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [token, isAuthenticated]);
+  }, [token]);
 
   useEffect(() => {
-    if (!token || !isAuthenticated) {
+    if (!token) {
       // Clear any existing timeouts/intervals
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
@@ -158,11 +168,5 @@ export function useTokenRefresh(
         checkIntervalRef.current = null;
       }
     };
-  }, [
-    token,
-    isAuthenticated,
-    refreshThresholdMs,
-    checkIntervalMs,
-    refreshToken,
-  ]);
+  }, [token, refreshThresholdMs, checkIntervalMs, refreshToken]);
 }

@@ -36,16 +36,22 @@ const mockTenants: Tenant[] = [
   },
 ];
 
-// Mock the hooks
-vi.mock('@/hooks/use-api', () => ({
-  useApi: () => ({
-    loading: false,
-    error: null,
-    get: vi.fn(),
-    post: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
+// Mock next/navigation
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    refresh: mockRefresh,
   }),
+  usePathname: () => '/dashboard',
+}));
+
+// Mock Server Actions
+vi.mock('@/lib/data-actions', () => ({
+  createTenantAction: vi.fn(),
+  updateTenantAction: vi.fn(),
+  deleteTenantAction: vi.fn(),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -60,10 +66,19 @@ vi.mock('@/hooks/use-toast', () => ({
 describe('TenantsManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPush.mockClear();
+    mockRefresh.mockClear();
   });
 
   it('renders tenants table with initial tenants', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
@@ -75,7 +90,14 @@ describe('TenantsManagement', () => {
 
   it('filters tenants by search query (name)', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
@@ -85,18 +107,14 @@ describe('TenantsManagement', () => {
       /buscar por nome ou slug/i,
     ) as HTMLInputElement;
 
-    // Clear any existing value and type the search query
-    // Use "Another" to avoid matching "Inactive" which contains "Active"
+    // Type the search query - this will trigger URL update
     await user.clear(searchInput);
     await user.type(searchInput, 'Another');
 
-    // Wait for the filter to apply
+    // Wait for URL update (router.push should be called)
     await waitFor(
       () => {
-        expect(screen.getByText('Another Active')).toBeInTheDocument();
-        expect(screen.queryByText('Active Tenant')).not.toBeInTheDocument();
-        expect(screen.queryByText('Inactive Tenant')).not.toBeInTheDocument();
-        expect(screen.queryByText('Suspended Tenant')).not.toBeInTheDocument();
+        expect(mockPush).toHaveBeenCalled();
       },
       { timeout: 2000 },
     );
@@ -104,7 +122,14 @@ describe('TenantsManagement', () => {
 
   it('filters tenants by search query (slug)', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
@@ -114,23 +139,27 @@ describe('TenantsManagement', () => {
     await user.clear(searchInput);
     await user.type(searchInput, 'inactive');
 
+    // Wait for URL update
     await waitFor(() => {
-      expect(screen.getByText('Inactive Tenant')).toBeInTheDocument();
-      expect(screen.queryByText('Active Tenant')).not.toBeInTheDocument();
-      expect(screen.queryByText('Suspended Tenant')).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('filters tenants by status (ACTIVE)', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
     });
 
     // All tenants should be visible initially
-    // The actual status filter UI interaction is tested in TenantsFilters component
-    // Here we verify that the component renders correctly with all tenants
     expect(screen.getByText('Active Tenant')).toBeInTheDocument();
     expect(screen.getByText('Another Active')).toBeInTheDocument();
     expect(screen.getByText('Inactive Tenant')).toBeInTheDocument();
@@ -138,32 +167,49 @@ describe('TenantsManagement', () => {
   });
 
   it('filters tenants by status (INACTIVE)', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
     });
 
-    // All tenants should be visible initially
-    // The actual status filter UI interaction is tested in TenantsFilters component
     expect(screen.getByText('Inactive Tenant')).toBeInTheDocument();
   });
 
   it('filters tenants by status (SUSPENDED)', async () => {
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
     });
 
-    // All tenants should be visible initially
-    // The actual status filter UI interaction is tested in TenantsFilters component
     expect(screen.getByText('Suspended Tenant')).toBeInTheDocument();
   });
 
   it('combines search and status filters', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Active Tenant')).toBeInTheDocument();
@@ -174,55 +220,41 @@ describe('TenantsManagement', () => {
     await user.clear(searchInput);
     await user.type(searchInput, 'Another');
 
+    // Wait for URL update
     await waitFor(() => {
-      expect(screen.getByText('Another Active')).toBeInTheDocument();
-      expect(screen.queryByText('Active Tenant')).not.toBeInTheDocument();
-      expect(screen.queryByText('Inactive Tenant')).not.toBeInTheDocument();
+      expect(mockPush).toHaveBeenCalled();
     });
   });
 
   it('shows message when no tenants match filters', async () => {
-    const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={[]}
+        searchQuery="NonExistent"
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText('Active Tenant')).toBeInTheDocument();
-    });
-
-    // Set search query that matches nothing
-    const searchInput = screen.getByPlaceholderText(/buscar por nome ou slug/i);
-    await user.type(searchInput, 'NonExistent');
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/nenhum tenant encontrado com os filtros aplicados/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/nenhum tenant encontrado/i)).toBeInTheDocument();
     });
   });
 
   it('clears search filter when clear button is clicked', async () => {
     const user = userEvent.setup();
-    render(<TenantsManagement initialTenants={mockTenants} />);
+    render(
+      <TenantsManagement
+        initialTenants={mockTenants}
+        searchQuery="Another"
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText('Active Tenant')).toBeInTheDocument();
+      expect(screen.getByText('Another Active')).toBeInTheDocument();
     });
-
-    // Type in search - use "Another" to avoid matching "Inactive" which contains "Active"
-    const searchInput = screen.getByPlaceholderText(
-      /buscar por nome ou slug/i,
-    ) as HTMLInputElement;
-    await user.clear(searchInput);
-    await user.type(searchInput, 'Another');
-
-    await waitFor(
-      () => {
-        expect(screen.getByText('Another Active')).toBeInTheDocument();
-        expect(screen.queryByText('Active Tenant')).not.toBeInTheDocument();
-        expect(screen.queryByText('Inactive Tenant')).not.toBeInTheDocument();
-      },
-      { timeout: 2000 },
-    );
 
     // Find and click clear button (button with X icon in absolute position)
     const buttons = screen.getAllByRole('button');
@@ -239,21 +271,22 @@ describe('TenantsManagement', () => {
     if (clearButton) {
       await user.click(clearButton);
 
-      await waitFor(
-        () => {
-          // All tenants should be visible again after clearing
-          expect(screen.getByText('Active Tenant')).toBeInTheDocument();
-          expect(screen.getByText('Another Active')).toBeInTheDocument();
-          expect(screen.getByText('Inactive Tenant')).toBeInTheDocument();
-          expect(screen.getByText('Suspended Tenant')).toBeInTheDocument();
-        },
-        { timeout: 2000 },
-      );
+      // Wait for URL update
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalled();
+      });
     }
   });
 
   it('shows filters only when there are tenants', async () => {
-    render(<TenantsManagement initialTenants={[]} />);
+    render(
+      <TenantsManagement
+        initialTenants={[]}
+        searchQuery=""
+        statusFilter="ALL"
+        currentPage={1}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/nenhum tenant encontrado/i)).toBeInTheDocument();

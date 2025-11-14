@@ -34,7 +34,7 @@ export default function SuperUserError({ error, reset }: ErrorProps) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <AlertTriangle className="size-6 text-destructive" />
             <CardTitle>Erro no Dashboard</CardTitle>
           </div>
           <CardDescription>
@@ -67,7 +67,7 @@ export default function SuperUserError({ error, reset }: ErrorProps) {
         </CardContent>
         <CardFooter className="flex gap-2">
           <Button onClick={reset} variant="default" className="flex-1">
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 size-4" />
             Tentar novamente
           </Button>
           <Button
@@ -75,12 +75,12 @@ export default function SuperUserError({ error, reset }: ErrorProps) {
             variant="outline"
             className="flex-1"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 size-4" />
             Voltar
           </Button>
           <Button asChild variant="outline" className="flex-1">
             <Link href="/">
-              <Home className="mr-2 h-4 w-4" />
+              <Home className="mr-2 size-4" />
               Início
             </Link>
           </Button>

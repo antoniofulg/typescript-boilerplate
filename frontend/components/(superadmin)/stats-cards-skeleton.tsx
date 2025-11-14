@@ -8,7 +8,7 @@ export function StatsCardsSkeleton() {
         <Card key={i}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="size-4 rounded-full" />
           </CardHeader>
           <CardContent>
             <Skeleton className="h-8 w-16" />

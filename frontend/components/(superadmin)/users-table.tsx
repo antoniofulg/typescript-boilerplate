@@ -71,15 +71,15 @@ export function UsersTable({ users, onEdit, onDelete }: UsersTableProps) {
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+      return <ArrowUpDown className="ml-2 size-4" />;
     }
     if (sortDirection === 'asc') {
-      return <ArrowUp className="ml-2 h-4 w-4" />;
+      return <ArrowUp className="ml-2 size-4" />;
     }
     if (sortDirection === 'desc') {
-      return <ArrowDown className="ml-2 h-4 w-4" />;
+      return <ArrowDown className="ml-2 size-4" />;
     }
-    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return <ArrowUpDown className="ml-2 size-4" />;
   };
 
   const sortedUsers = [...users].sort((a, b) => {
@@ -197,12 +197,12 @@ export function UsersTable({ users, onEdit, onDelete }: UsersTableProps) {
                   size="sm"
                   onClick={() => onEdit(user)}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="size-4" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="size-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

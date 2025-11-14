@@ -12,24 +12,34 @@ import {
 } from '@/components/ui/card';
 import { Users } from 'lucide-react';
 import Link from 'next/link';
-import type { Tenant } from '@/types/tenant';
+import type { Tenant, TenantStatus } from '@/types/tenant';
 
 type DashboardWrapperProps = {
   tenants: Tenant[];
+  allTenants: Tenant[];
+  searchQuery: string;
+  statusFilter: TenantStatus | 'ALL';
+  currentPage: number;
 };
 
-export function DashboardWrapper({ tenants }: DashboardWrapperProps) {
+export function DashboardWrapper({
+  tenants,
+  allTenants,
+  searchQuery,
+  statusFilter,
+  currentPage,
+}: DashboardWrapperProps) {
   return (
     <DashboardErrorBoundary>
       <div className="container mx-auto px-4 py-8">
-        <StatsCards tenants={tenants} />
+        <StatsCards tenants={allTenants} />
         <div className="mb-8">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
+                    <Users className="size-5" />
                     Gerenciamento de Usuários
                   </CardTitle>
                   <CardDescription>
@@ -38,7 +48,7 @@ export function DashboardWrapper({ tenants }: DashboardWrapperProps) {
                 </div>
                 <Button asChild>
                   <Link href="/users">
-                    <Users className="mr-2 h-4 w-4" />
+                    <Users className="mr-2 size-4" />
                     Gerenciar Usuários
                   </Link>
                 </Button>
@@ -46,7 +56,12 @@ export function DashboardWrapper({ tenants }: DashboardWrapperProps) {
             </CardHeader>
           </Card>
         </div>
-        <TenantsManagement initialTenants={tenants} />
+        <TenantsManagement
+          initialTenants={tenants}
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          currentPage={currentPage}
+        />
       </div>
     </DashboardErrorBoundary>
   );
