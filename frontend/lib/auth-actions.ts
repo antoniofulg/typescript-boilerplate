@@ -22,6 +22,20 @@ type LoginResult = {
   success: boolean;
   error?: string;
   redirectTo?: string;
+  accessToken?: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    role: 'SUPER_USER' | 'ADMIN' | 'OPERATOR' | 'USER';
+    tenantId?: string;
+    tenant?: {
+      id: string;
+      name: string;
+      slug: string;
+      status: string;
+    };
+  };
 };
 
 type RegisterResult = {
@@ -78,10 +92,13 @@ export async function loginAction(
       secure: process.env.NODE_ENV === 'production',
     });
 
-    // Return success with redirect path
+    // Return success with redirect path, token, and user data
+    // This allows the client to update AuthContext immediately
     return {
       success: true,
       redirectTo: data.user?.role === 'SUPER_USER' ? '/dashboard' : '/',
+      accessToken: data.accessToken,
+      user: data.user,
     };
   } catch (error) {
     return {

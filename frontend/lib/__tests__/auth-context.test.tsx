@@ -373,4 +373,51 @@ describe('logout', () => {
       expect(screen.getByTestId('token')).toHaveTextContent('no-token');
     });
   });
+
+  describe('setAuthState', () => {
+    it('should update token and user state immediately', async () => {
+      const mockToken = 'new-token-123';
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'USER' as const,
+      };
+
+      function SetAuthStateTestComponent() {
+        const { setAuthState, token, user } = useAuth();
+
+        return (
+          <div>
+            <button
+              data-testid="set-auth-button"
+              onClick={() => setAuthState(mockToken, mockUser)}
+            >
+              Set Auth
+            </button>
+            <div data-testid="token">{token || 'no-token'}</div>
+            <div data-testid="user-email">{user?.email || 'no-user'}</div>
+          </div>
+        );
+      }
+
+      render(
+        <AuthProvider>
+          <SetAuthStateTestComponent />
+        </AuthProvider>,
+      );
+
+      const setAuthButton = screen.getByTestId('set-auth-button');
+      const user = userEvent.setup();
+      await user.click(setAuthButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('token')).toHaveTextContent(mockToken);
+        expect(screen.getByTestId('user-email')).toHaveTextContent(
+          mockUser.email,
+        );
+        expect(localStorage.getItem('auth_token')).toBe(mockToken);
+      });
+    });
+  });
 });

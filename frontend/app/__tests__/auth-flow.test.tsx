@@ -122,6 +122,13 @@ describe('Authentication Flow', () => {
       vi.mocked(loginAction).mockResolvedValue({
         success: true,
         redirectTo: '/dashboard',
+        accessToken: 'mock-access-token',
+        user: {
+          id: '1',
+          email: 'admin@test.com',
+          name: 'Admin User',
+          role: 'SUPER_USER',
+        },
       });
 
       const user = userEvent.setup();
@@ -142,6 +149,8 @@ describe('Authentication Flow', () => {
             'password123',
           );
           expect(mockPush).toHaveBeenCalledWith('/dashboard');
+          // Verify that token was set in localStorage
+          expect(localStorage.getItem('auth_token')).toBe('mock-access-token');
         },
         { timeout: 3000 },
       );

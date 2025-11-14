@@ -30,6 +30,7 @@ type AuthContextType = {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   getProfile: () => Promise<void>;
+  setAuthState: (token: string, user: User) => void;
   isAuthenticated: boolean;
   loading: boolean;
 };
@@ -372,6 +373,15 @@ export function AuthProvider({
     }
   };
 
+  const setAuthState = (authToken: string, authUser: User) => {
+    setToken(authToken);
+    setUser(authUser);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', authToken);
+      document.cookie = `auth_token=${authToken}; path=/; max-age=604800; SameSite=Lax`;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -381,6 +391,7 @@ export function AuthProvider({
         register,
         logout,
         getProfile,
+        setAuthState,
         isAuthenticated: !!token && !!user,
         loading,
       }}

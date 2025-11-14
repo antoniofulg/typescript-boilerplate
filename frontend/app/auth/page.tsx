@@ -39,10 +39,12 @@ import {
   type RegisterFormData,
 } from '@/lib/validations/auth';
 import { loginAction, registerAction } from '@/lib/auth-actions';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AuthPage() {
   const router = useRouter();
   const toast = useToast();
+  const { setAuthState } = useAuth();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -68,12 +70,16 @@ export default function AuthPage() {
 
     if (result.success && result.redirectTo) {
       toast.success('Login realizado com sucesso!');
-      // Update localStorage for AuthContext
-      if (typeof window !== 'undefined') {
-        // Trigger a page reload or update AuthContext
-        // For now, just redirect
-        router.push(result.redirectTo);
+
+      // Update AuthContext immediately with token and user data
+      // This ensures the UserMenu updates without requiring a page reload
+      if (result.accessToken && result.user) {
+        // Use setAuthState to update the context state immediately
+        // This avoids making a second API call
+        setAuthState(result.accessToken, result.user);
       }
+
+      router.push(result.redirectTo);
     } else if (result.redirectTo) {
       // User already authenticated
       toast.info('Você já está autenticado', {
