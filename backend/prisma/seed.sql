@@ -15,29 +15,29 @@
 
 INSERT INTO permissions (id, key, name, description, created_at)
 VALUES
-  ('00000000-0000-0001-0000-000000000001', 'tenant:create', 'Create Tenant', 'Create new tenants', NOW()),
-  ('00000000-0000-0001-0000-000000000002', 'tenant:read', 'Read Tenant', 'View tenant information', NOW()),
-  ('00000000-0000-0001-0000-000000000003', 'tenant:delete', 'Delete Tenant', 'Delete tenants', NOW()),
-  ('00000000-0000-0001-0000-000000000004', 'user:create', 'Create User', 'Create new users', NOW()),
-  ('00000000-0000-0001-0000-000000000005', 'user:manage', 'Manage User', 'Manage user accounts', NOW()),
-  ('00000000-0000-0001-0000-000000000006', 'user:read', 'Read User', 'View user information', NOW()),
-  ('00000000-0000-0001-0000-000000000007', 'agenda:create', 'Create Agenda', 'Create agenda items', NOW()),
-  ('00000000-0000-0001-0000-000000000008', 'agenda:edit:any', 'Edit Any Agenda', 'Edit any agenda item', NOW()),
-  ('00000000-0000-0001-0000-000000000009', 'agenda:edit:own', 'Edit Own Agenda', 'Edit own agenda items', NOW()),
-  ('00000000-0000-0001-0000-000000000010', 'agenda:approve', 'Approve Agenda', 'Approve agenda items', NOW()),
-  ('00000000-0000-0001-0000-000000000011', 'session:open', 'Open Session', 'Open voting sessions', NOW()),
-  ('00000000-0000-0001-0000-000000000012', 'session:preside', 'Preside Session', 'Preside over sessions', NOW()),
-  ('00000000-0000-0001-0000-000000000013', 'vote:record', 'Record Vote', 'Record votes', NOW()),
-  ('00000000-0000-0001-0000-000000000014', 'vote:view', 'View Vote', 'View voting results', NOW()),
-  ('00000000-0000-0001-0000-000000000015', 'attendance:record', 'Record Attendance', 'Record attendance', NOW()),
-  ('00000000-0000-0001-0000-000000000016', 'attendance:view:own', 'View Own Attendance', 'View own attendance records', NOW()),
-  ('00000000-0000-0001-0000-000000000017', 'document:upload', 'Upload Document', 'Upload documents', NOW()),
-  ('00000000-0000-0001-0000-000000000018', 'document:read', 'Read Document', 'Read documents', NOW()),
-  ('00000000-0000-0001-0000-000000000019', 'report:export', 'Export Report', 'Export reports', NOW()),
-  ('00000000-0000-0001-0000-000000000020', 'report:view', 'View Report', 'View reports', NOW()),
-  ('00000000-0000-0001-0000-000000000021', 'public:read', 'Public Read', 'Read public information', NOW()),
-  ('00000000-0000-0001-0000-000000000022', 'audit:view', 'View Audit', 'View audit logs', NOW()),
-  ('00000000-0000-0001-0000-000000000023', 'profile:edit_own', 'Edit Own Profile', 'Edit own user profile', NOW())
+  ('00000000-0000-0001-0000-000000000001', 'tenant:create', 'Criar Tenant', 'Criar novos tenants', NOW()),
+  ('00000000-0000-0001-0000-000000000002', 'tenant:read', 'Ler Tenant', 'Visualizar informações do tenant', NOW()),
+  ('00000000-0000-0001-0000-000000000003', 'tenant:delete', 'Deletar Tenant', 'Deletar tenants', NOW()),
+  ('00000000-0000-0001-0000-000000000004', 'user:create', 'Criar Usuário', 'Criar novos usuários', NOW()),
+  ('00000000-0000-0001-0000-000000000005', 'user:manage', 'Gerenciar Usuário', 'Gerenciar contas de usuários', NOW()),
+  ('00000000-0000-0001-0000-000000000006', 'user:read', 'Ler Usuário', 'Visualizar informações de usuários', NOW()),
+  ('00000000-0000-0001-0000-000000000007', 'agenda:create', 'Criar Pauta', 'Criar itens de pauta', NOW()),
+  ('00000000-0000-0001-0000-000000000008', 'agenda:edit:any', 'Editar Qualquer Pauta', 'Editar qualquer item de pauta', NOW()),
+  ('00000000-0000-0001-0000-000000000009', 'agenda:edit:own', 'Editar Própria Pauta', 'Editar próprios itens de pauta', NOW()),
+  ('00000000-0000-0001-0000-000000000010', 'agenda:approve', 'Aprovar Pauta', 'Aprovar itens de pauta', NOW()),
+  ('00000000-0000-0001-0000-000000000011', 'session:open', 'Abrir Sessão', 'Abrir sessões de votação', NOW()),
+  ('00000000-0000-0001-0000-000000000012', 'session:preside', 'Presidir Sessão', 'Presidir sessões', NOW()),
+  ('00000000-0000-0001-0000-000000000013', 'vote:record', 'Registrar Voto', 'Registrar votos', NOW()),
+  ('00000000-0000-0001-0000-000000000014', 'vote:view', 'Visualizar Voto', 'Visualizar resultados de votação', NOW()),
+  ('00000000-0000-0001-0000-000000000015', 'attendance:record', 'Registrar Presença', 'Registrar presença', NOW()),
+  ('00000000-0000-0001-0000-000000000016', 'attendance:view:own', 'Visualizar Própria Presença', 'Visualizar próprios registros de presença', NOW()),
+  ('00000000-0000-0001-0000-000000000017', 'document:upload', 'Fazer Upload de Documento', 'Fazer upload de documentos', NOW()),
+  ('00000000-0000-0001-0000-000000000018', 'document:read', 'Ler Documento', 'Ler documentos', NOW()),
+  ('00000000-0000-0001-0000-000000000019', 'report:export', 'Exportar Relatório', 'Exportar relatórios', NOW()),
+  ('00000000-0000-0001-0000-000000000020', 'report:view', 'Visualizar Relatório', 'Visualizar relatórios', NOW()),
+  ('00000000-0000-0001-0000-000000000021', 'public:read', 'Leitura Pública', 'Ler informações públicas', NOW()),
+  ('00000000-0000-0001-0000-000000000022', 'audit:view', 'Visualizar Auditoria', 'Visualizar logs de auditoria', NOW()),
+  ('00000000-0000-0001-0000-000000000023', 'profile:edit_own', 'Editar Próprio Perfil', 'Editar próprio perfil de usuário', NOW())
 ON CONFLICT (key) DO UPDATE
 SET
   name = EXCLUDED.name,
@@ -51,13 +51,13 @@ SET
 
 INSERT INTO roles (id, name, slug, description, tenant_id, created_at)
 VALUES
-  ('00000000-0000-0002-0000-000000000001', 'Super User', 'super-user', 'Super user role with full system access', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000002', 'Admin Chamber', 'admin-chamber', 'Administrator for chamber operations', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000003', 'Editor', 'editor', 'Editor role for content management', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000004', 'Viewer', 'viewer', 'Viewer role with read-only access', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000005', 'Council Member', 'council-member', 'Role for council members', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000006', 'Chamber President', 'chamber-president', 'Role for chamber president', NULL, NOW()),
-  ('00000000-0000-0002-0000-000000000007', 'Public', 'public', 'Public access role', NULL, NOW())
+  ('00000000-0000-0002-0000-000000000001', 'Super Usuário', 'super-user', 'Cargo de super usuário com acesso completo ao sistema', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000002', 'Administrador da Câmara', 'admin-chamber', 'Administrador para operações da câmara', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000003', 'Editor', 'editor', 'Cargo de editor para gerenciamento de conteúdo', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000004', 'Visualizador', 'viewer', 'Cargo de visualizador com acesso somente leitura', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000005', 'Vereador', 'council-member', 'Cargo para vereadores', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000006', 'Presidente da Câmara', 'chamber-president', 'Cargo para presidente da câmara', NULL, NOW()),
+  ('00000000-0000-0002-0000-000000000007', 'Público', 'public', 'Cargo de acesso público', NULL, NOW())
 ON CONFLICT (slug) DO UPDATE
 SET
   name = EXCLUDED.name,

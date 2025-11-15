@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Shield, Key } from 'lucide-react';
 import type { UserRole } from '@/types/user';
 
 export type MenuItem = {
@@ -25,6 +25,22 @@ export const menuItems: MenuItem[] = [
     label: 'Usuários',
     icon: Users,
     allowedRoles: ['SUPER_USER'],
+  },
+  {
+    id: 'roles',
+    path: '/roles',
+    label: 'Cargos e Permissões',
+    icon: Shield,
+    allowedRoles: ['SUPER_USER'],
+    section: 'rbac',
+  },
+  {
+    id: 'permissions',
+    path: '/permissions',
+    label: 'Permissões',
+    icon: Key,
+    allowedRoles: ['SUPER_USER'],
+    section: 'rbac',
   },
   {
     id: 'logs',
