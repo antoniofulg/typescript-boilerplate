@@ -132,10 +132,12 @@ SET
 -- Super User (global, tenant_id = null)
 -- Admin Chamber (vinculado ao tenant)
 
--- Placeholder password hash - DEVE SER TROCADO ANTES DE PRODUÇÃO!
--- Este hash corresponde a "placeholder"
+-- Password hash para superuser - corresponde à senha "admin"
+-- DEVE SER TROCADO ANTES DE PRODUÇÃO!
+-- Placeholder hash para outros usuários - corresponde a "placeholder"
 DO $$
 DECLARE
+  super_user_password_hash TEXT := '$2b$10$MmQeNZzjsI3CJmaf.NzkMelhC4qNtyO1m7/vLw.wa54bixsMoogI2';
   placeholder_hash TEXT := '$2b$10$placeholder.hash.should.be.replaced.before.production.01234567890123456789012';
   super_user_id UUID := '00000000-0000-0004-0000-000000000001';
   admin_chamber_id UUID := '00000000-0000-0004-0000-000000000002';
@@ -145,7 +147,7 @@ DECLARE
 BEGIN
   -- Super User
   INSERT INTO users (id, tenant_id, name, email, password_hash, token_version, created_at)
-  VALUES (super_user_id, NULL, 'Super User', 'super.user@voto-inteligente.com', placeholder_hash, 0, NOW())
+  VALUES (super_user_id, NULL, 'Super User', 'admin@voto-inteligente.com', super_user_password_hash, 0, NOW())
   ON CONFLICT (tenant_id, email) DO UPDATE
   SET
     name = EXCLUDED.name,
@@ -224,5 +226,5 @@ SET
 -- SELECT COUNT(*) as total_positions FROM political_positions;
 -- SELECT COUNT(*) as total_council_members FROM council_members;
 --
--- ⚠️  IMPORTANTE: Troque os password hashes antes de usar em produção!
+-- ⚠️  IMPORTANTE: Super User criado com senha "admin". Troque antes de usar em produção!
 

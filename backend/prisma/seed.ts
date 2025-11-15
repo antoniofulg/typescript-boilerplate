@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
  * - Tenant, users, political positions e council members de exemplo
  *
  * IMPORTANTE: Este script usa UUIDs explícitos para garantir determinismo.
- * IMPORTANTE: Os password hashes são placeholders - devem ser trocados antes de produção!
+ * IMPORTANTE: O superuser é criado com senha "admin" - deve ser trocado antes de produção!
  *
  * Execute com: npx prisma db seed ou npm run prisma:seed
  */
@@ -66,7 +66,12 @@ const UUIDs = {
   COUNCIL_MEMBER_1: '00000000-0000-0006-0000-000000000001',
 } as const;
 
-// Placeholder password hash - DEVE SER TROCADO ANTES DE PRODUÇÃO!
+// Password hash para superuser
+// Este hash corresponde à senha "admin" - DEVE SER TROCADO ANTES DE PRODUÇÃO!
+const SUPER_USER_PASSWORD_HASH =
+  '$2b$10$MmQeNZzjsI3CJmaf.NzkMelhC4qNtyO1m7/vLw.wa54bixsMoogI2';
+
+// Placeholder password hash para outros usuários
 // Este hash corresponde a "placeholder" - use um hash real em produção
 const PLACEHOLDER_PASSWORD_HASH =
   '$2b$10$placeholder.hash.should.be.replaced.before.production.01234567890123456789012';
@@ -458,7 +463,7 @@ async function seedUsers(tenantId: string) {
   // Super User - usar findFirst pois tenantId é null (não funciona com upsert e unique composta)
   let superUser = await prisma.user.findFirst({
     where: {
-      email: 'super.user@voto-inteligente.com',
+      email: 'admin@voto-inteligente.com',
       tenantId: null,
     },
   });
@@ -468,7 +473,7 @@ async function seedUsers(tenantId: string) {
       where: { id: superUser.id },
       data: {
         name: 'Super User',
-        passwordHash: PLACEHOLDER_PASSWORD_HASH,
+        passwordHash: SUPER_USER_PASSWORD_HASH,
       },
     });
   } else {
@@ -476,8 +481,8 @@ async function seedUsers(tenantId: string) {
       data: {
         id: UUIDs.USER_SUPER_USER,
         name: 'Super User',
-        email: 'super.user@voto-inteligente.com',
-        passwordHash: PLACEHOLDER_PASSWORD_HASH,
+        email: 'admin@voto-inteligente.com',
+        passwordHash: SUPER_USER_PASSWORD_HASH,
         tenantId: null,
       },
     });
@@ -500,7 +505,7 @@ async function seedUsers(tenantId: string) {
   });
 
   console.log(
-    `  ✓ Super User: ${superUser.email} (tenant: null) - ATENÇÃO: password hash é placeholder!`,
+    `  ✓ Super User: ${superUser.email} (tenant: null) - senha: admin`,
   );
   results.created++;
 
@@ -619,7 +624,7 @@ async function main() {
   console.log('🌱 Iniciando seed determinístico...');
   console.log('');
   console.log(
-    '⚠️  ATENÇÃO: Este seed usa password hashes placeholders que DEVEM ser trocados antes de produção!',
+    '⚠️  ATENÇÃO: Este seed usa password hashes de desenvolvimento. Troque antes de produção!',
   );
   console.log('');
 
@@ -654,7 +659,7 @@ async function main() {
     console.log(`  - Council Member: 1 criado`);
     console.log('');
     console.log(
-      '🔒 IMPORTANTE: Troque os password hashes antes de usar em produção!',
+      '🔒 IMPORTANTE: Super User criado com senha "admin". Troque antes de usar em produção!',
     );
   } catch (error) {
     console.error('❌ Erro durante seed:', error);
