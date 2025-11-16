@@ -84,6 +84,7 @@ describe('JwtStrategy', () => {
         email: mockUser.email,
         role: mockUser.role,
         tenantId: mockUser.tenantId,
+        tokenVersion: mockUser.tokenVersion,
       });
       expect(userFindUniqueMock).toHaveBeenCalledWith({
         where: { id: userId },
@@ -186,6 +187,7 @@ describe('JwtStrategy', () => {
         email: mockUser.email,
         role: mockUser.role,
         tenantId: mockUser.tenantId,
+        tokenVersion: mockUser.tokenVersion,
       });
     });
 
@@ -257,6 +259,7 @@ describe('JwtStrategy', () => {
         email: mockSuperUser.email,
         role: mockSuperUser.role,
         tenantId: undefined,
+        tokenVersion: mockSuperUser.tokenVersion,
       });
     });
   });

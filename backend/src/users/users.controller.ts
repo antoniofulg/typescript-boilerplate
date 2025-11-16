@@ -57,6 +57,21 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: CurrentUserPayload,
   ) {
+    const targetUser = await this.usersService.findOne(id);
+    const isSuperUser = targetUser.role === UserRole.SUPER_USER;
+    const isChangingToSuperUser =
+      updateUserDto.role === UserRole.SUPER_USER &&
+      targetUser.role !== UserRole.SUPER_USER;
+
+    if (
+      (isSuperUser || isChangingToSuperUser) &&
+      !updateUserDto.passwordConfirmation
+    ) {
+      throw new BadRequestException(
+        'Confirmação de senha é obrigatória para operações em SUPER_USER',
+      );
+    }
+
     return this.usersService.update(id, updateUserDto, user.userId);
   }
 

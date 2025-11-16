@@ -433,7 +433,8 @@ describe('UsersService', () => {
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
       prismaService.user.update.mockResolvedValue(updatedUser);
       vi.mocked(roleHelper.getUserRoleFromRbac)
-        .mockResolvedValueOnce(UserRole.ADMIN) // For isTargetSuperUser check
+        .mockResolvedValueOnce(UserRole.ADMIN) // For currentRole in update
+        .mockResolvedValueOnce(UserRole.SUPER_USER) // For verifySuperUserPassword
         .mockResolvedValueOnce(UserRole.SUPER_USER); // For excludePasswordHash
 
       const result = await service.update(

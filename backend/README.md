@@ -57,6 +57,54 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Autenticação e `tokenVersion`
+
+Este backend usa um campo `tokenVersion` na entidade `User` (ver `prisma/schema.prisma`) para controle de invalidação de tokens JWT.
+
+- **Login (`AuthService.login`)**
+  - Ao autenticar com sucesso, o backend incrementa `tokenVersion` do usuário (`Prisma.user.update` com `tokenVersion: { increment: 1 }`).
+  - O payload do JWT inclui `userId`, `email`, `role`, `tenantId` e o `tokenVersion` atual do usuário.
+
+- **Refresh de token (`AuthService.refreshToken`)**
+  - Busca o usuário no banco e gera um novo JWT usando o `tokenVersion` atual armazenado no banco.
+  - Se o `tokenVersion` foi incrementado em outro fluxo (por exemplo, logout), tokens antigos deixam de ser aceitos.
+
+- **Logout (`AuthService.logout`)**
+  - Apenas incrementa `tokenVersion` do usuário.
+  - Qualquer token emitido com um `tokenVersion` anterior passa a ser considerado inválido.
+
+- **Validação do JWT (`JwtStrategy.validate`)**
+  - Lê o payload do token (`userId`, `tokenVersion`, etc.).
+  - Carrega o usuário e compara `payload.tokenVersion` com `user.tokenVersion`:
+    - Se forem diferentes, lança `UnauthorizedException` (token inválido ou revogado).
+    - Se `tokenVersion` não estiver presente no payload (tokens antigos), a validação ignora essa checagem por compatibilidade retroativa.
+  - Para usuários não SUPER_USER com `tenantId` definido, também valida se o `Tenant` está com status `ACTIVE`.
+
+Em resumo: **sempre que um usuário fizer login ou logout, o `tokenVersion` é atualizado e todos os tokens antigos são automaticamente invalidados**.
+
+## Operações com SUPER_USER e confirmação de senha
+
+Operações sensíveis envolvendo o papel `SUPER_USER` exigem confirmação de senha:
+
+- **Criação de SUPER_USER (`UsersService.create`)**
+  - Quando `role === SUPER_USER`, o DTO de criação deve conter `passwordConfirmation`.
+  - A senha de confirmação é comparada com a senha do SUPER_USER atual que está realizando a operação.
+  - Se a confirmação for ausente ou inválida, é lançada uma exceção (`BadRequestException` ou `ForbiddenException`).
+  - SUPER_USER sempre é criado sem `tenantId` (global).
+
+- **Atualização de usuário para SUPER_USER (`UsersService.update` + `UsersController.update`)**
+  - Se o usuário alvo já for SUPER_USER, ou se o `role` estiver sendo alterado para SUPER_USER, é obrigatório informar `passwordConfirmation`.
+  - O `UsersController` garante essa regra antes de chamar o serviço e retorna `BadRequestException` se a confirmação não for enviada.
+  - O `UsersService` valida a senha via `verifySuperUserPassword`; se inválida, lança `ForbiddenException`.
+  - Ao promover para SUPER_USER, o `tenantId` do usuário é definido como `null`.
+
+- **Exclusão de SUPER_USER (`UsersController.remove`)**
+  - Antes de deletar, o controller verifica se o usuário alvo é SUPER_USER.
+  - Se for, exige `passwordConfirmation` no corpo da requisição e chama `verifyPasswordForSuperUserOperation` no serviço.
+  - Sem confirmação, é lançada `BadRequestException`; com senha incorreta, `ForbiddenException`.
+
+Essas regras são cobertas pelos testes em `src/auth`, `src/users` e garantem que alterações críticas em usuários SUPER_USER sempre exijam autenticação explícita do super usuário responsável.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

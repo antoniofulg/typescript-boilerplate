@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { RbacService } from '../rbac/rbac.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
@@ -31,6 +32,11 @@ describe('UsersController', () => {
     verifyPasswordForSuperUserOperation: vi.fn(),
   };
 
+  const mockRbacService = {
+    getUserEffectivePermissions: vi.fn(),
+    hasPermission: vi.fn(),
+  } as unknown as RbacService;
+
   const mockCurrentUser = {
     userId: faker.string.uuid(),
     email: 'super@example.com',
@@ -47,6 +53,10 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: RbacService,
+          useValue: mockRbacService,
         },
       ],
     }).compile();
