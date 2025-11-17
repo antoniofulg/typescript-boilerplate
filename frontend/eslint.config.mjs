@@ -22,7 +22,7 @@ const eslintConfig = defineConfig([
       // Prettier integration
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
       // Compatible rules with backend
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       // Disabled because it requires type-aware linting that needs additional configuration
       '@typescript-eslint/no-floating-promises': 'off',
     },

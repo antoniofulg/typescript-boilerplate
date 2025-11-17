@@ -1,0 +1,59 @@
+{
+  "super_user": [
+    "tenant:create",
+    "tenant:read",
+    "tenant:delete",
+    "user:create",
+    "user:manage",
+    "user:read",
+    "agenda:create",
+    "agenda:edit:any",
+    "agenda:edit:own",
+    "agenda:approve",
+    "session:open",
+    "session:preside",
+    "vote:record",
+    "vote:view",
+    "attendance:record",
+    "attendance:view:own",
+    "document:upload",
+    "document:read",
+    "report:export",
+    "report:view",
+    "public:read",
+    "audit:view",
+    "profile:edit_own"
+  ],
+  "admin_chamber": [
+    "user:create",
+    "user:manage",
+    "user:read",
+    "agenda:approve",
+    "document:upload",
+    "document:read",
+    "report:view",
+    "report:export",
+    "audit:view"
+  ],
+  "editor": [
+    "agenda:create",
+    "agenda:edit:own",
+    "vote:record",
+    "attendance:record",
+    "document:upload"
+  ],
+  "viewer": ["document:read", "report:view", "public:read"],
+  "council_member": [
+    "vote:view",
+    "attendance:view:own",
+    "document:read",
+    "profile:edit_own"
+  ],
+  "chamber_president": [
+    "session:open",
+    "session:preside",
+    "agenda:approve",
+    "report:view"
+  ],
+  "public": ["public:read", "document:read"]
+}

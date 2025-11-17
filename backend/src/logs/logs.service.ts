@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LogAction } from '@prisma/client';
+import { LogAction, Prisma, UserRole } from '@prisma/client';
 import { LogResponseDto } from './dto/log-response.dto';
 import { FindLogsDto } from './dto/find-logs.dto';
 
@@ -26,7 +26,7 @@ export class LogsService {
         action: data.action,
         entity: data.entity,
         entityId: data.entityId,
-        changes: data.changes as object,
+        changes: data.changes as Prisma.InputJsonValue,
         ipAddress: data.ipAddress || null,
         userAgent: data.userAgent || null,
         tenantId: data.tenantId || null,
@@ -54,7 +54,7 @@ export class LogsService {
 
   async findAll(
     filters: FindLogsDto,
-    currentUserRole: string,
+    currentUserRole: UserRole,
     currentUserTenantId?: string,
   ): Promise<{
     logs: LogResponseDto[];
@@ -67,17 +67,7 @@ export class LogsService {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: {
-      userId?: string;
-      action?: LogAction;
-      entity?: string | { in: string[] };
-      entityId?: string;
-      tenantId?: string;
-      timestamp?: {
-        gte?: Date;
-        lte?: Date;
-      };
-    } = {};
+    const where: Prisma.LogWhereInput = {};
 
     if (filters.userId) {
       where.userId = filters.userId;
@@ -104,7 +94,7 @@ export class LogsService {
     }
 
     // Tenant isolation: ADMIN only sees logs from their tenant
-    if (currentUserRole !== 'SUPER_USER') {
+    if (currentUserRole !== UserRole.SUPER_USER) {
       // Security: If ADMIN doesn't have a tenantId, return empty results
       // to prevent seeing all logs across all tenants
       if (!currentUserTenantId) {

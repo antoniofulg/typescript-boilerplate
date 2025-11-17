@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserRole, TenantStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { getUserRoleFromRbac } from '../auth/helpers/role-helper';
 
 @Injectable()
 export class UsersService {
@@ -18,13 +19,13 @@ export class UsersService {
 
   /**
    * Helper method to exclude passwordHash from User objects
+   * Note: role is now determined from RBAC system
    */
-  private excludePasswordHash(user: {
+  private async excludePasswordHash(user: {
     id: string;
     name: string;
     email: string;
     passwordHash: string;
-    role: UserRole;
     tenantId: string | null;
     tenant?: {
       id: string;
@@ -33,10 +34,14 @@ export class UsersService {
       status: string;
     } | null;
     createdAt: Date;
-  }): UserResponseDto {
+  }): Promise<UserResponseDto> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash, ...result } = user;
-    return result;
+    const { passwordHash, ...userWithoutPassword } = user;
+    const role = await getUserRoleFromRbac(this.prisma, user.id);
+    return {
+      ...userWithoutPassword,
+      role,
+    };
   }
 
   /**
@@ -50,7 +55,13 @@ export class UsersService {
       where: { id: superUserId },
     });
 
-    if (!superUser || superUser.role !== UserRole.SUPER_USER) {
+    if (!superUser) {
+      throw new ForbiddenException('Usuário não encontrado');
+    }
+
+    // Check if user has SUPER_USER role via RBAC
+    const role = await getUserRoleFromRbac(this.prisma, superUserId);
+    if (role !== UserRole.SUPER_USER) {
       throw new ForbiddenException('Usuário não é um Super User');
     }
 
@@ -129,19 +140,21 @@ export class UsersService {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user
+    // Create user (role field removed - will be assigned via RBAC)
     const user = await this.prisma.user.create({
       data: {
         name,
         email,
         passwordHash,
-        role,
         tenantId: finalTenantId,
       },
       include: {
         tenant: true,
       },
     });
+
+    // TODO: Assign role via RBAC system based on createUserDto.role
+    // For now, role will be determined dynamically from RBAC
 
     return this.excludePasswordHash(user);
   }
@@ -152,7 +165,7 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return users.map((user) => this.excludePasswordHash(user));
+    return Promise.all(users.map((user) => this.excludePasswordHash(user)));
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
@@ -182,12 +195,14 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    const isTargetSuperUser = user.role === UserRole.SUPER_USER;
+    // Get current role from RBAC
+    const currentRole = await getUserRoleFromRbac(this.prisma, id);
+    const isTargetSuperUser = currentRole === UserRole.SUPER_USER;
     const isChangingToSuperUser =
       updateUserDto.role === UserRole.SUPER_USER &&
-      user.role !== UserRole.SUPER_USER;
+      currentRole !== UserRole.SUPER_USER;
     const isChangingFromSuperUser =
-      user.role === UserRole.SUPER_USER &&
+      currentRole === UserRole.SUPER_USER &&
       updateUserDto.role &&
       updateUserDto.role !== UserRole.SUPER_USER;
 
@@ -223,14 +238,15 @@ export class UsersService {
       }
     }
 
-    // Prepare update data
+    // Prepare update data (role field removed - will be managed via RBAC)
     const updateData: {
       name?: string;
       email?: string;
       passwordHash?: string;
-      role?: UserRole;
       tenantId?: string | null;
     } = { ...updateUserDto };
+    // Remove role from updateData as it's managed via RBAC
+    delete (updateData as { role?: UserRole }).role;
 
     // Hash password if provided
     if (updateUserDto.password) {

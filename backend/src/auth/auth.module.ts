@@ -8,6 +8,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RedirectIfAuthenticatedGuard } from './guards/redirect-if-authenticated.guard';
 import { SuperUserGuard } from './guards/super-user.guard';
+import ms from 'ms';
+
+type ExpiresIn = number | ms.StringValue | undefined;
 
 @Module({
   imports: [
@@ -24,13 +27,15 @@ import { SuperUserGuard } from './guards/super-user.guard';
           );
         }
         const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '16h';
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           secret: jwtSecret,
           signOptions: {
-            expiresIn,
+            // JwtModuleOptions expects expiresIn as number | StringValue | undefined
+            // StringValue is a type from jsonwebtoken library, but string works at runtime
+
+            expiresIn: expiresIn as ExpiresIn,
           },
-        } as any;
+        };
       },
       inject: [ConfigService],
     }),

@@ -9,10 +9,12 @@ import {
 describe('menu-config', () => {
   describe('menuItems', () => {
     it('should have all required menu items', () => {
-      expect(menuItems).toHaveLength(3);
+      expect(menuItems).toHaveLength(5);
       expect(menuItems[0].id).toBe('dashboard');
       expect(menuItems[1].id).toBe('users');
-      expect(menuItems[2].id).toBe('logs');
+      expect(menuItems[2].id).toBe('roles');
+      expect(menuItems[3].id).toBe('permissions');
+      expect(menuItems[4].id).toBe('logs');
     });
 
     it('should have correct structure for each menu item', () => {
@@ -44,10 +46,12 @@ describe('menu-config', () => {
 
     it('should return all items for SUPER_USER', () => {
       const result = filterMenuItemsByRole(menuItems, 'SUPER_USER');
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(5);
       expect(result.map((item) => item.id)).toEqual([
         'dashboard',
         'users',
+        'roles',
+        'permissions',
         'logs',
       ]);
     });

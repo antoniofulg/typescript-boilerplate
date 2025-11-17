@@ -11,7 +11,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { TenantStatus } from '@prisma/client';
+import { TenantStatus, UserRole, Prisma } from '@prisma/client';
+import { safeJwtSign } from '../common/type-helpers';
+import { getUserRoleFromRbac } from './helpers/role-helper';
+
+type UserWithTenant = Prisma.UserGetPayload<{
+  include: { tenant: true };
+}>;
+
+type JwtPayload = {
+  userId: string;
+  email: string;
+  role: UserRole;
+  tenantId?: string;
+  tokenVersion: number;
+};
 
 @Injectable()
 export class AuthService {
@@ -25,7 +39,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Buscar usuário (pode ser SUPER_USER ou usuário normal)
-    const user = await this.prisma.user.findFirst({
+    const user: UserWithTenant | null = await this.prisma.user.findFirst({
       where: { email },
       include: { tenant: true },
     });
@@ -52,7 +66,7 @@ export class AuthService {
 
     // Incrementar tokenVersion para invalidar tokens de outros dispositivos
     // Isso garante que apenas o último login seja válido
-    const updatedUser = await this.prisma.user.update({
+    const updatedUser: UserWithTenant = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         tokenVersion: {
@@ -64,20 +78,20 @@ export class AuthService {
       },
     });
 
+    // Determine role from RBAC system
+    const userRole = await getUserRoleFromRbac(this.prisma, updatedUser.id);
+
     // Gerar token JWT
-    const payload = {
+    const payload: JwtPayload = {
       userId: updatedUser.id,
       email: updatedUser.email,
-      role: updatedUser.role as string,
+      role: userRole,
       tenantId: updatedUser.tenantId || undefined,
       tokenVersion: updatedUser.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -85,14 +99,14 @@ export class AuthService {
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
-        role: updatedUser.role,
+        role: userRole,
         tenantId: updatedUser.tenantId || undefined,
       },
     };
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { name, email, password, role, tenantId } = registerDto;
+    const { name, email, password, tenantId } = registerDto;
 
     // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
@@ -136,13 +150,12 @@ export class AuthService {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user
-    const user = await this.prisma.user.create({
+    // Create user (role field removed - will be managed via RBAC)
+    const user: UserWithTenant = await this.prisma.user.create({
       data: {
         name,
         email,
         passwordHash,
-        role,
         tenantId: tenantId || null,
       },
       include: {
@@ -152,7 +165,7 @@ export class AuthService {
 
     // Incrementar tokenVersion para invalidar tokens de outros dispositivos
     // Isso garante que apenas o último login seja válido
-    const updatedUser = await this.prisma.user.update({
+    const updatedUser: UserWithTenant = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         tokenVersion: {
@@ -164,20 +177,23 @@ export class AuthService {
       },
     });
 
+    // Determine role from RBAC system
+    const userRole = await getUserRoleFromRbac(this.prisma, updatedUser.id);
+
+    // TODO: Assign requestedRole via RBAC system if needed
+    // For now, role will be determined dynamically from RBAC
+
     // Gerar token JWT
-    const payload = {
+    const payload: JwtPayload = {
       userId: updatedUser.id,
       email: updatedUser.email,
-      role: updatedUser.role as string,
+      role: userRole,
       tenantId: updatedUser.tenantId || undefined,
       tokenVersion: updatedUser.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -185,7 +201,7 @@ export class AuthService {
         id: updatedUser.id,
         email: updatedUser.email,
         name: updatedUser.name,
-        role: updatedUser.role,
+        role: userRole,
         tenantId: updatedUser.tenantId || undefined,
       },
     };
@@ -193,7 +209,7 @@ export class AuthService {
 
   async refreshToken(userId: string): Promise<AuthResponseDto> {
     // Validate if user still exists and is active
-    const user = await this.prisma.user.findUnique({
+    const user: UserWithTenant | null = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
@@ -211,19 +227,19 @@ export class AuthService {
       throw new UnauthorizedException('Tenant inativo');
     }
 
-    const payload = {
+    // Determine role from RBAC system
+    const role = await getUserRoleFromRbac(this.prisma, user.id);
+
+    const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role as string,
+      role,
       tenantId: user.tenantId || undefined,
       tokenVersion: user.tokenVersion,
     };
 
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '16h';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn,
-    } as any);
+    const accessToken = safeJwtSign(this.jwtService, payload, { expiresIn });
 
     return {
       accessToken,
@@ -231,7 +247,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role,
         tenantId: user.tenantId || undefined,
       },
     };
@@ -261,7 +277,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user: UserWithTenant | null = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
@@ -270,11 +286,14 @@ export class AuthService {
       throw new UnauthorizedException('Usuário não encontrado');
     }
 
+    // Determine role from RBAC system
+    const role = await getUserRoleFromRbac(this.prisma, user.id);
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role,
       tenantId: user.tenantId || undefined,
       tenant: user.tenant
         ? {
