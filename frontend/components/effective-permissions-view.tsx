@@ -292,7 +292,7 @@ export function EffectivePermissionsView({
             setDomainFilter(value === 'all' ? null : value);
           }}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px]" aria-label="Filtrar por domínio">
             <SelectValue placeholder="Filtrar por domínio" />
           </SelectTrigger>
           <SelectContent>
@@ -307,7 +307,11 @@ export function EffectivePermissionsView({
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-8">
+        <div
+          className="flex items-center justify-center py-8"
+          role="status"
+          aria-live="polite"
+        >
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : (

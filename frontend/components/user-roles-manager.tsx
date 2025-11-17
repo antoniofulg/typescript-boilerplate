@@ -156,7 +156,7 @@ export function UserRolesManager({ token, userId }: UserRolesManagerProps) {
             </SelectTrigger>
             <SelectContent>
               {availableRoles.length === 0 ? (
-                <SelectItem value="" disabled>
+                <SelectItem value="no-role" disabled>
                   Nenhuma role disponível
                 </SelectItem>
               ) : (

@@ -3,19 +3,16 @@ import { render, screen, waitFor } from '@/src/test-utils';
 import userEvent from '@testing-library/user-event';
 import { RolePermissionsEditor } from '../role-permissions-editor';
 
-// Mock AuthApiService
-const mockApiService = {
-  getRoles: vi.fn(),
-  getPermissions: vi.fn(),
-  getRolePermissions: vi.fn(),
-  assignPermissionToRole: vi.fn(),
-  removePermissionFromRole: vi.fn(),
-  setToken: vi.fn(),
-};
+vi.mock('@/lib/authApiService');
 
-vi.mock('@/lib/authApiService', () => ({
-  AuthApiService: vi.fn(() => mockApiService),
-}));
+let mockApiService: {
+  getRoles: ReturnType<typeof vi.fn>;
+  getPermissions: ReturnType<typeof vi.fn>;
+  getRolePermissions: ReturnType<typeof vi.fn>;
+  assignPermissionToRole: ReturnType<typeof vi.fn>;
+  removePermissionFromRole: ReturnType<typeof vi.fn>;
+  setToken: ReturnType<typeof vi.fn>;
+};
 
 describe('RolePermissionsEditor', () => {
   const mockToken = 'mock-token';
@@ -30,8 +27,24 @@ describe('RolePermissionsEditor', () => {
     { id: 'p2', key: 'session:view', description: 'View sessions' },
   ];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const authApiModule = await import('@/lib/authApiService');
+    const AuthApiServiceMock = vi.mocked(authApiModule.AuthApiService);
+
+    mockApiService = {
+      getRoles: vi.fn(),
+      getPermissions: vi.fn(),
+      getRolePermissions: vi.fn(),
+      assignPermissionToRole: vi.fn(),
+      removePermissionFromRole: vi.fn(),
+      setToken: vi.fn(),
+    };
+
+    AuthApiServiceMock.mockImplementation(function () {
+      return mockApiService as never;
+    });
   });
 
   it('should render loading state initially', () => {
@@ -86,7 +99,7 @@ describe('RolePermissionsEditor', () => {
       await userEvent.click(permissionCheckbox);
 
       await waitFor(() => {
-        expect(apiService.assignPermissionToRole).toHaveBeenCalledWith(
+        expect(mockApiService.assignPermissionToRole).toHaveBeenCalledWith(
           'role1',
           {
             permissionId: 'p1',

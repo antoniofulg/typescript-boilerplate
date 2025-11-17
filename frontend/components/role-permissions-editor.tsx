@@ -394,7 +394,11 @@ export function RolePermissionsEditor({ token }: RolePermissionsEditorProps) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-8">
+        <div
+          className="flex items-center justify-center py-8"
+          role="status"
+          aria-live="polite"
+        >
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
